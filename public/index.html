@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <!-- Navbar -->
     <nav class="navbar">
         <div class="navbar-content">
             <div class="logo">
@@ -25,22 +24,21 @@
         <h1>Bienvenido al Sistema</h1>
         <p>Selecciona el módulo al que deseas acceder según tu rol en la empresa</p>
         
-        <!-- Estadísticas rápidas -->
         <div class="stats-grid">
             <div class="stat-card stat-blue">
-                <div class="stat-number">24</div>
+                <div class="stat-number" id="stats-pendientes">--</div>
                 <div class="stat-label">Solicitudes Pendientes</div>
             </div>
             <div class="stat-card stat-green">
-                <div class="stat-number">18</div>
+                <div class="stat-number" id="stats-en-proceso">--</div>
                 <div class="stat-label">En Proceso</div>
             </div>
             <div class="stat-card stat-orange">
-                <div class="stat-number">12</div>
+                <div class="stat-number" id="stats-instalaciones">--</div>
                 <div class="stat-label">Instalaciones Hoy</div>
             </div>
             <div class="stat-card stat-purple">
-                <div class="stat-number">8</div>
+                <div class="stat-number" id="stats-soportes">--</div>
                 <div class="stat-label">Soportes Activos</div>
             </div>
         </div>
@@ -99,7 +97,6 @@
             </a>
         </div>
 
-        <!-- Información adicional -->
         <div class="info-section">
             <h3>
                 <i class="fas fa-info-circle"></i>
@@ -127,8 +124,37 @@
     </div>
 
     <script>
-        // Animación de entrada para las tarjetas
+        // Función para cargar las estadísticas desde la API
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                if (!response.ok) {
+                    throw new Error('Error al cargar los datos');
+                }
+                const stats = await response.json();
+
+                // Actualizar los números en las tarjetas
+                document.getElementById('stats-pendientes').textContent = stats.pendientes;
+                document.getElementById('stats-en-proceso').textContent = stats.enProceso;
+                document.getElementById('stats-instalaciones').textContent = stats.instalacionesHoy;
+                document.getElementById('stats-soportes').textContent = stats.soportesActivos;
+
+            } catch (error) {
+                console.error("No se pudieron cargar las estadísticas:", error);
+                // Si hay un error, dejamos los valores por defecto o mostramos un error
+                document.getElementById('stats-pendientes').textContent = 'X';
+                document.getElementById('stats-en-proceso').textContent = 'X';
+                document.getElementById('stats-instalaciones').textContent = 'X';
+                document.getElementById('stats-soportes').textContent = 'X';
+            }
+        }
+
+        // Event listener para ejecutar todo cuando el DOM esté listo
         document.addEventListener('DOMContentLoaded', () => {
+            // Cargar las estadísticas
+            loadStats();
+
+            // Animación de entrada para las tarjetas
             const cards = document.querySelectorAll('.menu-card, .stat-card');
             cards.forEach((card, index) => {
                 card.style.opacity = '0';

@@ -322,54 +322,84 @@
                 }
             });
 
-            const form = document.getElementById('soporteForm');
-            form.addEventListener('submit', e => {
-                e.preventDefault();
-                const submitButton = form.querySelector('button[type="submit"]');
-                const statusMessage = document.getElementById('status-message');
-                
-                submitButton.disabled = true;
-                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+            // soporte.html (reemplazar desde la línea 326 hasta el final del script)
 
-                const formData = new FormData(form);
-                const dataObject = Object.fromEntries(formData.entries());
+const form = document.getElementById('soporteForm');
+form.addEventListener('submit', async (e) => { // La función ahora es ASYNC
+    e.preventDefault();
+    const submitButton = form.querySelector('button[type="submit"]');
+    const statusMessage = document.getElementById('status-message');
+    
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
 
-                setTimeout(() => {
-                    statusMessage.className = 'status-message success';
-                    statusMessage.innerHTML = '<i class="fas fa-check-circle"></i> ¡Reporte guardado! Abriendo WhatsApp...';
-                    
-                    let message = `*Reporte Técnico de Soporte:*\n\n` +
-                        `*Fecha:* ${dataObject.fecha_reporte}\n` +
-                        `*Hora:* ${dataObject.hora_reporte}\n` +
-                        `*Cliente:* ${dataObject.nombre_cliente || 'N/A'}\n` +
-                        `*Precinto:* ${dataObject.precinto || 'N/A'}\n` +
-                        `*Caja Nap:* ${dataObject.caja_nap || 'N/A'}\n` +
-                        (dataObject.coordenadas ? `*Coordenadas:* https://www.google.com/maps?q=${dataObject.coordenadas}\n` : '') +
-                        `*Cantidad de Puertos:* ${dataObject.cantidad_puertos_nap || 'N/A'}\n` +
-                        `*Puerto cliente:* ${dataObject.puerto_cliente || 'N/A'}\n` +
-                        `*Potencia:* ${dataObject.potencia_dbm || 'N/A'}\n` +
-                        `*Zona:* ${dataObject.zona || 'N/A'}\n` +
-                        `*Estatus:* ${dataObject.estatus_visita || 'N/A'}\n` +
-                        `*Causa:* ${dataObject.causa_problema || 'N/A'}\n` +
-                        `*Acción Realizada:* ${dataObject.accion_realizada || 'N/A'}\n` +
-                        `*Conectores utilizados:* ${dataObject.conectores_utilizados || 'N/A'}\n` +
-                        `*Metraje utilizado:* ${dataObject.metraje_utilizado_m || 'N/A'}\n` +
-                        `*Observaciones Adicionales:* ${dataObject.observaciones || 'N/A'}\n` +
-                        `*Realizado por:* ${dataObject.realizado_por_tecnico || 'N/A'}`;
+    const formData = new FormData(form);
+    const dataObject = Object.fromEntries(formData.entries());
 
-                    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
-                    
-                    form.reset();
-                    const ahora = new Date();
-                    const offset = ahora.getTimezoneOffset();
-                    const ahoraLocal = new Date(ahora.getTime() - (offset * 60 * 1000));
-                    document.getElementById('fecha_reporte').value = ahoraLocal.toISOString().split('T')[0];
-                    document.getElementById('hora_reporte').value = ahoraLocal.toTimeString().split(' ')[0].substring(0, 5);
-                    
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = '<i class="fas fa-paper-plane"></i> Guardar y Enviar por WhatsApp';
-                }, 1500);
-            });
+    try {
+        // Hacemos la llamada real al backend
+        const response = await fetch('/api/soportes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dataObject)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            statusMessage.className = 'status-message success';
+            statusMessage.innerHTML = '<i class="fas fa-check-circle"></i> ¡Reporte guardado! Abriendo WhatsApp...';
+            
+            // Usamos la respuesta del servidor (result.reporte) para el mensaje
+            const reporteGuardado = result.reporte;
+
+            let message = `*Reporte Técnico de Soporte:*\n\n` +
+                `*Fecha:* ${reporteGuardado.fecha_reporte}\n` +
+                `*Hora:* ${reporteGuardado.hora_reporte}\n` +
+                `*Cliente:* ${reporteGuardado.nombre_cliente || 'N/A'}\n` +
+                `*Precinto:* ${reporteGuardado.precinto || 'N/A'}\n` +
+                `*Caja Nap:* ${reporteGuardado.caja_nap || 'N/A'}\n` +
+                (reporteGuardado.coordenadas ? `*Coordenadas:* https://www.google.com/maps/search/?api=1&query=${reporteGuardado.coordenadas}\n` : '') +
+                `*Cantidad de Puertos:* ${reporteGuardado.cantidad_puertos_nap || 'N/A'}\n` +
+                `*Puerto cliente:* ${reporteGuardado.puerto_cliente || 'N/A'}\n` +
+                `*Potencia:* ${reporteGuardado.potencia_dbm || 'N/A'} dBm\n` +
+                `*Zona:* ${reporteGuardado.zona || 'N/A'}\n` +
+                `*Estatus:* ${reporteGuardado.estatus_visita || 'N/A'}\n` +
+                `*Causa:* ${reporteGuardado.causa_problema || 'N/A'}\n` +
+                `*Acción Realizada:* ${reporteGuardado.accion_realizada || 'N/A'}\n` +
+                `*Conectores utilizados:* ${reporteGuardado.conectores_utilizados || '0'}\n` +
+                `*Metraje utilizado:* ${reporteGuardado.metraje_utilizado_m || '0'} m\n` +
+                `*Observaciones Adicionales:* ${reporteGuardado.observaciones || 'N/A'}\n` +
+                `*Realizado por:* ${reporteGuardado.realizado_por_tecnico || 'N/A'}`;
+
+            window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+            
+            form.reset();
+            // Recargar fecha y hora actuales después de enviar
+            const ahora = new Date();
+            const offset = ahora.getTimezoneOffset();
+            const ahoraLocal = new Date(ahora.getTime() - (offset * 60 * 1000));
+            document.getElementById('fecha_reporte').value = ahoraLocal.toISOString().split('T')[0];
+            document.getElementById('hora_reporte').value = ahoraLocal.toTimeString().split(' ')[0].substring(0, 5);
+        
+        } else {
+            // Si el servidor responde con un error
+            statusMessage.className = 'status-message error';
+            statusMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> Error: ${result.error || 'No se pudo guardar el reporte.'}`;
+            console.error("Error response from server:", result);
+        }
+
+    } catch (error) {
+        // Si hay un error de red (ej: no se puede conectar al servidor)
+        console.error("Error de red al enviar reporte:", error);
+        statusMessage.className = 'status-message error';
+        statusMessage.innerHTML = '<i class="fas fa-exclamation-circle"></i> Error de conexión. Revisa la consola.';
+    } finally {
+        // Esto se ejecuta siempre, haya error o no
+        submitButton.disabled = false;
+        submitButton.innerHTML = '<i class="fas fa-paper-plane"></i> Guardar y Enviar por WhatsApp';
+    }
+});
         });
     </script>
 </body>

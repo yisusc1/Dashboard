@@ -19,6 +19,8 @@ const planificacionRouter = require("./api/planificacion")
 const temporaryKeyRouter = require("./api/temporary-key")
 const techniciansRouter = require("./api/technicians") // Importación corregida
 const reportesRouter = require("./api/reportes") // Nueva importación
+const soportesRouter = require("./api/soportes") // Nueva importación
+const statsRouter = require('./api/stats') // Nueva importación para estadísticas
 
 // Usar las rutas de la API
 app.use("/api/solicitudes", solicitudesRouter)
@@ -26,6 +28,8 @@ app.use("/api/planificacion", planificacionRouter)
 app.use("/api/temporary-key", temporaryKeyRouter)
 app.use("/api/technicians", techniciansRouter) // Uso corregido
 app.use("/api/reportes", reportesRouter) // Nueva ruta
+app.use("/api/soportes", soportesRouter) // Nueva ruta
+app.use('/api/stats', statsRouter) // Nueva ruta para estadísticas
 
 // Rutas principales para servir los archivos HTML
 app.get("/", (req, res) => {
