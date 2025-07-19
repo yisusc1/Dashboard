@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión de Operaciones</title>
+    <link rel="stylesheet" href="/styles/enhanced-style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="logo">
+                <i class="fas fa-chart-line"></i>
+                Sistema de Gestión de Operaciones
+            </div>
+            <div class="nav-links">
+                <span style="color: var(--text-secondary); font-size: 0.9rem;">Panel Principal</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="menu-container">
+        <h1>Bienvenido al Sistema</h1>
+        <p>Selecciona el módulo al que deseas acceder según tu rol en la empresa</p>
+        
+        <!-- Estadísticas rápidas -->
+        <div class="stats-grid">
+            <div class="stat-card stat-blue">
+                <div class="stat-number">24</div>
+                <div class="stat-label">Solicitudes Pendientes</div>
+            </div>
+            <div class="stat-card stat-green">
+                <div class="stat-number">18</div>
+                <div class="stat-label">En Proceso</div>
+            </div>
+            <div class="stat-card stat-orange">
+                <div class="stat-number">12</div>
+                <div class="stat-label">Instalaciones Hoy</div>
+            </div>
+            <div class="stat-card stat-purple">
+                <div class="stat-number">8</div>
+                <div class="stat-label">Soportes Activos</div>
+            </div>
+        </div>
+
+        <div class="menu-options">
+            <a href="/solicitud" class="menu-card">
+                <div class="card-header">
+                    <div class="card-icon icon-blue">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div class="card-info">
+                        <h2>Nueva Solicitud</h2>
+                        <small>Asesores de Ventas</small>
+                    </div>
+                </div>
+                <p>Registrar solicitudes de nuevos clientes con todos los datos necesarios para la instalación.</p>
+            </a>
+
+            <a href="/admin" class="menu-card">
+                <div class="card-header">
+                    <div class="card-icon icon-green">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <div class="card-info">
+                        <h2>Panel de Administración</h2>
+                        <small>Planificadores</small>
+                    </div>
+                </div>
+                <p>Gestionar solicitudes pendientes y asignar equipos técnicos usando el tablero Kanban.</p>
+            </a>
+
+            <a href="/reporte" class="menu-card">
+                <div class="card-header">
+                    <div class="card-icon icon-orange">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                    <div class="card-info">
+                        <h2>Reporte de Instalación</h2>
+                        <small>Técnicos de Instalación</small>
+                    </div>
+                </div>
+                <p>Registrar detalles técnicos de instalaciones completadas con datos de equipos y mediciones.</p>
+            </a>
+            
+            <a href="/soporte" class="menu-card">
+                <div class="card-header">
+                    <div class="card-icon icon-red">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <div class="card-info">
+                        <h2>Reporte de Soporte</h2>
+                        <small>Técnicos de Soporte</small>
+                    </div>
+                </div>
+                <p>Documentar visitas de soporte técnico y soluciones implementadas para clientes.</p>
+            </a>
+        </div>
+
+        <!-- Información adicional -->
+        <div class="info-section">
+            <h3>
+                <i class="fas fa-info-circle"></i>
+                Información del Sistema
+            </h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <h4>🔐 Acceso Seguro</h4>
+                    <p>Cada módulo cuenta con autenticación por contraseña para proteger la información sensible.</p>
+                </div>
+                <div class="info-item">
+                    <h4>📱 Optimizado para Móviles</h4>
+                    <p>Los formularios están diseñados para funcionar perfectamente en dispositivos móviles.</p>
+                </div>
+                <div class="info-item">
+                    <h4>🗺️ Geolocalización</h4>
+                    <p>Captura automática de coordenadas GPS para ubicaciones precisas.</p>
+                </div>
+                <div class="info-item">
+                    <h4>💬 Integración WhatsApp</h4>
+                    <p>Envío automático de reportes formateados a través de WhatsApp.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Animación de entrada para las tarjetas
+        document.addEventListener('DOMContentLoaded', () => {
+            const cards = document.querySelectorAll('.menu-card, .stat-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    card.style.transition = 'all 0.5s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nueva Solicitud de Servicio</title>
+    <link rel="stylesheet" href="styles/enhanced-style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="logo">
+                <i class="fas fa-user-plus"></i>
+                Nueva Solicitud
+            </div>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">
+                    <i class="fas fa-home"></i>
+                    Inicio
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <div class="form-header">
+                <h1>Nueva Solicitud de Servicio</h1>
+                <p>Complete todos los datos para procesar la solicitud del cliente</p>
+            </div>
+            
+            <form id="solicitudForm">
+                <!-- Información Básica -->
+                <div class="form-section">
+                    <h3 style="margin: 0 0 1rem; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-user"></i>
+                        Información del Cliente
+                    </h3>
+                    
+                    <div class="form-group">
+                        <label for="fecha_solicitud">
+                            <i class="fas fa-calendar"></i>
+                            Fecha de Solicitud
+                        </label>
+                        <input type="date" id="fecha_solicitud" name="fecha_solicitud" readonly required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="nombre_cliente">
+                            <i class="fas fa-user"></i>
+                            Nombre y Apellido
+                        </label>
+                        <input type="text" id="nombre_cliente" name="nombre_cliente" placeholder="Ingrese el nombre completo" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cedula_numero">
+                            <i class="fas fa-id-card"></i>
+                            Cédula de Identidad
+                        </label>
+                        <div class="cedula-wrapper">
+                            <select id="cedula_nacionalidad" name="cedula_nacionalidad">
+                                <option value="V">V</option>
+                                <option value="E">E</option>
+                            </select>
+                            <input type="text" id="cedula_numero" name="cedula_numero" placeholder="Ej: 12345678" maxlength="8" pattern="[0-9]{7,8}" required>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="contacto_1">
+                                <i class="fas fa-phone"></i>
+                                Teléfono Principal
+                            </label>
+                            <input type="tel" id="contacto_1" name="contacto_1" placeholder="0412-1234567" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="contacto_2">
+                                <i class="fas fa-phone"></i>
+                                Teléfono Secundario
+                            </label>
+                            <input type="tel" id="contacto_2" name="contacto_2" placeholder="0212-9876543">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">
+                            <i class="fas fa-envelope"></i>
+                            Correo Electrónico
+                        </label>
+                        <input type="email" id="email" name="email" placeholder="cliente@ejemplo.com" required>
+                    </div>
+                </div>
+
+                <!-- Ubicación -->
+                <div class="form-section">
+                    <h3 style="margin: 0 0 1rem; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-map-marker-alt"></i>
+                        Ubicación del Servicio
+                    </h3>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="ubicacion">
+                                <i class="fas fa-city"></i>
+                                Ciudad
+                            </label>
+                            <select id="ubicacion" name="ubicacion" required>
+                                <option value="" disabled selected>Seleccione la ciudad</option>
+                                <option value="Carrizal">Carrizal</option>
+                                <option value="Tejerias">Tejerias</option>
+                                <option value="Puerta Morocha">Puerta Morocha</option>
+                                <option value="San Diego">San Diego</option>
+                                <option value="Caracas">Caracas</option>
+                                <option value="San Antonio">San Antonio</option>
+                                <option value="Los Teques">Los Teques</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="municipio">
+                                <i class="fas fa-map"></i>
+                                Municipio
+                            </label>
+                            <select id="municipio" name="municipio" required>
+                                <option value="" disabled selected>Seleccione el municipio</option>
+                                <option value="Guaicaipuro">Guaicaipuro</option>
+                                <option value="Los Salias">Los Salias</option>
+                                <option value="Cecilio Acosta">Cecilio Acosta</option>
+                                <option value="Libertador">Libertador</option>
+                                <option value="Carrizal">Carrizal</option>
+                                <option value="Revenga">Revenga</option>
+                                <option value="Santos Michelena">Santos Michelena</option>
+                                <option value="Sucre">Sucre</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sector">
+                            <i class="fas fa-location-arrow"></i>
+                            Sector
+                        </label>
+                        <input type="text" id="sector" name="sector" placeholder="Nombre del sector o urbanización" required>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="calle">
+                                <i class="fas fa-road"></i>
+                                Calle o Avenida
+                            </label>
+                            <input type="text" id="calle" name="calle" placeholder="Nombre de la calle" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="casa">
+                                <i class="fas fa-home"></i>
+                                Casa o Edificio
+                            </label>
+                            <input type="text" id="casa" name="casa" placeholder="Número de casa o edificio" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="coordenadas">
+                            <i class="fas fa-crosshairs"></i>
+                            Coordenadas GPS
+                        </label>
+                        <div class="geo-wrapper">
+                            <input type="text" id="coordenadas" name="coordenadas" placeholder="Presiona el botón para obtener la ubicación" readonly>
+                            <button type="button" id="geo-btn" class="btn-primary geo-btn">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Servicio -->
+                <div class="form-section">
+                    <h3 style="margin: 0 0 1rem; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-cogs"></i>
+                        Detalles del Servicio
+                    </h3>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="tipo_servicio">
+                                <i class="fas fa-wifi"></i>
+                                Tipo de Servicio
+                            </label>
+                            <select id="tipo_servicio" name="tipo_servicio" required>
+                                <option value="" disabled selected>Seleccione el tipo</option>
+                                <option value="Domiciliario">Domiciliario</option>
+                                <option value="Empresarial">Empresarial</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="fecha_disponibilidad">
+                                <i class="fas fa-calendar-check"></i>
+                                Disponibilidad para Instalación
+                            </label>
+                            <input type="date" id="fecha_disponibilidad" name="fecha_disponibilidad" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Información Comercial -->
+                <div class="form-section">
+                    <h3 style="margin: 0 0 1rem; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-handshake"></i>
+                        Información Comercial
+                    </h3>
+
+                    <div class="form-group">
+                        <label for="asesor">
+                            <i class="fas fa-user-tie"></i>
+                            Asesor Responsable
+                        </label>
+                        <select id="asesor" name="asesor" required>
+                            <option value="" disabled selected>Seleccione el asesor</option>
+                            <option value="Yaisen Herrera">Yaisen Herrera</option>
+                            <option value="Lorena Esqueda">Lorena Esqueda</option>
+                            <option value="Cindy Infante">Cindy Infante</option>
+                            <option value="Randy Moreno">Randy Moreno</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                        <input type="text" id="otro_asesor" name="otro_asesor" class="otro-campo" placeholder="Especifique otro asesor">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="fuente_conocimiento">
+                            <i class="fas fa-bullhorn"></i>
+                            ¿Cómo nos conoció?
+                        </label>
+                        <select id="fuente_conocimiento" name="fuente_conocimiento" required>
+                            <option value="" disabled selected>Seleccione una opción</option>
+                            <option value="Folleto">Folleto</option>
+                            <option value="Valla Publicitaria">Valla Publicitaria</option>
+                            <option value="Evento">Evento</option>
+                            <option value="Redes Sociales">Redes Sociales</option>
+                            <option value="Recomendación">Recomendación</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                        <input type="text" id="otra_fuente" name="otra_fuente" class="otro-campo" placeholder="Especifique otra fuente">
+                    </div>
+                </div>
+
+                <div id="status-message" class="status-message"></div>
+                
+                <!-- Contenedor para el enlace de WhatsApp -->
+                <div id="whatsapp-action-container" style="display: none; text-align: center; margin-top: 1rem;">
+                    <div style="background: #e8f5e8; border: 1px solid #25D366; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                        <p style="margin: 0 0 1rem; color: #155724; font-weight: 500;">
+                            <i class="fas fa-check-circle" style="color: #25D366;"></i>
+                            ¡Solicitud guardada exitosamente! Ahora envía el reporte por WhatsApp:
+                        </p>
+                        <a id="whatsapp-link" href="#" target="_blank" style="display: inline-flex; align-items: center; gap: 0.5rem; background-color: #25D366; color: white; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600; transition: background-color 0.3s ease;">
+                            <i class="fab fa-whatsapp" style="font-size: 1.2rem;"></i>
+                            Enviar por WhatsApp
+                        </a>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn-primary" id="guardar-btn" style="width: 100%; padding: 1rem; font-size: 1.1rem;">
+                    <i class="fas fa-save"></i>
+                    Guardar Solicitud
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Establecer fecha actual
+            const fechaInput = document.getElementById('fecha_solicitud');
+            const hoy = new Date();
+            const offset = hoy.getTimezoneOffset();
+            const hoyLocal = new Date(hoy.getTime() - (offset * 60 * 1000));
+            fechaInput.value = hoyLocal.toISOString().split('T')[0];
+
+            // Geolocalización
+            document.getElementById('geo-btn').addEventListener('click', () => {
+                const geoBtn = document.getElementById('geo-btn');
+                const coordsInput = document.getElementById('coordenadas');
+                
+                if (!navigator.geolocation) {
+                    coordsInput.value = 'Geolocalización no soportada.';
+                    return;
+                }
+                
+                geoBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                geoBtn.disabled = true;
+                
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        coordsInput.value = `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`;
+                        geoBtn.innerHTML = '<i class="fas fa-check"></i>';
+                        setTimeout(() => {
+                            geoBtn.innerHTML = '<i class="fas fa-map-marker-alt"></i>';
+                            geoBtn.disabled = false;
+                        }, 2000);
+                    },
+                    () => {
+                        coordsInput.value = 'No se pudo obtener la ubicación.';
+                        geoBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+                        setTimeout(() => {
+                            geoBtn.innerHTML = '<i class="fas fa-map-marker-alt"></i>';
+                            geoBtn.disabled = false;
+                        }, 2000);
+                    }
+                );
+            });
+
+            // Campos condicionales
+            const asesorSelect = document.getElementById('asesor');
+            const otroAsesorInput = document.getElementById('otro_asesor');
+            asesorSelect.addEventListener('change', function() {
+                otroAsesorInput.style.display = this.value === 'Otro' ? 'block' : 'none';
+                otroAsesorInput.required = this.value === 'Otro';
+            });
+
+            const fuenteSelect = document.getElementById('fuente_conocimiento');
+            const otraFuenteInput = document.getElementById('otra_fuente');
+            fuenteSelect.addEventListener('change', function() {
+                otraFuenteInput.style.display = this.value === 'Otro' ? 'block' : 'none';
+                otraFuenteInput.required = this.value === 'Otro';
+            });
+
+            // Formateo de teléfonos
+            function formatPhoneNumber(input) {
+                let value = input.value.replace(/\D/g, '');
+                if (value.length > 4) {
+                    value = `${value.slice(0, 4)}-${value.slice(4)}`;
+                }
+                input.value = value.slice(0, 12);
+            }
+            
+            document.getElementById('contacto_1').addEventListener('input', (e) => formatPhoneNumber(e.target));
+            document.getElementById('contacto_2').addEventListener('input', (e) => formatPhoneNumber(e.target));
+            
+            // Solo números en cédula
+            document.getElementById('cedula_numero').addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/\D/g, '');
+            });
+
+            // Envío del formulario con API
+            const form = document.getElementById('solicitudForm');
+            const guardarBtn = document.getElementById('guardar-btn');
+            const whatsappLinkContainer = document.getElementById('whatsapp-action-container');
+            const whatsappLink = document.getElementById('whatsapp-link');
+
+            form.addEventListener('submit', e => {
+                e.preventDefault();
+                const submitButton = form.querySelector('button[type="submit"]');
+                const statusMessage = document.getElementById('status-message');
+                
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+                whatsappLinkContainer.style.display = 'none';
+
+                const formData = new FormData(form);
+                const dataObject = Object.fromEntries(formData.entries());
+
+                // Procesar datos
+                dataObject.cedula = `${dataObject.cedula_nacionalidad}-${dataObject.cedula_numero}`;
+                delete dataObject.cedula_nacionalidad;
+                delete dataObject.cedula_numero;
+
+                if (dataObject.asesor === 'Otro') dataObject.asesor = dataObject.otro_asesor;
+                if (dataObject.fuente_conocimiento === 'Otro') dataObject.fuente_conocimiento = dataObject.otra_fuente;
+                delete dataObject.otro_asesor;
+                delete dataObject.otra_fuente;
+
+                // --- NUEVOS LOGS DE DEPURACIÓN ---
+                console.log("Datos a enviar a la API:", JSON.stringify(dataObject, null, 2));
+                // --- FIN NUEVOS LOGS ---
+
+                // Enviar a la API
+                fetch('/api/solicitudes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dataObject)
+                })
+                .then(response => {
+                    // --- NUEVOS LOGS DE DEPURACIÓN ---
+                    console.log("Respuesta de la API (raw):", response);
+                    // --- FIN NUEVOS LOGS ---
+                    if (!response.ok) throw new Error('Error del servidor al guardar');
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Respuesta de la API (JSON):", data); // Log de la respuesta JSON
+                    statusMessage.className = 'status-message success';
+                    statusMessage.innerHTML = '<i class="fas fa-check-circle"></i> ¡Solicitud guardada con éxito!';
+                    
+                    // Ocultar el botón de guardar
+                    guardarBtn.style.display = 'none';
+
+                    // Generar mensaje WhatsApp
+                    const fechaSolicitud = new Date(dataObject.fecha_solicitud + 'T00:00:00').toLocaleDateString('es-ES');
+                    const fechaDisponibilidad = new Date(dataObject.fecha_disponibilidad + 'T00:00:00').toLocaleDateString('es-ES');
+                    
+                    const coordsLink = dataObject.coordenadas ? `*Coordenadas:* https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dataObject.coordenadas)}\n` : '';
+                    
+                    let message = `*Nueva Solicitud de Servicio*\n\n` +
+                        `*Fecha de Solicitud:* ${fechaSolicitud}\n` +
+                        `*Nombre y Apellido:* ${dataObject.nombre_cliente}\n` +
+                        `*Cédula:* ${dataObject.cedula}\n` +
+                        `*Contacto 1:* ${dataObject.contacto_1}\n` +
+                        (dataObject.contacto_2 ? `*Contacto 2:* ${dataObject.contacto_2}\n` : '') +
+                        `*Ubicación:* ${dataObject.ubicacion}, ${dataObject.municipio}, ${dataObject.sector}\n` +
+                        `*Dirección:* ${dataObject.calle}, ${dataObject.casa}\n` +
+                        coordsLink +
+                        `*Correo:* ${dataObject.email}\n` +
+                        `*Tipo de Servicio:* ${dataObject.tipo_servicio}\n` +
+                        `*Disponibilidad para instalación:* ${fechaDisponibilidad}\n` +
+                        `*Asesor:* ${dataObject.asesor}\n` +
+                        `*Cómo nos conoció:* ${dataObject.fuente_conocimiento}`;
+
+                    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+                    whatsappLink.href = whatsappUrl;
+                    whatsappLinkContainer.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error("Error en el fetch de solicitud:", error); // Log del error completo
+                    statusMessage.className = 'status-message error';
+                    statusMessage.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Error: ${error.message}`;
+                    
+                    // Rehabilitar el botón si hay error
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = '<i class="fas fa-save"></i> Guardar Solicitud';
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Planificación</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jkanban@1.3.1/dist/jkanban.min.css">
+    <link rel="stylesheet" href="/styles/enhanced-style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Estilos específicos para el panel admin */
+        .admin-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background-color: var(--background-color);
+        }
+
+        .admin-header {
+            background: var(--card-background);
+            border-bottom: 1px solid var(--border-color);
+            padding: var(--spacing-lg) var(--spacing-xl);
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: var(--spacing-md);
+        }
+
+        .admin-header h1 {
+            margin: 0;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            flex-wrap: wrap;
+        }
+
+        .temp-key-box {
+            background: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-sm) var(--spacing-md);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            font-size: 0.875rem;
+        }
+
+        .temp-key-box code {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .temp-key-box button {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+        }
+
+        .temp-key-box button:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .kanban-wrapper {
+            flex: 1;
+            overflow-x: auto;
+            padding: var(--spacing-lg);
+            background: var(--background-color);
+        }
+
+        /* Estilos para jKanban mejorados */
+        .kanban-container {
+            display: flex !important;
+            gap: 1.5rem !important;
+            min-height: calc(100vh - 200px);
+        }
+
+        .kanban-board {
+            background: var(--card-background) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: var(--border-radius-lg) !important;
+            box-shadow: var(--shadow-sm) !important;
+            width: 320px !important;
+            flex-shrink: 0;
+        }
+
+        .kanban-board-header {
+            background: var(--background-color) !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            padding: var(--spacing-lg) !important;
+            border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0 !important;
+        }
+
+        .kanban-item {
+            background: var(--card-background) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: var(--border-radius) !important;
+            margin: var(--spacing-sm) !important;
+            padding: var(--spacing-md) !important;
+            box-shadow: var(--shadow-sm) !important;
+            cursor: grab !important;
+            transition: all 0.2s ease !important;
+        }
+
+        .kanban-item:hover {
+            box-shadow: var(--shadow-md) !important;
+            transform: translateY(-2px) !important;
+        }
+
+        .kanban-item:active {
+            cursor: grabbing !important;
+        }
+
+        .card-content {
+            font-size: 0.875rem;
+        }
+
+        .card-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-sm);
+            font-size: 1rem;
+        }
+
+        .card-detail {
+            margin-bottom: 0.375rem;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        .card-detail strong {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .card-status-container {
+            margin-top: var(--spacing-sm);
+            text-align: center;
+        }
+
+        .card-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-pending {
+            background: rgba(108, 117, 125, 0.1);
+            color: #6c757d;
+        }
+
+        .status-planificada {
+            background: rgba(0, 122, 255, 0.1);
+            color: var(--primary-color);
+        }
+
+        .status-instalado {
+            background: rgba(25, 135, 84, 0.1);
+            color: var(--success-color);
+        }
+
+        .board-title-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .equipo-name {
+            font-weight: 600 !important;
+            font-size: 1rem !important;
+            color: var(--primary-color) !important;
+            text-align: center !important;
+            border: none !important;
+            background: transparent !important;
+            width: 100% !important;
+        }
+
+        .delete-board-btn {
+            background: var(--error-color) !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 4px !important;
+            padding: 0.25rem 0.5rem !important;
+            cursor: pointer !important;
+            font-size: 0.875rem !important;
+            transition: background-color 0.2s ease !important;
+        }
+
+        .delete-board-btn:hover {
+            background: #b02a37 !important;
+        }
+
+        .board-controls {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        .tecnico-select {
+            width: 100% !important;
+            padding: 0.5rem !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: var(--border-radius) !important;
+            font-size: 0.875rem !important;
+            background: var(--card-background) !important;
+            color: var(--text-primary) !important;
+        }
+
+        .tecnico-select:focus {
+            outline: none !important;
+            border-color: var(--primary-color) !important;
+            box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.1) !important;
+        }
+
+        /* Login container mejorado */
+        .login-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: var(--background-color);
+            padding: var(--spacing-md);
+        }
+
+        .login-box {
+            background: var(--card-background);
+            padding: var(--spacing-2xl);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-color);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-box h1 {
+            margin: 0 0 var(--spacing-xl);
+            color: var(--primary-color);
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+
+        .login-box form {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-lg);
+        }
+
+        .login-box input {
+            padding: 0.875rem var(--spacing-md);
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .login-box input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        .login-box button {
+            padding: 0.875rem var(--spacing-lg);
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .login-box button:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .admin-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: var(--spacing-md);
+            }
+
+            .header-controls {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+
+            .kanban-wrapper {
+                padding: var(--spacing-md);
+            }
+
+            .kanban-container {
+                flex-direction: column !important;
+                gap: var(--spacing-md) !important;
+            }
+
+            .kanban-board {
+                width: 100% !important;
+            }
+        }
+
+        /* Loading state */
+        .loading-state {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--spacing-2xl);
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .loading-state i {
+            margin-right: var(--spacing-sm);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error-state {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--spacing-2xl);
+            color: var(--error-color);
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        .error-state i {
+            margin-right: var(--spacing-sm);
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Container -->
+    <div id="password-container" class="login-container">
+        <div class="login-box">
+            <h1>
+                <i class="fas fa-tasks"></i>
+                Panel de Planificación
+            </h1>
+            <form id="password-form">
+                <input type="password" id="password" placeholder="Ingrese la clave de acceso" required>
+                <button type="submit">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Ingresar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="admin-panel" class="admin-container" style="display:none;">
+        <header class="admin-header">
+            <h1>
+                <i class="fas fa-tasks"></i>
+                Panel de Planificación
+            </h1>
+            <div class="header-controls">
+                <div class="temp-key-box">
+                    <span>
+                        <i class="fas fa-key"></i>
+                        Clave Rápida:
+                    </span>
+                    <code id="temp-key-display">----</code>
+                    <button id="refresh-key-btn" title="Refrescar Clave">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                <input type="date" id="fecha-planificacion" class="form-input" style="width: auto; margin: 0;">
+                <button id="add-equipo-btn" class="btn btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Añadir Equipo
+                </button>
+                <a href="index.html" class="btn" style="background: var(--text-secondary); color: white;">
+                    <i class="fas fa-home"></i>
+                    Inicio
+                </a>
+            </div>
+        </header>
+        <main class="kanban-wrapper" id="kanban-board-container">
+            <div class="loading-state">
+                <i class="fas fa-spinner"></i>
+                Cargando panel de planificación...
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jkanban@1.3.1/dist/jkanban.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const passwordForm = document.getElementById('password-form');
+            const dateSelector = document.getElementById('fecha-planificacion');
+            const boardContainer = document.getElementById('kanban-board-container');
+            let kanban, masterTechnicians = [], masterSolicitudes = [];
+
+            function createCardHTML(solicitud) {
+                const telefonos = [solicitud.contacto_1, solicitud.contacto_2].filter(Boolean).join(' / ');
+                const ubicacion = [solicitud.ubicacion, solicitud.municipio, solicitud.sector, solicitud.calle, solicitud.casa].filter(Boolean).join(', ');
+                let statusClass = 'status-pending';
+                if (solicitud.estado_solicitud === 'Pendiente') statusClass = 'status-pending';
+                else if (solicitud.estado_solicitud === 'Planificada') statusClass = 'status-planificada';
+                else if (solicitud.estado_solicitud === 'Instalado') statusClass = 'status-instalado';
+                
+                return `
+                    <div class="card-content">
+                        <div class="card-title">
+                            <i class="fas fa-user"></i>
+                            ${solicitud.nombre_cliente || 'Sin Nombre'}
+                        </div>
+                        <div class="card-detail">
+                            <strong><i class="fas fa-phone"></i> Teléfono:</strong> 
+                            <span>${telefonos || 'N/A'}</span>
+                        </div>
+                        <div class="card-detail">
+                            <strong><i class="fas fa-map-marker-alt"></i> Ubicación:</strong> 
+                            <span>${ubicacion || 'No especificada'}</span>
+                        </div>
+                        <div class="card-detail">
+                            <strong><i class="fas fa-cogs"></i> Servicio:</strong> 
+                            <span>${solicitud.tipo_servicio || 'No especificado'}</span>
+                        </div>
+                        <div class="card-detail">
+                            <strong><i class="fas fa-user-tie"></i> Asesor:</strong> 
+                            <span>${solicitud.asesor || 'N/A'}</span>
+                        </div>
+                        <div class="card-status-container">
+                            <span class="card-status ${statusClass}">
+                                ${solicitud.estado_solicitud || 'Sin Estado'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            async function fetchAndDisplayTempKey() {
+                const keyDisplay = document.getElementById('temp-key-display');
+                const refreshBtn = document.getElementById('refresh-key-btn');
+                
+                keyDisplay.textContent = '...';
+                refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                
+                try {
+                    const response = await fetch('/api/temporary-key');
+                    const data = await response.json();
+                    keyDisplay.textContent = data.key;
+                } catch (error) { 
+                    keyDisplay.textContent = 'Error';
+                } finally {
+                    refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+                }
+            }
+
+            function updateDisabledOptions() {
+                const assignedTechs = new Set();
+                document.querySelectorAll('.tecnico-select').forEach(s => { 
+                    if (s.value) assignedTechs.add(s.value); 
+                });
+                document.querySelectorAll('.tecnico-select').forEach(select => {
+                    for (const option of select.options) {
+                        if (option.value) {
+                            option.disabled = assignedTechs.has(option.value) && option.value !== select.value;
+                        }
+                    }
+                });
+            }
+
+            function createTeamControls(equipo = '', tec1Id = '', tec2Id = '') { // Recibe IDs de técnicos
+                const tecOptions = masterTechnicians.map(t => `<option value="${t.id}">${t.nombre}</option>`).join('');
+                return `
+                    <div class="board-title-container">
+                        <input type="text" class="equipo-name" value="${equipo}" disabled>
+                        <button class="delete-board-btn" title="Eliminar equipo">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    <div class="board-controls">
+                        <select class="tecnico-select tecnico1">
+                            <option value="">
+                                <i class="fas fa-user"></i>
+                                Técnico 1
+                            </option>
+                            ${tecOptions}
+                        </select>
+                        <select class="tecnico-select tecnico2">
+                            <option value="">
+                                <i class="fas fa-user"></i>
+                                Técnico 2
+                            </option>
+                            ${tecOptions}
+                        </select>
+                    </div>
+                `;
+            }
+            
+            function getNextTeamLetter() {
+                const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+                const usedTeams = new Set(kanban.options.boards.map(b => b.id));
+                for (const letter of alphabet) {
+                    const potentialTeamName = `Equipo ${letter}`;
+                    if (!usedTeams.has(potentialTeamName)) return letter;
+                }
+                return null;
+            }
+
+            function addDeleteListener(boardId) {
+                const boardElement = kanban.findBoard(boardId);
+                if (!boardElement) return;
+                const deleteBtn = boardElement.querySelector('.delete-board-btn');
+                if (deleteBtn) {
+                    deleteBtn.addEventListener('click', () => {
+                        // No es necesario verificar si hay tareas aquí, el backend lo manejará
+                        if (confirm(`¿Seguro que quieres eliminar el ${boardId}? Todas las tareas asignadas a este equipo volverán a estado 'Pendiente'.`)) {
+                            // Lógica para eliminar el equipo de la base de datos
+                            fetch(`/api/planificacion/team/${boardId.replace('Equipo ', '')}`, { // Enviar solo la letra del equipo
+                                method: 'DELETE',
+                            })
+                            .then(res => {
+                                if (!res.ok) throw new Error('Error al eliminar el equipo del servidor');
+                                return res.json();
+                            })
+                            .then(() => {
+                                kanban.removeBoard(boardId);
+                                updateDisabledOptions();
+                                loadBoardForDate(dateSelector.value); // Recargar el tablero para reflejar las tareas desasignadas
+                            })
+                            .catch(err => {
+                                alert(`Error al eliminar el equipo: ${err.message}`);
+                            });
+                        }
+                    });
+                }
+            }
+            
+            function initializeKanban(solicitudes, teamsData, techniciansData) { // Recibe datos de equipos y técnicos
+                console.log("initializeKanban received solicitudes:", solicitudes);
+                console.log("initializeKanban received teamsData:", teamsData);
+                console.log("initializeKanban received techniciansData:", techniciansData);
+
+                if (!Array.isArray(solicitudes) || !Array.isArray(teamsData) || !Array.isArray(techniciansData)) {
+                    console.error("initializeKanban: Invalid input data.");
+                    boardContainer.innerHTML = `
+                        <div class="error-state">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Error: Datos de inicialización inválidos. Verifique la consola.
+                        </div>
+                    `;
+                    return;
+                }
+
+                boardContainer.innerHTML = '';
+                const pending = solicitudes.filter(s => s.estado_solicitud === 'Pendiente');
+                const planned = solicitudes.filter(s => s.estado_solicitud === 'Planificada' || s.estado_solicitud === 'Instalado');
+                
+                const pendingBoard = { 
+                    id: 'pendientes', 
+                    title: `<div style="text-align: center; padding: 1rem; font-weight: 600; color: var(--primary-color);">
+                        <i class="fas fa-clock"></i> Solicitudes Pendientes (${pending.length})
+                    </div>`, 
+                    item: pending.map(s => ({ id: s.id, title: createCardHTML(s) }))
+                };
+                
+                // Construir el objeto de equipos a partir de teamsData (de la tabla 'equipos')
+                const teams = {};
+                teamsData.forEach(team => {
+                    teams[`Equipo ${team.letra}`] = { // Usar "Equipo X" como ID para jKanban
+                        equipo: `Equipo ${team.letra}`,
+                        tecnico1: team.tecnico_1_id, // Estos son los IDs
+                        tecnico2: team.tecnico_2_id, // Estos son los IDs
+                        tasks: []
+                    };
+                });
+
+                // Asignar tareas planificadas a sus respectivos equipos
+                planned.forEach(task => {
+                    const teamId = `Equipo ${task.equipo}`; // Construir el ID del equipo para jKanban
+                    if (teams[teamId]) {
+                        teams[teamId].tasks.push({ id: task.id, title: createCardHTML(task) });
+                    } else {
+                        console.warn(`Tarea ${task.id} asignada a un equipo no existente ${task.equipo}.`);
+                    }
+                });
+                
+                const teamBoards = Object.values(teams).map(team => ({ 
+                    id: team.equipo, 
+                    title: createTeamControls(team.equipo, team.tecnico1, team.tecnico2), // Pasar IDs
+                    item: team.tasks 
+                }));
+
+                kanban = new jKanban({
+                    element: '#kanban-board-container',
+                    boards: [pendingBoard, ...teamBoards],
+                    dropEl: function (el, target, source) {
+                        el.style.opacity = '0.5';
+                        const solicitudId = el.dataset.eid;
+                        const targetBoardEl = target.closest('.kanban-board');
+                        
+                        if (!targetBoardEl) { 
+                            el.style.opacity = '1'; 
+                            source.appendChild(el); 
+                            return; 
+                        }
+                        
+                        const endpoint = targetBoardEl.dataset.id === 'pendientes' ? 
+                            '/api/planificacion/unassign' : '/api/planificacion/assign';
+                        const solicitudOriginal = masterSolicitudes.find(s => s.id == solicitudId);
+                        
+                        if (!solicitudOriginal) { 
+                            alert('Error: Datos originales no encontrados.'); 
+                            source.appendChild(el); 
+                            el.style.opacity = '1'; 
+                            return; 
+                        }
+                        
+                        let body = { ...solicitudOriginal, solicitud_id: solicitudId };
+                        
+                        if (endpoint === '/api/planificacion/assign') {
+                            const controls = targetBoardEl.querySelector('.board-controls');
+                            const equipo = targetBoardEl.dataset.id.replace('Equipo ', ''); // Obtener solo la letra del equipo
+                            const tecnico1 = controls.querySelector('.tecnico-select.tecnico1').value;
+                            const tecnico2 = controls.querySelector('.tecnico-select.tecnico2').value; // Obtener también el técnico 2
+                            
+                            if (!equipo || !tecnico1) {
+                                alert('Seleccione un Técnico 1 para este equipo.'); 
+                                source.appendChild(el); 
+                                el.style.opacity = '1'; 
+                                return;
+                            }
+                            
+                            body.equipo = equipo;
+                            body.tecnico_1_id = tecnico1; // Usar tecnico_1_id
+                            body.tecnico_2_id = tecnico2 || null; // Usar tecnico_2_id
+                            body.fecha_asignada = dateSelector.value;
+                        }
+
+                        fetch(endpoint, { 
+                            method: 'POST', 
+                            headers: { 'Content-Type': 'application/json' }, 
+                            body: JSON.stringify(body) 
+                        })
+                        .then(res => { 
+                            if (!res.ok) throw new Error('Error del Servidor'); 
+                            return res.json(); 
+                        })
+                        .then(() => {
+                            solicitudOriginal.estado_solicitud = (endpoint === '/api/planificacion/assign') ? 'Planificada' : 'Pendiente';
+                            if (endpoint === '/api/planificacion/assign') {
+                                solicitudOriginal.equipo = body.equipo;
+                                solicitudOriginal.tecnico_1_id = body.tecnico_1_id; // Actualizar con ID
+                                solicitudOriginal.tecnico_2_id = body.tecnico_2_id; // Actualizar con ID
+                            } else {
+                                solicitudOriginal.equipo = null;
+                                solicitudOriginal.tecnico_1_id = null;
+                                solicitudOriginal.tecnico_2_id = null;
+                            }
+                            el.innerHTML = createCardHTML(solicitudOriginal);
+                            updateDisabledOptions();
+                        })
+                        .catch(err => { 
+                            alert(err.message); 
+                            source.appendChild(el); 
+                        })
+                        .finally(() => { 
+                            el.style.opacity = '1'; 
+                        });
+                    }
+                });
+                
+                // Establecer los valores iniciales para los selectores de técnicos después de que jKanban los inicialice
+                kanban.options.boards.forEach(board => {
+                    if (board.id !== 'pendientes') {
+                        const boardElement = kanban.findBoard(board.id);
+                        if (boardElement) {
+                            const select1 = boardElement.querySelector('.tecnico-select.tecnico1');
+                            const select2 = boardElement.querySelector('.tecnico-select.tecnico2');
+                            
+                            const teamData = teamsData.find(t => `Equipo ${t.letra}` === board.id); // Encontrar los datos originales del equipo
+                            
+                            if (select1 && teamData && teamData.tecnico_1_id) {
+                                select1.value = teamData.tecnico_1_id;
+                            }
+                            if (select2 && teamData && teamData.tecnico_2_id) {
+                                select2.value = teamData.tecnico_2_id;
+                            }
+                        }
+                    }
+                });
+
+                kanban.options.boards.forEach(board => addDeleteListener(board.id));
+                updateDisabledOptions();
+            }
+            
+            function loadBoardForDate(dateString) {
+                boardContainer.innerHTML = `
+                    <div class="loading-state">
+                        <i class="fas fa-spinner"></i>
+                        Cargando datos para ${dateString}...
+                    </div>
+                `;
+                
+                fetch(`/api/planificacion/${dateString}`)
+                .then(async res => { 
+                    if (!res.ok) {
+                        const errorText = await res.text(); 
+                        console.error("API response not OK:", res.status, errorText);
+                        throw new Error(`Error del servidor (${res.status}): ${errorText}`);
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    console.log("Datos recibidos de la API de planificación:", data); 
+
+                    if (!data || typeof data !== 'object' || !Array.isArray(data.solicitudes) || !Array.isArray(data.technicians) || !Array.isArray(data.equipos)) {
+                        console.error("loadBoardForDate: La estructura de la respuesta de la API es inválida.", data);
+                        boardContainer.innerHTML = `
+                            <div class="error-state">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Error: La respuesta de la API no tiene el formato esperado. Verifique la consola.
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    masterTechnicians = data.technicians; // Ahora almacena {id, nombre}
+                    masterSolicitudes = data.solicitudes; 
+                    
+                    // Pasar todos los datos necesarios a initializeKanban
+                    initializeKanban(data.solicitudes, data.equipos, data.technicians);
+                })
+                .catch(err => {
+                    console.error("Error en loadBoardForDate:", err); 
+                    boardContainer.innerHTML = `
+                        <div class="error-state">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Error al cargar datos del tablero: ${err.message || err}
+                        </div>
+                    `;
+                });
+            }
+
+            // Event Listeners
+            passwordForm.addEventListener('submit', e => {
+                e.preventDefault();
+                const passwordInput = e.target.querySelector('input');
+                const submitBtn = e.target.querySelector('button');
+                
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
+                submitBtn.disabled = true;
+                
+                setTimeout(() => {
+                    if (passwordInput.value === '666') {
+                        document.getElementById('password-container').style.display = 'none';
+                        document.getElementById('admin-panel').style.display = 'flex';
+                        dateSelector.valueAsDate = new Date();
+                        loadBoardForDate(dateSelector.value);
+                        fetchAndDisplayTempKey();
+                    } else { 
+                        alert('Clave incorrecta');
+                        submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Ingresar';
+                        submitBtn.disabled = false;
+                    }
+                }, 1000);
+            });
+            
+            dateSelector.addEventListener('change', () => loadBoardForDate(dateSelector.value));
+            
+            document.getElementById('add-equipo-btn').addEventListener('click', () => {
+                if(kanban) {
+                    const nextLetter = getNextTeamLetter();
+                    if(!nextLetter) {
+                        alert('No hay más letras de equipo disponibles.');
+                        return;
+                    }
+                    const teamName = `Equipo ${nextLetter}`;
+                    // Crear el equipo en la base de datos primero
+                    fetch('/api/planificacion/team', { // Nuevo endpoint para crear equipos
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ letra: nextLetter, tecnico_1_id: null, tecnico_2_id: null }) // Enviar null para que la DB lo acepte
+                    })
+                    .then(res => {
+                        if (!res.ok) throw new Error('Error al crear el equipo en el servidor');
+                        return res.json();
+                    })
+                    .then(() => {
+                        kanban.addBoards([{ 
+                            id: teamName, 
+                            title: createTeamControls(teamName, '', ''), // Pasar cadenas vacías para nuevos técnicos
+                            item: [] 
+                        }]);
+                        addDeleteListener(teamName);
+                        updateDisabledOptions();
+                    })
+                    .catch(err => {
+                        alert(`Error al añadir equipo: ${err.message}`);
+                    });
+                }
+            });
+
+            document.getElementById('refresh-key-btn').addEventListener('click', fetchAndDisplayTempKey);
+            
+            // Nuevo evento para guardar la selección de técnicos del equipo
+            boardContainer.addEventListener('change', async e => {
+                if (e.target.matches('.board-controls select')) {
+                    updateDisabledOptions(); // Mantener esto para deshabilitar opciones ya seleccionadas
+
+                    const selectElement = e.target;
+                    const boardElement = selectElement.closest('.kanban-board');
+                    const teamId = boardElement.dataset.id; // Ej. "Equipo A"
+                    
+                    // Obtener los valores actuales de ambos selectores en el equipo
+                    const currentTec1Id = boardElement.querySelector('.tecnico-select.tecnico1').value;
+                    const currentTec2Id = boardElement.querySelector('.tecnico-select.tecnico2').value;
+
+                    const updateBody = {
+                        tecnico_1_id: currentTec1Id,
+                        tecnico_2_id: currentTec2Id,
+                    };
+
+                    try {
+                        const response = await fetch(`/api/planificacion/team/${teamId.replace('Equipo ', '')}`, { // Enviar solo la letra
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(updateBody),
+                        });
+
+                        if (!response.ok) {
+                            const errorText = await response.text();
+                            throw new Error(`Error al actualizar el equipo: ${response.status} - ${errorText}`);
+                        }
+                        console.log(`Equipo ${teamId} actualizado exitosamente.`);
+                    } catch (error) {
+                        console.error("Error al actualizar los técnicos del equipo:", error);
+                        alert(`Error al guardar la selección del técnico: ${error.message}`);
+                        // Opcionalmente, revertir la selección en la UI si falla
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

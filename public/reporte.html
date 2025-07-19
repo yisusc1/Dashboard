@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Instalación</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/styles/enhanced-style.css">
+    <style>
+        /* Estilos específicos para el reporte */
+        .form-section {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+        .payment-combination-input {
+            margin-top: 0.5rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="logo">
+                <i class="fas fa-tools"></i>
+                Reporte de Instalación
+            </div>
+            <div class="nav-links">
+                <a href="/" class="nav-link">
+                    <i class="fas fa-home"></i>
+                    Inicio
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container" id="password-container">
+        <div class="card">
+            <div class="form-header">
+                <h1>Acceso para Instaladores</h1>
+                <p>Ingrese la clave para acceder al formulario de reporte.</p>
+            </div>
+            <form id="password-form">
+                <div class="form-group">
+                    <label for="password">
+                        <i class="fas fa-lock"></i>
+                        Clave de Acceso
+                    </label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%;">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Ingresar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="container" id="form-container" style="display:none;">
+        <div class="card">
+            <div class="form-header">
+                <h1>Reporte de Instalación</h1>
+                <p>Complete los datos técnicos de la instalación realizada.</p>
+            </div>
+            
+            <form id="reporteForm">
+                <!-- Selección de Solicitud -->
+                <div class="form-section">
+                    <h3 style="margin: 0 0 1rem; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-search"></i>
+                        Selección de Solicitud
+                    </h3>
+                    <div class="form-group">
+                        <label for="solicitud_id_select">
+                            <i class="fas fa-id-card"></i>
+                            Cliente y ID de Solicitud
+                        </label>
+                        <select id="solicitud_id_select" name="solicitud_id" required>
+                            <option value="" disabled selected>Cargando solicitudes...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Información Básica (Auto-llenado y editable) -->
+                <div class="form-section">
+                    <h3 style="margin: 0 0 1rem; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-info-circle"></i>
+                        Información Básica
+                    </h3>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="fecha_reporte">
+                                <i class="fas fa-calendar"></i>
+                                Fecha
+                            </label>
+                            <input type="date" id="fecha_reporte" name="fecha_reporte" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="hora_reporte">
+                                <i class="fas fa-clock"></i>
+                                Hora
+                            </label>
+                            <input type="time" id="hora_reporte" name="hora_reporte" required>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="equipo">
+                                <i class="fas fa-users"></i>
+                                Equipo
+                            </label>
+                            <input type="text" id="equipo" name="equipo" placeholder="Ej: Equipo A" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="nombre_cliente">
+                                <i class="fas fa-user"></i>
+                                Cliente
+                            </label>
+                            <input type="text" id="nombre_cliente" name="nombre_cliente" placeholder="Nombre del cliente" readonly>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="ubicacion_cliente">
+                            <i class="fas fa-map-marker-alt"></i>
+                            Ubicación Cliente
+                        </label>
+                        <input type="text" id="ubicacion_cliente" name="ubicacion_cliente" placeholder="Ubicación del cliente" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="tipo_servicio_cliente">
+                            <i class="fas fa-wifi"></i>
+                            Tipo de Servicio
+                        </label>
+                        <input type="text" id="tipo_servicio_cliente" name="tipo_servicio_cliente" placeholder="Tipo de servicio" readonly>
+                    </div>
+                </div>
+
+                <!-- Datos Técnicos -->
+                <div class="form-section">
+                    <h3 style="margin: 0 0 1rem; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-cogs"></i>
+                        Datos Técnicos
+                    </h3>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="pw_asignado">
+                                <i class="fas fa-key"></i>
+                                PW Asignado
+                            </label>
+                            <input type="text" id="pw_asignado" name="pw_asignado" placeholder="Ej: PW1 o PW20500">
+                        </div>
+                        <div class="form-group">
+                            <label for="mac">
+                                <i class="fas fa-network-wired"></i>
+                                MAC
+                            </label>
+                            <input type="text" id="mac" name="mac" placeholder="Dirección MAC">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="precinto">
+                                <i class="fas fa-tag"></i>
+                                Precinto
+                            </label>
+                            <input type="text" id="precinto" name="precinto" pattern="[0-9]{8}" title="8 dígitos numéricos" maxlength="8" placeholder="12345678">
+                        </div>
+                        <div class="form-group">
+                            <label for="onu_pon">
+                                <i class="fas fa-router"></i>
+                                ONU PON
+                            </label>
+                            <input type="text" id="onu_pon" name="onu_pon" placeholder="Identificador ONU">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="router">
+                            <i class="fas fa-wifi"></i>
+                            Router
+                        </label>
+                        <input type="text" id="router" name="router" placeholder="Modelo del router">
+                    </div>
+                </div>
+
+                <!-- Plan y Velocidades -->
+                <div class="form-section">
+                    <h3 style="margin: 0 0 1rem; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Plan y Velocidades
+                    </h3>
+
+                    <div class="form-group">
+                        <label for="plan_contratado">
+                            <i class="fas fa-list"></i>
+                            Plan Contratado
+                        </label>
+                        <select id="plan_contratado" name="plan_contratado" required>
+                            <option value="" disabled selected>Seleccione un plan</option>
+                            <option value="400 MB Residencial">400 MB Residencial</option>
+                            <option value="600 MB Residencial">600 MB Residencial</option>
+                            <option value="800 MB Residencial">800 MB Residencial</option>
+                            <option value="400 MB Corporativo">400 MB Corporativo</option>
+                            <option value="600 MB Corporativo">600 MB Corporativo</option>
+                            <option value="800 MB Corporativo">800 MB Corporativo</option>
+                            <option value="1 Giga Corporativo">1 Giga Corporativo</option>
+                        </select>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="velocidad_descarga_mbps">
+                                <i class="fas fa-download"></i>
+                                V. Descarga (Mbps)
+                            </label>
+                            <input type="number" id="velocidad_descarga_mbps" name="velocidad_descarga_mbps" placeholder="Velocidad de descarga">
+                        </div>
+                        <div class="form-group">
+                            <label for="velocidad_subida_mbps">
+                                <i class="fas fa-upload"></i>
+                                V. Subida (Mbps)
+                            </label>
+                            <input type="number" id="velocidad_subida_mbps" name="velocidad_subida_mbps" placeholder="Velocidad de subida">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mediciones y Estado -->
+                <div class="form-section">
+                    <h3 style="margin: 0 0 1rem; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-chart-line"></i>
+                        Mediciones y Estado
+                    </h3>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="potencia_nap">
+                                <i class="fas fa-signal"></i>
+                                Potencia NAP
+                            </label>
+                            <input type="number" step="any" id="potencia_nap" name="potencia_nap" min="-30" max="-10" placeholder="-20.5">
+                        </div>
+                        <div class="form-group">
+                            <label for="potencia_cliente">
+                                <i class="fas fa-signal"></i>
+                                Potencia Cliente
+                            </label>
+                            <input type="number" step="any" id="potencia_cliente" name="potencia_cliente" placeholder="-15.2">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="metraje_utilizado_m">
+                                <i class="fas fa-ruler"></i>
+                                Metraje utilizado (m)
+                            </label>
+                            <input type="number" id="metraje_utilizado_m" name="metraje_utilizado_m" placeholder="Metros utilizados">
+                        </div>
+                        <div class="form-group">
+                            <label for="metraje_desechado_m">
+                                <i class="fas fa-trash"></i>
+                                Metraje desechado (m)
+                            </label>
+                            <input type="number" id="metraje_desechado_m" name="metraje_desechado_m" placeholder="Metros desechados">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tensores_utilizados">
+                            <i class="fas fa-grip-horizontal"></i>
+                            N# Tensores utilizados (Ganchos)
+                        </label>
+                        <input type="number" id="tensores_utilizados" name="tensores_utilizados" placeholder="Cantidad de tensores">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="estado_instalacion">
+                            <i class="fas fa-check-circle"></i>
+                            Estado de la Instalación
+                        </label>
+                        <select id="estado_instalacion" name="estado_instalacion" required>
+                            <option value="Exitosa">Exitosa</option>
+                            <option value="En punta">En punta</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Métodos de Pago -->
+                <div class="form-section">
+                    <h3 style="margin: 0 0 1rem; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-money-bill-wave"></i>
+                        Método de Pago
+                    </h3>
+                    <div class="form-group">
+                        <label for="metodo_pago">
+                            <i class="fas fa-wallet"></i>
+                            Método de Pago
+                        </label>
+                        <select id="metodo_pago" name="metodo_pago" required>
+                            <option value="" disabled selected>Seleccione un método</option>
+                            <option value="Pago Móvil">Pago Móvil</option>
+                            <option value="Efectivo ($)">Efectivo ($)</option>
+                            <option value="Efectivo (€)">Efectivo (€)</option>
+                            <option value="Efectivo (Bs)">Efectivo (Bs)</option>
+                            <option value="Transferencia Bancaria">Transferencia Bancaria</option>
+                            <option value="Zelle">Zelle</option>
+                            <option value="Combinación">Combinación de Pagos</option>
+                        </select>
+                        <input type="text" id="metodo_pago_combinacion" name="metodo_pago_combinacion" class="payment-combination-input" placeholder="Ej: $10 + Bs 50" style="display: none;">
+                    </div>
+                </div>
+
+                <!-- Técnicos (Auto-llenado y editable) -->
+                <div class="form-section">
+                    <h3 style="margin: 0 0 1rem; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-user-hard-hat"></i>
+                        Técnicos Responsables
+                    </h3>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="tecnico_1_id">
+                                <i class="fas fa-user"></i>
+                                Técnico 1
+                            </label>
+                            <select id="tecnico_1_id" name="tecnico_1_id" required>
+                                <option value="" disabled selected>Cargando técnicos...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="tecnico_2_id">
+                                <i class="fas fa-user"></i>
+                                Técnico 2
+                            </label>
+                            <select id="tecnico_2_id" name="tecnico_2_id">
+                                <option value="" disabled selected>Cargando técnicos...</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="status-message" class="status-message"></div>
+                
+                <button type="submit" class="btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem;">
+                    <i class="fas fa-paper-plane"></i>
+                    Guardar y Enviar por WhatsApp
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const REPORT_PASSWORD = "0000";
+        const passwordForm = document.getElementById('password-form');
+        const passwordContainer = document.getElementById('password-container');
+        const formContainer = document.getElementById('form-container');
+        const solicitudSelect = document.getElementById('solicitud_id_select');
+        const reporteForm = document.getElementById('reporteForm');
+        const metodoPagoSelect = document.getElementById('metodo_pago');
+        const metodoPagoCombinacionInput = document.getElementById('metodo_pago_combinacion');
+        const tecnico1Select = document.getElementById('tecnico_1_id');
+        const tecnico2Select = document.getElementById('tecnico_2_id');
+
+        let allSolicitudes = [];
+        let allTechnicians = [];
+
+        // Función para formatear la fecha a YYYY-MM-DD
+        function formatDate(date) {
+            const d = new Date(date);
+            let month = '' + (d.getMonth() + 1);
+            let day = '' + d.getDate();
+            const year = d.getFullYear();
+
+            if (month.length < 2) month = '0' + month;
+            if (day.length < 2) day = '0' + day;
+
+            return [year, month, day].join('-');
+        }
+
+        // Cargar solicitudes pendientes y planificadas
+        async function loadSolicitudesForReport() {
+            try {
+                const response = await fetch('/api/solicitudes');
+                const data = await response.json();
+                allSolicitudes = data.filter(s => s.estado_solicitud === 'Pendiente' || s.estado_solicitud === 'Planificada');
+
+                solicitudSelect.innerHTML = '<option value="" disabled selected>Seleccione un cliente y ID</option>';
+                if (allSolicitudes.length === 0) {
+                    solicitudSelect.innerHTML += '<option value="" disabled>No hay solicitudes pendientes/planificadas</option>';
+                    return;
+                }
+                allSolicitudes.forEach(sol => {
+                    const option = document.createElement('option');
+                    option.value = sol.id;
+                    option.textContent = `${sol.nombre_cliente} (ID: ${sol.id}) - ${sol.tipo_servicio} - ${sol.estado_solicitud}`;
+                    solicitudSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Error al cargar solicitudes para reporte:", error);
+                solicitudSelect.innerHTML = '<option value="" disabled>Error al cargar solicitudes</option>';
+            }
+        }
+
+        // Cargar técnicos
+        async function loadTechnicians() {
+            try {
+                const response = await fetch('/api/technicians'); // Usar el nuevo endpoint de técnicos
+                if (!response.ok) {
+                    throw new Error('Error al cargar los técnicos');
+                }
+                allTechnicians = await response.json();
+                allTechnicians.sort((a, b) => a.nombre.localeCompare(b.nombre)); // Ordenar alfabéticamente
+
+                populateTechnicianSelects();
+            } catch (error) {
+                console.error("Error loading technicians:", error);
+                tecnico1Select.innerHTML = '<option value="" disabled>Error al cargar técnicos</option>';
+                tecnico2Select.innerHTML = '<option value="" disabled>Error al cargar técnicos</option>';
+            }
+        }
+
+        function populateTechnicianSelects() {
+            tecnico1Select.innerHTML = '<option value="" disabled selected>Seleccione Técnico 1</option>';
+            tecnico2Select.innerHTML = '<option value="" selected>Seleccione Técnico 2 (Opcional)</option>'; // Permitir vacío
+
+            allTechnicians.forEach(tech => {
+                const option1 = document.createElement('option');
+                option1.value = tech.id;
+                option1.textContent = tech.nombre;
+                tecnico1Select.appendChild(option1);
+
+                const option2 = document.createElement('option');
+                option2.value = tech.id;
+                option2.textContent = tech.nombre;
+                tecnico2Select.appendChild(option2);
+            });
+        }
+
+
+        // Auto-llenar campos al seleccionar solicitud
+        solicitudSelect.addEventListener('change', async (e) => {
+            const selectedId = parseInt(e.target.value);
+            const selectedSolicitud = allSolicitudes.find(sol => sol.id === selectedId);
+
+            if (selectedSolicitud) {
+                document.getElementById('nombre_cliente').value = selectedSolicitud.nombre_cliente || '';
+                document.getElementById('equipo').value = selectedSolicitud.equipo || '';
+                document.getElementById('ubicacion_cliente').value = `${selectedSolicitud.municipio || ''}, ${selectedSolicitud.sector || ''}, ${selectedSolicitud.calle || ''}, ${selectedSolicitud.casa || ''}`.trim().replace(/^, |^,|, $/g, '');
+                document.getElementById('tipo_servicio_cliente').value = selectedSolicitud.tipo_servicio || '';
+                
+                // Auto-seleccionar técnicos si están asignados a la solicitud
+                if (selectedSolicitud.tecnico_1_id) {
+                    tecnico1Select.value = selectedSolicitud.tecnico_1_id;
+                } else {
+                    tecnico1Select.value = ''; // Reset if not assigned
+                }
+                if (selectedSolicitud.tecnico_2_id) {
+                    tecnico2Select.value = selectedSolicitud.tecnico_2_id;
+                } else {
+                    tecnico2Select.value = ''; // Reset if not assigned
+                }
+
+                // Establecer fecha y hora actuales
+                const ahora = new Date();
+                document.getElementById('fecha_reporte').value = formatDate(ahora);
+                document.getElementById('hora_reporte').value = ahora.toTimeString().split(' ')[0].substring(0, 5);
+            } else {
+                // Limpiar campos si no hay solicitud seleccionada
+                reporteForm.reset();
+                document.getElementById('nombre_cliente').value = '';
+                document.getElementById('equipo').value = '';
+                document.getElementById('ubicacion_cliente').value = '';
+                document.getElementById('tipo_servicio_cliente').value = '';
+                tecnico1Select.value = '';
+                tecnico2Select.value = '';
+            }
+        });
+
+        // Lógica para el campo de combinación de pago
+        metodoPagoSelect.addEventListener('change', (e) => {
+            if (e.target.value === 'Combinación') {
+                metodoPagoCombinacionInput.style.display = 'block';
+                metodoPagoCombinacionInput.required = true;
+            } else {
+                metodoPagoCombinacionInput.style.display = 'none';
+                metodoPagoCombinacionInput.required = false;
+                metodoPagoCombinacionInput.value = '';
+            }
+        });
+
+        // Envío del formulario de reporte
+        reporteForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitButton = reporteForm.querySelector('button[type="submit"]');
+            const statusMessage = document.getElementById('status-message');
+            
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+
+            const formData = new FormData(reporteForm);
+            const dataObject = Object.fromEntries(formData.entries());
+
+            // Ajustar método de pago si es combinación
+            if (dataObject.metodo_pago === 'Combinación') {
+                dataObject.metodo_pago = dataObject.metodo_pago_combinacion;
+            }
+            delete dataObject.metodo_pago_combinacion; // Eliminar el campo extra
+
+            // Convertir IDs de técnicos a números
+            dataObject.tecnico_1_id = parseInt(dataObject.tecnico_1_id);
+            dataObject.tecnico_2_id = dataObject.tecnico_2_id ? parseInt(dataObject.tecnico_2_id) : null;
+            dataObject.solicitud_id = parseInt(dataObject.solicitud_id); // Asegurar que sea número
+
+            try {
+                const response = await fetch('/api/reportes', { // Endpoint correcto
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dataObject)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    statusMessage.className = 'status-message success';
+                    statusMessage.innerHTML = '<i class="fas fa-check-circle"></i> ¡Reporte guardado! Abriendo WhatsApp...';
+                    
+                    // Generar mensaje WhatsApp
+                    let message = `*Reporte de Instalación:*\n\n` +
+                        `*ID Solicitud:* ${dataObject.solicitud_id}\n` +
+                        `*Cliente:* ${dataObject.nombre_cliente || 'N/A'}\n` +
+                        `*Fecha:* ${dataObject.fecha_reporte || 'N/A'}\n` +
+                        `*Hora:* ${dataObject.hora_reporte || 'N/A'}\n` +
+                        `*Equipo:* ${dataObject.equipo || 'N/A'}\n` +
+                        `*Ubicación:* ${dataObject.ubicacion_cliente || 'N/A'}\n` +
+                        `*Tipo Servicio:* ${dataObject.tipo_servicio_cliente || 'N/A'}\n` +
+                        `*PW Asignado:* ${dataObject.pw_asignado || 'N/A'}\n` +
+                        `*MAC:* ${dataObject.mac || 'N/A'}\n` +
+                        `*Precinto:* ${dataObject.precinto || 'N/A'}\n` +
+                        `*ONU PON:* ${dataObject.onu_pon || 'N/A'}\n` +
+                        `*Router:* ${dataObject.router || 'N/A'}\n` +
+                        `*Plan Contratado:* ${dataObject.plan_contratado || 'N/A'}\n` +
+                        `*V. Descarga:* ${dataObject.velocidad_descarga_mbps || 'N/A'} Mbps\n` +
+                        `*V. Subida:* ${dataObject.velocidad_subida_mbps || 'N/A'} Mbps\n` +
+                        `*Potencia NAP:* ${dataObject.potencia_nap || 'N/A'} dBm\n` +
+                        `*Potencia Cliente:* ${dataObject.potencia_cliente || 'N/A'} dBm\n` +
+                        `*Metraje Utilizado:* ${dataObject.metraje_utilizado_m || 'N/A'} m\n` +
+                        `*Metraje Desechado:* ${dataObject.metraje_desechado_m || 'N/A'} m\n` +
+                        `*Tensores Utilizados:* ${dataObject.tensores_utilizados || 'N/A'}\n` +
+                        `*Estado Instalación:* ${dataObject.estado_instalacion || 'N/A'}\n` +
+                        `*Método de Pago:* ${dataObject.metodo_pago || 'N/A'}\n` +
+                        `*Técnico 1:* ${allTechnicians.find(t => t.id === dataObject.tecnico_1_id)?.nombre || 'N/A'}\n` +
+                        `*Técnico 2:* ${dataObject.tecnico_2_id ? allTechnicians.find(t => t.id === dataObject.tecnico_2_id)?.nombre : 'N/A'}`;
+
+                    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+
+                    reporteForm.reset();
+                    document.getElementById('metodo_pago_combinacion').style.display = 'none';
+                    loadSolicitudesForReport(); // Recargar la lista de solicitudes
+                    
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = '<i class="fas fa-paper-plane"></i> Guardar y Enviar por WhatsApp';
+                } else {
+                    statusMessage.className = 'status-message error';
+                    statusMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> Error: ${result.error || 'No se pudo guardar el reporte.'}`;
+                    console.error("Error response:", result);
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = '<i class="fas fa-paper-plane"></i> Guardar y Enviar por WhatsApp';
+                }
+            } catch (error) {
+                console.error("Error de red al enviar reporte:", error);
+                statusMessage.className = 'status-message error';
+                statusMessage.innerHTML = '<i class="fas fa-exclamation-circle"></i> Error de conexión con el servidor.';
+                submitButton.disabled = false;
+                submitButton.innerHTML = '<i class="fas fa-paper-plane"></i> Guardar y Enviar por WhatsApp';
+            }
+        });
+
+        // Lógica de autenticación
+        passwordForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (e.target.querySelector('input').value === REPORT_PASSWORD) {
+                passwordContainer.style.display = 'none';
+                formContainer.style.display = 'block';
+                loadSolicitudesForReport(); // Cargar solicitudes al entrar
+                loadTechnicians(); // Cargar técnicos
+            } else {
+                alert('Clave incorrecta.');
+            }
+        });
+    </script>
+</body>
+</html>
