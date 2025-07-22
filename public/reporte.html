@@ -349,12 +349,24 @@
                 </div>
 
                 <div id="status-message" class="status-message"></div>
-                
                 <button type="submit" class="btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem;">
                     <i class="fas fa-paper-plane"></i>
                     Guardar y Enviar por WhatsApp
                 </button>
             </form>
+
+            <div id="whatsapp-action-container" style="display: none; text-align: center; margin-top: 1rem;">
+                <div style="background: #e8f5e8; border: 1px solid #25D366; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                    <p style="margin: 0 0 1rem; color: #155724; font-weight: 500;">
+                        <i class="fas fa-check-circle" style="color: #25D366;"></i>
+                        ¡Reporte guardado exitosamente! Ahora envía el reporte por WhatsApp:
+                    </p>
+                    <a id="whatsapp-link" href="#" target="_blank" style="display: inline-flex; align-items: center; gap: 0.5rem; background-color: #25D366; color: white; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600; transition: background-color 0.3s ease;">
+                        <i class="fab fa-whatsapp" style="font-size: 1.2rem;"></i>
+                        Enviar por WhatsApp
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -369,6 +381,8 @@
         const metodoPagoCombinacionInput = document.getElementById('metodo_pago_combinacion');
         const tecnico1Select = document.getElementById('tecnico_1_id');
         const tecnico2Select = document.getElementById('tecnico_2_id');
+        const whatsappActionContainer = document.getElementById('whatsapp-action-container');
+        const whatsappLink = document.getElementById('whatsapp-link');
 
         let allSolicitudes = [];
         let allTechnicians = [];
@@ -530,9 +544,10 @@
                 const result = await response.json();
 
                 if (response.ok) {
+                    // Mensaje de éxito arriba
                     statusMessage.className = 'status-message success';
-                    statusMessage.innerHTML = '<i class="fas fa-check-circle"></i> ¡Reporte guardado! Abriendo WhatsApp...';
-                    
+                    statusMessage.innerHTML = '<i class="fas fa-check-circle"></i> ¡Reporte guardado con éxito!';
+
                     // Generar mensaje WhatsApp
                     let message = `*Reporte de Instalación:*\n\n` +
                         `*ID Solicitud:* ${dataObject.solicitud_id}\n` +
@@ -560,14 +575,16 @@
                         `*Técnico 1:* ${allTechnicians.find(t => t.id === dataObject.tecnico_1_id)?.nombre || 'N/A'}\n` +
                         `*Técnico 2:* ${dataObject.tecnico_2_id ? allTechnicians.find(t => t.id === dataObject.tecnico_2_id)?.nombre : 'N/A'}`;
 
-                    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+                    // Mostrar botón de WhatsApp abajo
+                    whatsappLink.href = `https://wa.me/?text=${encodeURIComponent(message)}`;
+                    whatsappActionContainer.style.display = 'block';
+
+                    // Ocultar el botón submit
+                    submitButton.style.display = 'none';
 
                     reporteForm.reset();
-                    document.getElementById('metodo_pago_combinacion').style.display = 'none';
-                    loadSolicitudesForReport(); // Recargar la lista de solicitudes
-                    
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = '<i class="fas fa-paper-plane"></i> Guardar y Enviar por WhatsApp';
+                    metodoPagoCombinacionInput.style.display = 'none';
+                    loadSolicitudesForReport();
                 } else {
                     statusMessage.className = 'status-message error';
                     statusMessage.innerHTML = `<i class="fas fa-exclamation-circle"></i> Error: ${result.error || 'No se pudo guardar el reporte.'}`;
@@ -599,3 +616,4 @@
     </script>
 </body>
 </html>
+
