@@ -14,14 +14,16 @@ type Props = {
     profile: any
     stock: any
     todaysInstallations: any[]
+    todaysSupports: any[]
     activeClients: any[]
     vehicles: any[]
 }
 
 // Helper: safe number parse
 const parseNum = (val: any) => parseFloat(String(val).replace(/[^0-9.]/g, '')) || 0
+const parseIntSafe = (val: any) => parseInt(String(val || 0).replace(/\D/g, '')) || 0
 
-export function TechnicianReportDialog({ profile, stock, todaysInstallations, activeClients, vehicles }: Props) {
+export function TechnicianReportDialog({ profile, stock, todaysInstallations, todaysSupports, activeClients, vehicles }: Props) {
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
 
@@ -121,11 +123,20 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, ac
         // A. Materials
         let c_used = 0, t_used = 0, p_used = 0, r_used = 0
 
+        // Sum Installations
         todaysInstallations.forEach((c: any) => {
-            c_used += parseInt(String(c.conectores || 0).replace(/\D/g, '')) || 0
-            t_used += parseInt(String(c.tensores || 0).replace(/\D/g, '')) || 0
+            c_used += parseIntSafe(c.conectores)
+            t_used += parseIntSafe(c.tensores)
             if (c.patchcord === 'Si' || c.patchcord === true) p_used++
             if (c.rosetas === 'Si' || c.rosetas === true) r_used++
+        })
+
+        // Sum Supports (Assuming integer columns or strings)
+        todaysSupports.forEach((s: any) => {
+            c_used += parseIntSafe(s.conectores)
+            t_used += parseIntSafe(s.tensores)
+            p_used += parseIntSafe(s.patchcord) // Support uses integer count usually?
+            r_used += parseIntSafe(s.rosetas)
         })
 
         const c_remaining = activeStockQuantity(stock, "CONV")
@@ -142,23 +153,26 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, ac
         // B. Spools (Auto-detect usage)
         const detectedSpools: Record<string, SpoolEntry> = {}
 
-        todaysInstallations.forEach((c: any) => {
-            if (c.codigo_carrete && availableSpools.includes(c.codigo_carrete)) {
-                if (!detectedSpools[c.codigo_carrete]) {
-                    const stockKey = Object.keys(stock).find(k => k.includes(c.codigo_carrete))
+        const processUsage = (item: any) => {
+            if (item.codigo_carrete && availableSpools.includes(item.codigo_carrete)) {
+                if (!detectedSpools[item.codigo_carrete]) {
+                    const stockKey = Object.keys(stock).find(k => k.includes(item.codigo_carrete))
                     const rem = stockKey ? stock[stockKey].quantity : 0
 
-                    detectedSpools[c.codigo_carrete] = {
-                        serial: c.codigo_carrete,
+                    detectedSpools[item.codigo_carrete] = {
+                        serial: item.codigo_carrete,
                         used: 0,
                         remaining: rem
                     }
                 }
-                const u = parseNum(c.metraje_usado)
-                const w = parseNum(c.metraje_desechado)
-                detectedSpools[c.codigo_carrete].used += (u + w)
+                const u = parseNum(item.metraje_usado)
+                const w = parseNum(item.metraje_desechado)
+                detectedSpools[item.codigo_carrete].used += (u + w)
             }
-        })
+        }
+
+        todaysInstallations.forEach(processUsage)
+        todaysSupports.forEach(processUsage) // Supports also use spools
 
         setSpools(Object.values(detectedSpools))
     }

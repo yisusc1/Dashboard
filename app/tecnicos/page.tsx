@@ -71,7 +71,17 @@ export default async function TechnicianDashboard() {
     .select("metraje_usado, metraje_desechado, conectores, precinto, rosetas, tensores, patchcord, tecnico_1, equipo, created_at, id, tecnico_id, codigo_carrete, user_id")
     .or(`tecnico_id.in.(${teamMembersIDs.join(',')}),user_id.in.(${teamMembersIDs.join(',')})`)
     .order("created_at", { ascending: false })
+    .order("created_at", { ascending: false })
     .limit(50)
+
+  // Fetch Supports (Today)
+  const { data: supports } = await supabase
+    .from("soportes")
+    .select("created_at, tecnico_id, user_id, conectores, tensores, patchcord, rosetas, metraje_usado, metraje_desechado, codigo_carrete, onu_nueva")
+    .or(`tecnico_id.in.(${teamMembersIDs.join(',')}),user_id.in.(${teamMembersIDs.join(',')})`)
+    .gte("created_at", new Date().toISOString().split('T')[0])
+    .order("created_at", { ascending: false })
+
 
   if (closuresError) {
     console.error("DEBUG: Error fetching closures:", closuresError)
@@ -147,11 +157,21 @@ export default async function TechnicianDashboard() {
   const lastAuditOfToday = (mostRecentAudit && getVeDate(mostRecentAudit.created_at) === todayVE) ? mostRecentAudit : null
 
   // Find time of latest work
+  // Determine latest work time (Installation OR Support)
   const latestClosure = todaysInstallations.length > 0
     ? [...todaysInstallations].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
     : null
 
-  const latestWorkTime = latestClosure ? new Date(latestClosure.created_at).getTime() : 0
+  const latestSupport = supports && supports.length > 0 ? supports[0] : null
+
+  let latestWorkTimestamp = 0
+  if (latestClosure) latestWorkTimestamp = new Date(latestClosure.created_at).getTime()
+  if (latestSupport) {
+    const t = new Date(latestSupport.created_at).getTime()
+    if (t > latestWorkTimestamp) latestWorkTimestamp = t
+  }
+
+  const latestWorkTime = latestWorkTimestamp
   // Use updated_at if available (for appended audits), otherwise created_at
   const lastAuditTime = lastAuditOfToday ? new Date(lastAuditOfToday.updated_at || lastAuditOfToday.created_at).getTime() : 0
 
@@ -173,7 +193,7 @@ export default async function TechnicianDashboard() {
   const hasOpenAssignments = false // Check if Assignments table needed? 'activeDispatches'?
   // User mentioned "Installation" which links to Client. So activeClients is likely enough.
 
-  const hasWork = todaysInstallations.length > 0
+  const hasWork = todaysInstallations.length > 0 || (supports && supports.length > 0)
 
   // Determine if day is finalized (Audit exists AND is later than last work)
   const isDayCompleted = !!lastAuditOfToday && (
@@ -621,6 +641,7 @@ export default async function TechnicianDashboard() {
                 stock={stock}
                 vehicles={vehicles || []}
                 todaysInstallations={todaysInstallations}
+                todaysSupports={supports || []}
                 activeClients={activeClients || []}
               />
             ) : null}
