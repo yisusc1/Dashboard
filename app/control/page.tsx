@@ -76,6 +76,7 @@ export default async function ControlPage() {
                                 Gestión de Bobinas
                             </Button>
                         </Link>
+                        <DailyReportDialog teams={teams || []} />
 
                     </div>
                 </div>
