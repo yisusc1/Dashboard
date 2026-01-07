@@ -67,7 +67,7 @@ export function AutoFillButton({ phase, onFill, existingData }: AutoFillButtonPr
             baseData.metraje_desechado = Math.floor(Math.random() * 10).toString()
             baseData.conectores = "2"
             baseData.tensores = "2"
-            baseData.power_go = "ACTIVO"
+            baseData.power_go = "Activo"
             baseData.estatus = "Activo"
             baseData.observacion_final = "Instalación completada (Auto-fill)."
             // Boolean toggles
