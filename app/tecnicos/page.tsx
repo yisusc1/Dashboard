@@ -75,7 +75,7 @@ export default async function TechnicianDashboard() {
   // OPTIMIZATION: Filter by relevant IDs and Order by Date Descending to catch latest
   const { data: closures, error: closuresError } = await supabase
     .from("cierres")
-    .select("metraje_usado, metraje_desechado, conectores, precinto, rosetas, tensores, patchcord, tecnico_1, equipo, created_at, id, tecnico_id, codigo_carrete, user_id")
+    .select("metraje_usado, metraje_desechado, conectores, precinto, rosetas, tensores, patchcord, tecnico_1, equipo, created_at, id, tecnico_id, codigo_carrete, user_id, cedula, cliente")
     .or(`tecnico_id.in.(${teamMembersIDs.join(',')}),user_id.in.(${teamMembersIDs.join(',')})`)
     .order("created_at", { ascending: false })
     .order("created_at", { ascending: false })
@@ -205,6 +205,23 @@ export default async function TechnicianDashboard() {
   const isDayCompleted = !!lastAuditOfToday && (
     !hasWork || lastAuditTime >= latestWorkTime
   )
+
+  // CHECK REPORT STATUS (To hide button if already sent)
+  // Fetch today's report metadata
+  const { data: dailyReport } = await supabase
+    .from("technician_daily_reports")
+    .select("updated_at")
+    .eq("user_id", user.id)
+    .eq("date", new Date().toISOString().split('T')[0])
+    .single()
+
+  const reportSentTime = dailyReport ? new Date(dailyReport.updated_at).getTime() : 0
+
+  // Show Report Button IF:
+  // 1. Day IS Completed (Audit exists and covers work)
+  // 2. AND Report is NOT sent OR Report is OLDER than the Audit (meaning new finalize happened)
+  // Strict check: if reportSentTime > lastAuditTime, then we are done.
+  const isReportPending = isDayCompleted && (!dailyReport || lastAuditTime > reportSentTime)
 
   // Show Finalize Button IF:
   // 1. No open jobs
@@ -641,7 +658,7 @@ export default async function TechnicianDashboard() {
           </div>
 
           <div className="space-y-4 pt-8">
-            {isDayCompleted ? (
+            {isReportPending ? (
               <TechnicianReportDialog
                 profile={profile}
                 stock={stock}
