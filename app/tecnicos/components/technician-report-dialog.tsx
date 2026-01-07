@@ -3,137 +3,113 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
-import { MessageSquare, Copy, Send } from "lucide-react"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { MessageSquare, Send, Plus, Trash2, SlidersHorizontal } from "lucide-react"
 import { toast } from "sonner"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 type Props = {
     profile: any
     stock: any
     todaysInstallations: any[]
-    activeClients: any[] // "No Efectuadas" candidates
+    activeClients: any[]
 }
+
+// Helper: safe number parse
+const parseNum = (val: any) => parseFloat(String(val).replace(/[^0-9.]/g, '')) || 0
 
 export function TechnicianReportDialog({ profile, stock, todaysInstallations, activeClients }: Props) {
     const [open, setOpen] = useState(false)
-    const [text, setText] = useState("")
-    const [statusOnus, setStatusOnus] = useState("Panel 04") // Default or Input?
+
+    // --- FORM STATE ---
+    const [statusOnus, setStatusOnus] = useState("Panel 04")
+    const [onuSerials, setOnuSerials] = useState("")
+    const [routerSerials, setRouterSerials] = useState("")
+
+    // Materials
+    const [materials, setMaterials] = useState({
+        conectores_used: 0,
+        conectores_remaining: 0,
+        conectores_defective: 0,
+        tensores_used: 0,
+        patchcords_used: 0,
+        rosetas_used: 0
+    })
+
+    // Spools (Dynamic Array)
+    type SpoolEntry = { serial: string, used: number, remaining: number }
+    const [spools, setSpools] = useState<SpoolEntry[]>([])
+
+    // Available Spools (from Stock) for Dropdown
+    const availableSpools = Object.keys(stock)
+        .filter(k => k.includes("CARRETE"))
+        .map(k => {
+            const parts = k.split("__")
+            return parts[1] || parts[0]
+        })
 
     useEffect(() => {
         if (open) {
-            generateText()
+            calculateInitialValues()
         }
-    }, [open, statusOnus])
+    }, [open])
 
-    function generateText() {
-        const teamName = profile.team?.name || "Sin Equipo"
-        const installers = [profile.first_name, profile.last_name]
-
-        // Try to add partner if exists
-        const partner = profile.team?.profiles?.find((p: any) => p.id !== profile.id)
-        if (partner) installers.push(`${partner.first_name} ${partner.last_name}`)
-
-        const date = new Date().toLocaleDateString("es-ES")
-
-        // 1. ONUS (Manual Entry requested)
-        // 2. ROUTERS (Manual Entry requested)
-
-        // 3. Installations
-        const failedCount = activeClients.length
-
-        // 4. Materials Used (Sum from todaysInstallations)
-        let conectores = 0
-        let tensores = 0
-        let patchcords = 0
-        let rosetas = 0
+    function calculateInitialValues() {
+        // A. Materials
+        let c_used = 0, t_used = 0, p_used = 0, r_used = 0
 
         todaysInstallations.forEach((c: any) => {
-            // Parse text to numbers
-            conectores += parseInt(String(c.conectores || 0).replace(/\D/g, '')) || 0
-            tensores += parseInt(String(c.tensores || 0).replace(/\D/g, '')) || 0
-
-            // Patch/Roseta might be "Si"/"No" or number?
-            if (c.patchcord === 'Si' || c.patchcord === true) patchcords++
-            if (c.rosetas === 'Si' || c.rosetas === true) rosetas++
+            c_used += parseInt(String(c.conectores || 0).replace(/\D/g, '')) || 0
+            t_used += parseInt(String(c.tensores || 0).replace(/\D/g, '')) || 0
+            if (c.patchcord === 'Si' || c.patchcord === true) p_used++
+            if (c.rosetas === 'Si' || c.rosetas === true) r_used++
         })
 
-        // 5. Spools
-        const spoolUsage: Record<string, { used: number, remaining: number }> = {}
-        // We need REMAINING for spools. Stock object handles "Quantity" as remaining!
-        // Stock object keys for spools are `CARRETE__SERIAL`.
+        const c_remaining = activeStockQuantity(stock, "CONV")
 
-        Object.keys(stock).forEach(key => {
-            if (key.includes("CARRETE")) {
-                const parts = key.split("__")
-                const serial = parts[1] || parts[0]
+        setMaterials({
+            conectores_used: c_used,
+            conectores_remaining: c_remaining,
+            conectores_defective: 0,
+            tensores_used: t_used,
+            patchcords_used: p_used,
+            rosetas_used: r_used
+        })
 
-                spoolUsage[serial] = {
-                    used: 0, // Will sum below
-                    remaining: stock[key].quantity // Already calculated in page.tsx
+        // B. Spools (Auto-detect usage)
+        const detectedSpools: Record<string, SpoolEntry> = {}
+
+        todaysInstallations.forEach((c: any) => {
+            if (c.codigo_carrete && availableSpools.includes(c.codigo_carrete)) {
+                if (!detectedSpools[c.codigo_carrete]) {
+                    // Find current remaining from stock object?
+                    // Stock key is tricky "CARRETE-XXX__SERIAL". Need to find it.
+                    const stockKey = Object.keys(stock).find(k => k.includes(c.codigo_carrete))
+                    const rem = stockKey ? stock[stockKey].quantity : 0
+
+                    detectedSpools[c.codigo_carrete] = {
+                        serial: c.codigo_carrete,
+                        used: 0,
+                        remaining: rem // Stock is current live remaining usually
+                    }
                 }
+                const u = parseNum(c.metraje_usado)
+                const w = parseNum(c.metraje_desechado)
+                detectedSpools[c.codigo_carrete].used += (u + w)
             }
         })
 
-        // Sum Usage from closures
-        todaysInstallations.forEach((c: any) => {
-            if (c.codigo_carrete && spoolUsage[c.codigo_carrete]) {
-                const u = parseFloat(String(c.metraje_usado || 0).replace(/[^0-9.]/g, '')) || 0
-                const w = parseFloat(String(c.metraje_desechado || 0).replace(/[^0-9.]/g, '')) || 0
-                spoolUsage[c.codigo_carrete].used += (u + w)
-            }
-        })
-
-
-        // BUILD STRING
-        let t = `*Reporte De Entrada ${teamName}*\n`
-        t += `*Fecha: ${date}*\n`
-        t += `*Nombre De Instaladores:* ${profile.first_name} ${profile.last_name}`
-        if (partner) t += ` y ${partner.first_name} ${partner.last_name}`
-        t += `\n\n`
-
-        t += `*Estatus ONUS:* ${statusOnus}\n\n`
-
-        t += `*ONUS:* 00\n\n`
-        t += `[ESCRIBIR SERIALES ONUS AQUÍ]\n`
-        t += `\n`
-
-        t += `*ROUTER:* 00\n\n`
-        t += `[ESCRIBIR SERIALES ROUTERS AQUÍ]\n`
-        t += `\n`
-
-        t += `*Instalaciones Asignadas No Efectuadas:* ${String(failedCount).padStart(2, '0')}\n\n`
-        activeClients.forEach(c => {
-            t += `${c.nombre}: cliente manifestó no contar con el dinero (Editar Razón)\n`
-        })
-        t += `\n`
-
-        t += `*Total De Instalaciones Realizadas:* ${String(todaysInstallations.length).padStart(2, '0')}\n\n`
-
-        t += `*Conectores Utilizados:*  ${String(conectores).padStart(2, '0')}\n`
-        // We normally track Remaining Connectors? Stock has it.
-        const totalConnectors = activeStockQuantity(stock, "CONV")
-        t += `*Conectores  Restantes:* ${String(totalConnectors).padStart(2, '0')}\n`
-        t += `*Conectores Defectuosos:* 00\n` // Manual input usually
-        t += `*Tensores Utilizados:* ${String(tensores).padStart(2, '0')}\n`
-        t += `*Patchcords Utilizados:* ${String(patchcords).padStart(2, '0')}\n`
-        t += `*Rosetas Utilizadas:* ${String(rosetas).padStart(2, '0')}\n\n`
-
-        Object.keys(spoolUsage).forEach(serial => {
-            t += `Carrete ${serial}\n`
-            t += ` Metraje Utilizado:  ${spoolUsage[serial].used}Mts\n`
-            t += `*Metraje Restante:* ${spoolUsage[serial].remaining}Mts\n\n`
-        })
-
-        setText(t)
+        // If detected spools empty, add one empty row if available spools exist
+        let initSpools = Object.values(detectedSpools)
+        if (initSpools.length === 0 && availableSpools.length > 0) {
+            // We don't auto-add to keep clean unless they used one.
+        }
+        setSpools(initSpools)
     }
 
-    // Helper to extract serials/qty
-    function activeStockSerials(item: any) {
-        return item?.serials || []
-    }
     function activeStockQuantity(stockObj: any, keyMap: string) {
-        // keyMap like "CONV"
         let q = 0
         Object.keys(stockObj).forEach(k => {
             if (k.includes(keyMap)) q += stockObj[k].quantity
@@ -141,54 +117,275 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, ac
         return q
     }
 
-    function sendWhatsApp() {
-        const url = `https://wa.me/?text=${encodeURIComponent(text)}`
+    // --- ACTIONS ---
+    function addSpool() {
+        setSpools([...spools, { serial: "", used: 0, remaining: 0 }])
+    }
+
+    function removeSpool(index: number) {
+        const n = [...spools]
+        n.splice(index, 1)
+        setSpools(n)
+    }
+
+    function updateSpool(index: number, field: keyof SpoolEntry, val: any) {
+        const n = [...spools]
+        // @ts-ignore
+        n[index][field] = val
+        setSpools(n)
+    }
+
+    // --- GENERATOR ---
+    function generateAndSend() {
+        const teamName = profile.team?.name || "Sin Equipo"
+        const partner = profile.team?.profiles?.find((p: any) => p.id !== profile.id)
+
+        let t = `*Reporte De Entrada ${teamName}*\n`
+        t += `*Fecha: ${new Date().toLocaleDateString("es-ES")}*\n`
+        t += `*Nombre De Instaladores:* ${profile.first_name} ${profile.last_name}`
+        if (partner) t += ` y ${partner.first_name} ${partner.last_name}`
+        t += `\n\n`
+
+        t += `*Estatus ONUS:* ${statusOnus}\n\n`
+
+        // Count lines in manual entry or default 0
+        const onuLines = onuSerials.split('\n').filter(x => x.trim().length > 0)
+        t += `*ONUS:* ${String(onuLines.length).padStart(2, '0')}\n\n`
+        if (onuSerials) t += `${onuSerials}\n\n`
+        else t += `(Sin seriales reportados)\n\n`
+
+        const routerLines = routerSerials.split('\n').filter(x => x.trim().length > 0)
+        t += `*ROUTER:* ${String(routerLines.length).padStart(2, '0')}\n\n`
+        if (routerSerials) t += `${routerSerials}\n\n`
+        else t += `(Sin seriales reportados)\n\n`
+
+        t += `*Instalaciones Asignadas No Efectuadas:* ${String(activeClients.length).padStart(2, '0')}\n\n`
+        activeClients.forEach(c => {
+            t += `${c.nombre}: (Pendiente)\n`
+        })
+        t += `\n`
+
+        t += `*Total De Instalaciones Realizadas:* ${String(todaysInstallations.length).padStart(2, '0')}\n\n`
+
+        t += `*Conectores Utilizados:*  ${String(materials.conectores_used).padStart(2, '0')}\n`
+        t += `*Conectores  Restantes:* ${String(materials.conectores_remaining).padStart(2, '0')}\n`
+        t += `*Conectores Defectuosos:* ${String(materials.conectores_defective).padStart(2, '0')}\n`
+        t += `*Tensores Utilizados:* ${String(materials.tensores_used).padStart(2, '0')}\n`
+        t += `*Patchcords Utilizados:* ${String(materials.patchcords_used).padStart(2, '0')}\n`
+        t += `*Rosetas Utilizadas:* ${String(materials.rosetas_used).padStart(2, '0')}\n\n`
+
+        spools.forEach(s => {
+            t += `Carrete ${s.serial}\n`
+            t += ` Metraje Utilizado:  ${s.used}Mts\n`
+            t += `*Metraje Restante:* ${s.remaining}Mts\n\n`
+        })
+
+        const url = `https://wa.me/?text=${encodeURIComponent(t)}`
         window.open(url, '_blank')
     }
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl mt-4 h-12 gap-2">
+                <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl mt-4 h-12 gap-2 shadow-sm">
                     <MessageSquare size={20} />
                     Reporte WhatsApp
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md w-full max-h-[85vh] overflow-y-auto rounded-3xl bg-zinc-50">
-                <DialogHeader>
-                    <DialogTitle>Generar Reporte Diario</DialogTitle>
-                </DialogHeader>
+            <DialogContent className="max-w-2xl w-full max-h-[90vh] overflow-y-auto rounded-[32px] bg-[#F2F2F7] p-0 border-0 outline-none">
+                {/* iOS Header */}
+                <div className="bg-white/80 backdrop-blur-xl sticky top-0 z-10 border-b border-slate-200/50 px-6 py-4 flex items-center justify-between">
+                    <DialogTitle className="text-lg font-semibold text-slate-900">Reporte Diario</DialogTitle>
+                    <Button variant="ghost" size="sm" onClick={() => generateAndSend()} className="text-blue-500 font-bold hover:bg-blue-50 hover:text-blue-600">
+                        Enviar
+                    </Button>
+                </div>
 
-                <div className="space-y-4">
-                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-zinc-100">
-                        <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide mb-2 block">Estatus ONUS</label>
-                        <Input
-                            value={statusOnus}
-                            onChange={e => setStatusOnus(e.target.value)}
-                            className="bg-zinc-50 border-zinc-200"
-                        />
-                    </div>
+                <div className="p-6 space-y-8">
 
-                    <div className="space-y-2">
-                        <div className="flex justify-between items-center px-1">
-                            <span className="text-sm font-semibold text-zinc-700">Vista Previa</span>
-                            <span className="text-xs text-zinc-400">Puede editar el texto abajo</span>
+                    {/* SECTION: STATUS */}
+                    <section className="space-y-3">
+                        <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">
+                            <SlidersHorizontal size={14} /> Estado General
                         </div>
-                        <Textarea
-                            value={text}
-                            onChange={e => setText(e.target.value)}
-                            className="min-h-[300px] font-mono text-sm bg-white border-zinc-200 rounded-xl p-4 leading-relaxed"
-                        />
-                    </div>
+                        <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100">
+                            <div className="p-4 border-b border-slate-50 last:border-0">
+                                <Label className="text-xs text-slate-500 mb-1.5 block">Estatus ONUs</Label>
+                                <Input
+                                    className="border-0 bg-slate-50 rounded-xl h-10 font-medium"
+                                    value={statusOnus}
+                                    onChange={e => setStatusOnus(e.target.value)}
+                                />
+                            </div>
+                        </div>
+                    </section>
 
-                    <div className="grid grid-cols-2 gap-3 pt-2">
-                        <Button variant="outline" onClick={() => { navigator.clipboard.writeText(text); toast.success("Copiado") }} className="h-12 rounded-xl text-zinc-600">
-                            <Copy size={18} className="mr-2" /> Copiar
-                        </Button>
-                        <Button onClick={sendWhatsApp} className="h-12 rounded-xl bg-[#25D366] hover:bg-[#128C7E] text-white font-bold">
-                            <Send size={18} className="mr-2" /> Enviar
-                        </Button>
-                    </div>
+                    {/* SECTION: SERIALS */}
+                    <section className="space-y-3">
+                        <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">Seriales Restantes</div>
+                        <div className="grid md:grid-cols-2 gap-4">
+                            <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                                <Label className="text-xs font-bold text-slate-900 mb-2 block flex justify-between">
+                                    ONUs
+                                    <span className="text-slate-400 font-normal">{onuSerials.split('\n').filter(x => x.trim()).length}</span>
+                                </Label>
+                                <Textarea
+                                    placeholder="Pegar seriales ONU aquí..."
+                                    value={onuSerials}
+                                    onChange={e => setOnuSerials(e.target.value)}
+                                    className="bg-slate-50 border-0 rounded-xl min-h-[120px] font-mono text-sm resize-none focus-visible:ring-1"
+                                />
+                            </div>
+                            <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                                <Label className="text-xs font-bold text-slate-900 mb-2 block flex justify-between">
+                                    Routers
+                                    <span className="text-slate-400 font-normal">{routerSerials.split('\n').filter(x => x.trim()).length}</span>
+                                </Label>
+                                <Textarea
+                                    placeholder="Pegar seriales Router aquí..."
+                                    value={routerSerials}
+                                    onChange={e => setRouterSerials(e.target.value)}
+                                    className="bg-slate-50 border-0 rounded-xl min-h-[120px] font-mono text-sm resize-none focus-visible:ring-1"
+                                />
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* SECTION: SPOOLS */}
+                    <section className="space-y-3">
+                        <div className="flex items-center justify-between ml-1">
+                            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Carretes Utilizados</div>
+                            <Button size="sm" variant="ghost" onClick={addSpool} className="h-6 text-blue-500 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-full">
+                                <Plus size={16} className="mr-1" /> Añadir
+                            </Button>
+                        </div>
+
+                        <div className="space-y-3">
+                            {spools.map((spool, idx) => (
+                                <div key={idx} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 relative group">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => removeSpool(idx)}
+                                        className="absolute top-2 right-2 text-slate-300 hover:text-red-500 h-8 w-8"
+                                    >
+                                        <Trash2 size={16} />
+                                    </Button>
+                                    <div className="grid gap-4">
+                                        <div>
+                                            <Label className="text-xs text-slate-500 mb-1.5 block">Serial Carrete</Label>
+                                            <Select value={spool.serial} onValueChange={(v) => updateSpool(idx, "serial", v)}>
+                                                <SelectTrigger className="bg-slate-50 border-0 h-10 rounded-xl">
+                                                    <SelectValue placeholder="Seleccionar..." />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {availableSpools.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                                    <SelectItem value="OTRO">Otro / Manual</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <Label className="text-xs text-slate-500 mb-1.5 block">Usado (m)</Label>
+                                                <Input
+                                                    type="number"
+                                                    className="bg-slate-50 border-0 rounded-xl"
+                                                    value={spool.used}
+                                                    onChange={e => updateSpool(idx, "used", parseFloat(e.target.value) || 0)}
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label className="text-xs text-slate-500 mb-1.5 block">Restante (m)</Label>
+                                                <Input
+                                                    type="number"
+                                                    className="bg-slate-50 border-0 rounded-xl font-bold text-slate-700"
+                                                    value={spool.remaining}
+                                                    onChange={e => updateSpool(idx, "remaining", parseFloat(e.target.value) || 0)}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                            {spools.length === 0 && (
+                                <div className="text-center p-6 bg-slate-100/50 rounded-2xl border border-dashed border-slate-200">
+                                    <p className="text-sm text-slate-400">Ningún carrete añadido</p>
+                                </div>
+                            )}
+                        </div>
+                    </section>
+
+                    {/* SECTION: MATERIALS */}
+                    <section className="space-y-3">
+                        <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">Consumo de Materiales</div>
+                        <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 divide-y divide-slate-50">
+
+                            {/* Connectors Row */}
+                            <div className="p-4 grid grid-cols-3 gap-4">
+                                <div className="col-span-3 pb-1"><Label className="font-bold text-slate-700">Conectores</Label></div>
+                                <div>
+                                    <Label className="text-[10px] text-slate-400 uppercase mb-1 block">Usados</Label>
+                                    <Input
+                                        type="number" className="bg-blue-50/50 border-0 text-blue-700 font-bold rounded-xl"
+                                        value={materials.conectores_used}
+                                        onChange={e => setMaterials({ ...materials, conectores_used: parseFloat(e.target.value) || 0 })}
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="text-[10px] text-slate-400 uppercase mb-1 block">Restantes</Label>
+                                    <Input
+                                        type="number" className="bg-slate-50 border-0 rounded-xl"
+                                        value={materials.conectores_remaining}
+                                        onChange={e => setMaterials({ ...materials, conectores_remaining: parseFloat(e.target.value) || 0 })}
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="text-[10px] text-slate-400 uppercase mb-1 block">Defectuosos</Label>
+                                    <Input
+                                        type="number" className="bg-red-50/50 border-0 text-red-600 font-bold rounded-xl"
+                                        value={materials.conectores_defective}
+                                        onChange={e => setMaterials({ ...materials, conectores_defective: parseFloat(e.target.value) || 0 })}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Others */}
+                            <div className="p-4 grid grid-cols-3 gap-4">
+                                <div>
+                                    <Label className="text-[10px] text-slate-400 uppercase mb-1 block">Tensores</Label>
+                                    <Input
+                                        type="number" className="bg-slate-50 border-0 rounded-xl"
+                                        value={materials.tensores_used}
+                                        onChange={e => setMaterials({ ...materials, tensores_used: parseFloat(e.target.value) || 0 })}
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="text-[10px] text-slate-400 uppercase mb-1 block">Patchcords</Label>
+                                    <Input
+                                        type="number" className="bg-slate-50 border-0 rounded-xl"
+                                        value={materials.patchcords_used}
+                                        onChange={e => setMaterials({ ...materials, patchcords_used: parseFloat(e.target.value) || 0 })}
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="text-[10px] text-slate-400 uppercase mb-1 block">Rosetas</Label>
+                                    <Input
+                                        type="number" className="bg-slate-50 border-0 rounded-xl"
+                                        value={materials.rosetas_used}
+                                        onChange={e => setMaterials({ ...materials, rosetas_used: parseFloat(e.target.value) || 0 })}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <Button onClick={generateAndSend} className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white font-bold h-14 rounded-2xl shadow-lg shadow-green-500/20 text-lg">
+                        <Send className="mr-2" /> Enviar Reporte por WhatsApp
+                    </Button>
+                    <p className="text-center text-xs text-slate-400 px-4">
+                        Al enviar, se abrirá WhatsApp con el formato listo para compartir.
+                    </p>
+
                 </div>
             </DialogContent>
         </Dialog>
