@@ -653,7 +653,7 @@ export default async function TechnicianDashboard() {
             ) : null}
 
             {/* FINALIZAR JORNADA BUTTON */}
-            {(!isDayCompleted) && (
+            {showFinalizeButton && (
               <div className="pt-8 pb-8 animate-in fade-in slide-in-from-bottom-4">
                 <div className="bg-black rounded-[28px] p-8 text-center relative overflow-hidden shadow-2xl shadow-gray-200">
                   {/* Decorative */}
