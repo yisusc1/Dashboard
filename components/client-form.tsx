@@ -61,7 +61,7 @@ export function ClientForm({ client, phase, onBack, onPhaseComplete, teamData }:
     // Phase 3: Cierre
     router: "",
     mac_router: "",
-    power_go: "ACTIVO",
+    power_go: "Activo",
     motivo_power_go: "",
     estatus: "Activo",
     v_descarga: "",
@@ -208,6 +208,8 @@ export function ClientForm({ client, phase, onBack, onPhaseComplete, teamData }:
             router_serial: ((newData as any).router && (newData as any).router !== "N/A" ? (newData as any).router : "") || "",
             mac_router: ((newData as any).mac_router && (newData as any).ma_router !== "N/A" ? (newData as any).mac_router : "") || "",
             motivo_power_go: ((newData as any).motivo_power_go && (newData as any).motivo_power_go !== "N/A" ? (newData as any).motivo_power_go : "") || "",
+            // [Fix] Normalize Power Go Case
+            power_go: ((newData as any).power_go === "ACTIVO" || (newData as any).power_go === "Activo") ? "Activo" : "Inactivo",
           }
         })
 
@@ -382,7 +384,7 @@ export function ClientForm({ client, phase, onBack, onPhaseComplete, teamData }:
               router: formData.venta_router ? formData.router_serial : "N/A",
               mac_router: formData.venta_router ? formData.mac_router : "N/A",
               power_go: formData.power_go,
-              motivo_power_go: formData.power_go === "INACTIVO" ? formData.motivo_power_go : "N/A",
+              motivo_power_go: formData.power_go === "Inactivo" ? formData.motivo_power_go : "N/A",
               v_descarga: formData.v_descarga,
               v_subida: formData.v_subida,
               codigo_carrete: formData.codigo_carrete,
@@ -422,7 +424,7 @@ export function ClientForm({ client, phase, onBack, onPhaseComplete, teamData }:
                 router: formData.venta_router ? formData.router_serial : "N/A",
                 mac_router: formData.venta_router ? formData.mac_router : "N/A",
                 power_go: formData.power_go,
-                motivo_power_go: formData.power_go === "INACTIVO" ? formData.motivo_power_go : "N/A",
+                motivo_power_go: formData.power_go === "Inactivo" ? formData.motivo_power_go : "N/A",
                 estatus: "Activo",
                 v_descarga: formData.v_descarga,
                 v_subida: formData.v_subida,
@@ -519,9 +521,12 @@ export function ClientForm({ client, phase, onBack, onPhaseComplete, teamData }:
         `*Patchcord Utilizado:* ${formData.patchcord ? 'Si' : 'No'}\n` +
         `*Rosetas Utilizadas:* ${formData.rosetas ? 'Si' : 'No'}\n` +
         `*Técnico 1:* ${formData.tecnico_1}\n` +
-        `*Técnico 2:* ${formData.tecnico_2}\n` +
-        `*Observación:* ${formData.observacion_final}\n` +
-        `*Motivo Power Go:* ${formData.power_go === 'INACTIVO' ? formData.motivo_power_go : ''}`
+        `*Técnico 2:* ${formData.tecnico_2}\n` +
+        `*Observación:* ${formData.observacion_final}`
+
+      if (formData.power_go === 'Inactivo') {
+        message += `\n*Motivo Power Go:* ${formData.motivo_power_go}`
+      }
     }
 
     const url = `https://wa.me/?text=${encodeURIComponent(message)}`
@@ -744,14 +749,20 @@ export function ClientForm({ client, phase, onBack, onPhaseComplete, teamData }:
                   </div>
 
                   <div className="space-y-3">
-                    <div>
-                      <label className={labelClass}>Power Go</label>
-                      <select name="power_go" value={formData.power_go} onChange={handleChange} className={inputClass}>
-                        <option value="ACTIVO">ACTIVO</option>
-                        <option value="INACTIVO">INACTIVO</option>
-                      </select>
+                    <div className="flex items-center justify-between p-3 bg-zinc-50 rounded-xl border border-zinc-100">
+                      <div className="space-y-0.5">
+                        <label className="text-sm font-semibold text-zinc-900 block">Power Go</label>
+                        <p className="text-[10px] text-zinc-400">
+                          {formData.power_go === "Activo" ? "Servicio Activo" : "Servicio Inactivo"}
+                        </p>
+                      </div>
+                      <Switch
+                        checked={formData.power_go === "Activo"}
+                        onCheckedChange={(c) => setFormData(prev => ({ ...prev, power_go: c ? "Activo" : "Inactivo" }))}
+                      />
                     </div>
-                    {formData.power_go === "INACTIVO" && (
+
+                    {formData.power_go === "Inactivo" && (
                       <div className="animate-in slide-in-from-top-2 fade-in">
                         <label className={labelClass}>Motivo</label>
                         <input name="motivo_power_go" value={formData.motivo_power_go} onChange={handleChange} required className={inputClass} />
