@@ -447,6 +447,9 @@ export function ClientForm({ client, phase, onBack, onPhaseComplete, teamData }:
       if (error) throw error
 
       setSuccessData(insertedData)
+      if (insertedData?.id) {
+        setLastRecordId(insertedData.id)
+      }
       setSuccess(true)
       toast.success("Fase guardada correctamente")
 
