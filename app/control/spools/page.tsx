@@ -30,6 +30,7 @@ export default function SpoolManagementPage() {
     const [loading, setLoading] = useState(true)
     const [isAssignOpen, setIsAssignOpen] = useState(false)
     const [isHistoryOpen, setIsHistoryOpen] = useState(false)
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
     // Alert Dialog State
     const [spoolReleaseId, setSpoolReleaseId] = useState<string | null>(null)
@@ -56,7 +57,9 @@ export default function SpoolManagementPage() {
     async function handleAssign() {
         if (!selectedTeam || !serial || !meters) return toast.error("Complete todos los campos")
 
+        setIsSubmitting(true)
         const res = await assignSpoolToTeam(selectedTeam, serial, Number(meters))
+        setIsSubmitting(false)
         if (res.success) {
             toast.success("Bobina asignada correctamente")
             setIsAssignOpen(false)
@@ -160,8 +163,8 @@ export default function SpoolManagementPage() {
                                             className="rounded-xl border-slate-200 h-11"
                                         />
                                     </div>
-                                    <Button className="w-full bg-blue-600 text-white font-bold rounded-xl h-12 mt-4" onClick={handleAssign}>
-                                        Confirmar Asignación
+                                    <Button className="w-full bg-blue-600 text-white font-bold rounded-xl h-12 mt-4" onClick={handleAssign} disabled={isSubmitting}>
+                                        {isSubmitting ? "Asignando..." : "Confirmar Asignación"}
                                     </Button>
                                 </div>
                             </DialogContent>

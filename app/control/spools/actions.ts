@@ -127,6 +127,19 @@ export async function assignSpoolToTeam(teamId: string, serial: string, initialM
     )
 
     try {
+        // 0. Validate if Serial is ALREADY assigned (Active)
+        // We join Items -> Assignment to check status=ACTIVE and Serial Match
+        const { data: existing } = await supabase
+            .from("inventory_assignment_items")
+            .select("id, assignment:inventory_assignments!inner(status)")
+            .eq("inventory_assignments.status", "ACTIVE")
+            .contains("serials", [serial])
+            .limit(1)
+
+        if (existing && existing.length > 0) {
+            throw new Error(`El serial ${serial} ya se encuentra asignado y activo.`)
+        }
+
         // 1. Find Product ID for "CARRETE" (Generic or Specific?)
         // Let's look for a product with SKU "CARRETE-FIBRA" or just match first "CARRETE"
         const { data: products } = await supabase
