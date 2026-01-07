@@ -406,6 +406,32 @@ CREATE TABLE public.teams (
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT teams_pkey PRIMARY KEY (id)
 );
+CREATE TABLE public.technician_daily_reports (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid,
+  team_id uuid,
+  date text NOT NULL,
+  vehicle_id uuid,
+  onu_serials jsonb DEFAULT '[]'::jsonb,
+  router_serials jsonb DEFAULT '[]'::jsonb,
+  materials jsonb DEFAULT '{}'::jsonb,
+  spools jsonb DEFAULT '[]'::jsonb,
+  conectores_used integer DEFAULT 0,
+  conectores_remaining integer DEFAULT 0,
+  conectores_defective integer DEFAULT 0,
+  tensores_used integer DEFAULT 0,
+  tensores_remaining integer DEFAULT 0,
+  patchcords_used integer DEFAULT 0,
+  patchcords_remaining integer DEFAULT 0,
+  rosetas_used integer DEFAULT 0,
+  clients_snapshot jsonb DEFAULT '[]'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT technician_daily_reports_pkey PRIMARY KEY (id),
+  CONSTRAINT technician_daily_reports_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT technician_daily_reports_team_id_fkey FOREIGN KEY (team_id) REFERENCES public.teams(id),
+  CONSTRAINT technician_daily_reports_vehicle_id_fkey FOREIGN KEY (vehicle_id) REFERENCES public.vehiculos(id)
+);
 CREATE TABLE public.vehiculos (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   created_at timestamp with time zone NOT NULL DEFAULT now(),

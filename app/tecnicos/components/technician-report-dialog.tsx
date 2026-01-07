@@ -301,7 +301,7 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, to
             router_serials: routerSerials.filter(s => s.trim().length > 0),
             materials: materials,
             spools: spools,
-            // Capture Text for potential debugging or just rely on backend
+            clients_snapshot: todaysInstallations.map((c: any) => ({ client: c.cliente, cedula: c.cedula || 'S/I' }))
         }
 
         const toastId = toast.loading("Guardando reporte...")

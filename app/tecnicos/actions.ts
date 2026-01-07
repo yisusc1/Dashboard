@@ -124,7 +124,18 @@ export async function saveTechnicianReport(data: any) {
             router_serials: data.router_serials,
             materials: data.materials,
             spools: data.spools,
-            updated_at: new Date().toISOString()
+            clients_snapshot: data.clients_snapshot || [],
+            updated_at: new Date().toISOString(),
+
+            // Normalized Columns
+            conectores_used: data.materials?.conectores_used || 0,
+            conectores_remaining: data.materials?.conectores_remaining || 0,
+            conectores_defective: data.materials?.conectores_defective || 0,
+            tensores_used: data.materials?.tensores_used || 0,
+            tensores_remaining: data.materials?.tensores_remaining || 0,
+            patchcords_used: data.materials?.patchcords_used || 0,
+            patchcords_remaining: data.materials?.patchcords_remaining || 0,
+            rosetas_used: data.materials?.rosetas_used || 0
         }
 
         const { error } = await supabase
