@@ -204,6 +204,13 @@ export default async function TechnicianDashboard() {
     .in("status", ["ACTIVE", "PARTIAL_RETURN"])
     .order("created_at", { ascending: false })
 
+  // Fetch Vehicles for Report
+  const { data: vehicles } = await supabase
+    .from("vehiculos")
+    .select("id, placa, modelo, codigo")
+    .order("modelo", { ascending: true })
+
+
   // ... (Stock Logic remains) ...
 
   // (Skip to Rendering Section)
@@ -610,6 +617,7 @@ export default async function TechnicianDashboard() {
             <TechnicianReportDialog
               profile={profile}
               stock={stock}
+              vehicles={vehicles || []}
               todaysInstallations={todaysInstallations}
               activeClients={activeClients || []}
             />

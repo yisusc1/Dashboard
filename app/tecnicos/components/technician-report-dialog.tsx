@@ -5,9 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { MessageSquare, Send, Plus, Trash2, SlidersHorizontal } from "lucide-react"
-import { toast } from "sonner"
+import { MessageSquare, Send, Plus, Trash2, SlidersHorizontal, Car } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 type Props = {
@@ -15,18 +13,24 @@ type Props = {
     stock: any
     todaysInstallations: any[]
     activeClients: any[]
+    vehicles: any[]
 }
 
 // Helper: safe number parse
 const parseNum = (val: any) => parseFloat(String(val).replace(/[^0-9.]/g, '')) || 0
 
-export function TechnicianReportDialog({ profile, stock, todaysInstallations, activeClients }: Props) {
+export function TechnicianReportDialog({ profile, stock, todaysInstallations, activeClients, vehicles }: Props) {
     const [open, setOpen] = useState(false)
 
     // --- FORM STATE ---
-    const [statusOnus, setStatusOnus] = useState("Panel 04")
-    const [onuSerials, setOnuSerials] = useState("")
-    const [routerSerials, setRouterSerials] = useState("")
+    const [selectedVehicle, setSelectedVehicle] = useState("")  // Was statusOnus
+
+    // Dynamic Serials
+    const [onuCount, setOnuCount] = useState<number>(0)
+    const [onuSerials, setOnuSerials] = useState<string[]>([])
+
+    const [routerCount, setRouterCount] = useState<number>(0)
+    const [routerSerials, setRouterSerials] = useState<string[]>([])
 
     // Materials
     const [materials, setMaterials] = useState({
@@ -56,6 +60,24 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, ac
         }
     }, [open])
 
+    // Resize Serial Arrays when Count Changes
+    useEffect(() => {
+        setOnuSerials(prev => {
+            const arr = [...prev]
+            if (onuCount > arr.length) return [...arr, ...Array(onuCount - arr.length).fill("")]
+            return arr.slice(0, onuCount)
+        })
+    }, [onuCount])
+
+    useEffect(() => {
+        setRouterSerials(prev => {
+            const arr = [...prev]
+            if (routerCount > arr.length) return [...arr, ...Array(routerCount - arr.length).fill("")]
+            return arr.slice(0, routerCount)
+        })
+    }, [routerCount])
+
+
     function calculateInitialValues() {
         // A. Materials
         let c_used = 0, t_used = 0, p_used = 0, r_used = 0
@@ -84,15 +106,13 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, ac
         todaysInstallations.forEach((c: any) => {
             if (c.codigo_carrete && availableSpools.includes(c.codigo_carrete)) {
                 if (!detectedSpools[c.codigo_carrete]) {
-                    // Find current remaining from stock object?
-                    // Stock key is tricky "CARRETE-XXX__SERIAL". Need to find it.
                     const stockKey = Object.keys(stock).find(k => k.includes(c.codigo_carrete))
                     const rem = stockKey ? stock[stockKey].quantity : 0
 
                     detectedSpools[c.codigo_carrete] = {
                         serial: c.codigo_carrete,
                         used: 0,
-                        remaining: rem // Stock is current live remaining usually
+                        remaining: rem
                     }
                 }
                 const u = parseNum(c.metraje_usado)
@@ -101,12 +121,7 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, ac
             }
         })
 
-        // If detected spools empty, add one empty row if available spools exist
-        let initSpools = Object.values(detectedSpools)
-        if (initSpools.length === 0 && availableSpools.length > 0) {
-            // We don't auto-add to keep clean unless they used one.
-        }
-        setSpools(initSpools)
+        setSpools(Object.values(detectedSpools))
     }
 
     function activeStockQuantity(stockObj: any, keyMap: string) {
@@ -135,10 +150,26 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, ac
         setSpools(n)
     }
 
+    function updateSerial(type: 'ONU' | 'ROUTER', index: number, val: string) {
+        if (type === 'ONU') {
+            const arr = [...onuSerials]
+            arr[index] = val
+            setOnuSerials(arr)
+        } else {
+            const arr = [...routerSerials]
+            arr[index] = val
+            setRouterSerials(arr)
+        }
+    }
+
     // --- GENERATOR ---
     function generateAndSend() {
         const teamName = profile.team?.name || "Sin Equipo"
         const partner = profile.team?.profiles?.find((p: any) => p.id !== profile.id)
+
+        // Find vehicle model/plate if selected
+        const vObj = vehicles.find(v => v.id === selectedVehicle)
+        const vehicleStr = vObj ? `${vObj.modelo} (${vObj.placa})` : "No asignado"
 
         let t = `*Reporte De Entrada ${teamName}*\n`
         t += `*Fecha: ${new Date().toLocaleDateString("es-ES")}*\n`
@@ -146,18 +177,21 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, ac
         if (partner) t += ` y ${partner.first_name} ${partner.last_name}`
         t += `\n\n`
 
-        t += `*Estatus ONUS:* ${statusOnus}\n\n`
+        t += `*Vehículo Asignado:* ${vehicleStr}\n\n`
 
-        // Count lines in manual entry or default 0
-        const onuLines = onuSerials.split('\n').filter(x => x.trim().length > 0)
-        t += `*ONUS:* ${String(onuLines.length).padStart(2, '0')}\n\n`
-        if (onuSerials) t += `${onuSerials}\n\n`
-        else t += `(Sin seriales reportados)\n\n`
+        t += `*ONUS:* ${String(onuSerials.length).padStart(2, '0')}\n\n`
+        if (onuSerials.length > 0) {
+            onuSerials.forEach(s => t += `${s}\n`)
+        } else {
+            t += `(Ninguna)\n`
+        }
+        t += `\n`
 
-        const routerLines = routerSerials.split('\n').filter(x => x.trim().length > 0)
-        t += `*ROUTER:* ${String(routerLines.length).padStart(2, '0')}\n\n`
-        if (routerSerials) t += `${routerSerials}\n\n`
-        else t += `(Sin seriales reportados)\n\n`
+        t += `*ROUTER:* ${String(routerSerials.length).padStart(2, '0')}\n\n`
+        if (routerSerials.length > 0) {
+            routerSerials.forEach(s => t += `${s}\n`)
+            t += `\n`
+        }
 
         t += `*Instalaciones Asignadas No Efectuadas:* ${String(activeClients.length).padStart(2, '0')}\n\n`
         activeClients.forEach(c => {
@@ -203,52 +237,94 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, ac
 
                 <div className="p-6 space-y-8">
 
-                    {/* SECTION: STATUS */}
+                    {/* SECTION: VEHICLE */}
                     <section className="space-y-3">
                         <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">
-                            <SlidersHorizontal size={14} /> Estado General
+                            <Car size={14} /> Vehículo
                         </div>
-                        <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100">
-                            <div className="p-4 border-b border-slate-50 last:border-0">
-                                <Label className="text-xs text-slate-500 mb-1.5 block">Estatus ONUs</Label>
-                                <Input
-                                    className="border-0 bg-slate-50 rounded-xl h-10 font-medium"
-                                    value={statusOnus}
-                                    onChange={e => setStatusOnus(e.target.value)}
-                                />
-                            </div>
+                        <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 p-2">
+                            <Select value={selectedVehicle} onValueChange={setSelectedVehicle}>
+                                <SelectTrigger className="border-0 bg-transparent h-12 text-base">
+                                    <SelectValue placeholder="Seleccionar Vehículo..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {vehicles.map(v => (
+                                        <SelectItem key={v.id} value={v.id}>{v.modelo} - {v.placa}</SelectItem>
+                                    ))}
+                                    <SelectItem value="none">Ninguno / N/A</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                     </section>
 
-                    {/* SECTION: SERIALS */}
-                    <section className="space-y-3">
+                    {/* SECTION: SERIALS (DYNAMIC) */}
+                    <section className="space-y-6">
                         <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">Seriales Restantes</div>
-                        <div className="grid md:grid-cols-2 gap-4">
-                            <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-                                <Label className="text-xs font-bold text-slate-900 mb-2 block flex justify-between">
-                                    ONUs
-                                    <span className="text-slate-400 font-normal">{onuSerials.split('\n').filter(x => x.trim()).length}</span>
-                                </Label>
-                                <Textarea
-                                    placeholder="Pegar seriales ONU aquí..."
-                                    value={onuSerials}
-                                    onChange={e => setOnuSerials(e.target.value)}
-                                    className="bg-slate-50 border-0 rounded-xl min-h-[120px] font-mono text-sm resize-none focus-visible:ring-1"
-                                />
+
+                        {/* ONUS */}
+                        <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 space-y-4">
+                            <div className="flex justify-between items-center">
+                                <Label className="font-bold text-slate-900 text-base">ONUs</Label>
+                                <div className="flex items-center gap-2 bg-slate-100 rounded-lg p-1">
+                                    <span className="text-xs font-bold text-slate-500 pl-2">CANT:</span>
+                                    <Input
+                                        type="number"
+                                        className="h-8 w-16 border-0 bg-white shadow-sm text-center font-bold"
+                                        value={onuCount}
+                                        onChange={e => setOnuCount(parseInt(e.target.value) || 0)}
+                                    />
+                                </div>
                             </div>
-                            <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-                                <Label className="text-xs font-bold text-slate-900 mb-2 block flex justify-between">
-                                    Routers
-                                    <span className="text-slate-400 font-normal">{routerSerials.split('\n').filter(x => x.trim()).length}</span>
-                                </Label>
-                                <Textarea
-                                    placeholder="Pegar seriales Router aquí..."
-                                    value={routerSerials}
-                                    onChange={e => setRouterSerials(e.target.value)}
-                                    className="bg-slate-50 border-0 rounded-xl min-h-[120px] font-mono text-sm resize-none focus-visible:ring-1"
-                                />
-                            </div>
+
+                            {onuCount > 0 && (
+                                <div className="space-y-3 pt-2 animate-in slide-in-from-top-2 fade-in">
+                                    {onuSerials.map((serial, idx) => (
+                                        <div key={idx} className="flex gap-3 items-center">
+                                            <span className="text-xs font-mono text-slate-300 w-6 text-right">#{idx + 1}</span>
+                                            <Input
+                                                placeholder={`Serial ONU ${idx + 1}`}
+                                                className="bg-slate-50 border-0 rounded-xl"
+                                                value={serial}
+                                                onChange={e => updateSerial('ONU', idx, e.target.value)}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
+
+                        {/* ROUTERS */}
+                        <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 space-y-4">
+                            <div className="flex justify-between items-center">
+                                <Label className="font-bold text-slate-900 text-base">Routers</Label>
+                                <div className="flex items-center gap-2 bg-slate-100 rounded-lg p-1">
+                                    <span className="text-xs font-bold text-slate-500 pl-2">CANT:</span>
+                                    <Input
+                                        type="number"
+                                        className="h-8 w-16 border-0 bg-white shadow-sm text-center font-bold"
+                                        value={routerCount}
+                                        onChange={e => setRouterCount(parseInt(e.target.value) || 0)}
+                                    />
+                                </div>
+                            </div>
+
+                            {routerCount > 0 && (
+                                <div className="space-y-3 pt-2 animate-in slide-in-from-top-2 fade-in">
+                                    {routerSerials.map((serial, idx) => (
+                                        <div key={idx} className="flex gap-3 items-center">
+                                            <span className="text-xs font-mono text-slate-300 w-6 text-right">#{idx + 1}</span>
+                                            <Input
+                                                placeholder={`Serial Router ${idx + 1}`}
+                                                className="bg-slate-50 border-0 rounded-xl"
+                                                value={serial}
+                                                onChange={e => updateSerial('ROUTER', idx, e.target.value)}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
                     </section>
 
                     {/* SECTION: SPOOLS */}
