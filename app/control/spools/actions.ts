@@ -318,3 +318,70 @@ export async function getSpoolHistory() {
 
     return history.filter(Boolean)
 }
+
+export async function cleanupDuplicates() {
+    const cookieStore = await cookies()
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                getAll() { return cookieStore.getAll() },
+                setAll() { }
+            },
+        }
+    )
+
+    try {
+        // 1. Get ALL Active Assignments with items
+        const { data: assignments, error } = await supabase
+            .from("inventory_assignments")
+            .select(`
+                id,
+                created_at,
+                items:inventory_assignment_items(serials)
+            `)
+            .eq("status", "ACTIVE")
+
+        if (error) throw new Error("Error fetching assignments: " + error.message)
+
+        // 2. Group by Serial
+        const serialMap: Record<string, any[]> = {}
+        assignments?.forEach((a: any) => {
+            const item = a.items?.[0]
+            if (item && item.serials && item.serials.length > 0) {
+                const serial = typeof item.serials[0] === 'string' ? item.serials[0] : item.serials[0].serial
+                if (!serialMap[serial]) serialMap[serial] = []
+                serialMap[serial].push(a)
+            }
+        })
+
+        // 3. Identify Duplicates
+        let deletedCount = 0
+        for (const serial in serialMap) {
+            const list = serialMap[serial]
+            if (list.length > 1) {
+                // Sort by created_at ascending (Oldest first)
+                // We keep the OLDEST (index 0) and delete the rest
+                list.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+
+                const toDelete = list.slice(1) // All except first
+
+                for (const item of toDelete) {
+                    // Delete items first (cascade might rely on it, but let's be explicit if needed, 
+                    // though cascade delete on assignment delete is better. 
+                    // Let's try deleting assignment directly)
+                    await supabase.from("inventory_assignment_items").delete().eq("assignment_id", item.id)
+                    await supabase.from("inventory_assignments").delete().eq("id", item.id)
+                    deletedCount++
+                }
+            }
+        }
+
+        revalidatePath("/control/spools")
+        return { success: true, count: deletedCount }
+
+    } catch (e: any) {
+        return { success: false, error: e.message }
+    }
+}

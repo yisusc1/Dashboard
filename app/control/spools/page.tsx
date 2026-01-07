@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { getActiveSpools, getTeams, assignSpoolToTeam, returnSpool, getSpoolHistory } from "./actions"
+import { getActiveSpools, getTeams, assignSpoolToTeam, returnSpool, getSpoolHistory, cleanupDuplicates } from "./actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog"
@@ -89,6 +89,21 @@ export default function SpoolManagementPage() {
         }
     }
 
+    async function handleCleanup() {
+        const toastId = toast.loading("Buscando duplicados...")
+        const res = await cleanupDuplicates()
+        if (res.success && typeof res.count === 'number') {
+            if (res.count > 0) {
+                toast.success(`Se eliminaron ${res.count} asignaciones duplicadas`, { id: toastId })
+                loadData()
+            } else {
+                toast.success("No se encontraron duplicados", { id: toastId })
+            }
+        } else if (!res.success) {
+            toast.error("Error al limpiar: " + res.error, { id: toastId })
+        }
+    }
+
     return (
         <div className="min-h-screen bg-slate-50/50 p-6 md:p-10">
             <div className="max-w-6xl mx-auto">
@@ -109,6 +124,9 @@ export default function SpoolManagementPage() {
                         <Button variant="outline" onClick={() => setIsHistoryOpen(true)} className="gap-2 w-full sm:w-auto justify-center">
                             <History size={16} />
                             Historial
+                        </Button>
+                        <Button variant="ghost" onClick={handleCleanup} className="text-xs text-slate-400 hover:text-red-500">
+                            Reparar Duplicados
                         </Button>
                         <Dialog open={isAssignOpen} onOpenChange={setIsAssignOpen}>
                             <DialogTrigger asChild>
