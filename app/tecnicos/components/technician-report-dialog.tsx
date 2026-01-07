@@ -36,29 +36,10 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, ac
 
         const date = new Date().toLocaleDateString("es-ES")
 
-        // 1. ONUS (Remaining)
-        // Find stock items with "ONU" in name/sku
-        const onuItems = Object.values(stock).filter((i: any) => i.name.toUpperCase().includes("ONU") || i.serials.some((s: string) => s.length > 0))
-        // Actually, logic in page.tsx filters serials by 'installedOnus' so stock.serials SHOULD be the remaining ones.
-        // Let's gather ALL serials from ALL items that look like ONUs
-        const remainingOnuSerials: string[] = []
-        Object.keys(stock).forEach(key => {
-            if (key.includes("ONU")) {
-                remainingOnuSerials.push(...activeStockSerials(stock[key]))
-            }
-        })
-
-        // 2. ROUTERS (Remaining)
-        const remainingRouterSerials: string[] = []
-        Object.keys(stock).forEach(key => {
-            if (key.includes("ROUTER")) {
-                remainingRouterSerials.push(...activeStockSerials(stock[key]))
-            }
-        })
+        // 1. ONUS (Manual Entry requested)
+        // 2. ROUTERS (Manual Entry requested)
 
         // 3. Installations
-        // Failed: activeClients (Pending/In Progress could be considered "No efectuadas" if end of day)
-        // Or we just list them.
         const failedCount = activeClients.length
 
         // 4. Materials Used (Sum from todaysInstallations)
@@ -73,7 +54,6 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, ac
             tensores += parseInt(String(c.tensores || 0).replace(/\D/g, '')) || 0
 
             // Patch/Roseta might be "Si"/"No" or number?
-            // Page logic: val = (valStr === 'Si' || valStr === true) ? 1 : 0
             if (c.patchcord === 'Si' || c.patchcord === true) patchcords++
             if (c.rosetas === 'Si' || c.rosetas === true) rosetas++
         })
@@ -85,8 +65,6 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, ac
 
         Object.keys(stock).forEach(key => {
             if (key.includes("CARRETE")) {
-                // key is like "CARRETE-FIBRA__123456"
-                // Serial is after __
                 const parts = key.split("__")
                 const serial = parts[1] || parts[0]
 
@@ -116,19 +94,13 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, ac
 
         t += `*Estatus ONUS:* ${statusOnus}\n\n`
 
-        t += `*ONUS:* ${String(remainingOnuSerials.length).padStart(2, '0')}\n\n`
-        if (remainingOnuSerials.length > 0) {
-            remainingOnuSerials.forEach(s => t += `${s}\n`)
-        } else {
-            t += `(Ninguna)\n`
-        }
+        t += `*ONUS:* 00\n\n`
+        t += `[ESCRIBIR SERIALES ONUS AQUÍ]\n`
         t += `\n`
 
-        t += `*ROUTER:* ${String(remainingRouterSerials.length).padStart(2, '0')}\n\n`
-        if (remainingRouterSerials.length > 0) {
-            remainingRouterSerials.forEach(s => t += `${s}\n`)
-            t += `\n`
-        }
+        t += `*ROUTER:* 00\n\n`
+        t += `[ESCRIBIR SERIALES ROUTERS AQUÍ]\n`
+        t += `\n`
 
         t += `*Instalaciones Asignadas No Efectuadas:* ${String(failedCount).padStart(2, '0')}\n\n`
         activeClients.forEach(c => {
