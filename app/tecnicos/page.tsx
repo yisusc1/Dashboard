@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { User, Shield, Users, Wrench, ArrowRight, Package, AlertTriangle, LogOut, Lock, Trash2, Plus } from "lucide-react"
 import { LogoutButton } from "@/components/ui/logout-button"
 import { FinalizeDayButton } from "./components/finalize-day-button"
+import { TechnicianReportDialog } from "./components/technician-report-dialog"
 import { DesktopModeToggle } from "@/components/desktop-mode-toggle"
 
 export default async function TechnicianDashboard() {
@@ -605,21 +606,29 @@ export default async function TechnicianDashboard() {
             )}
           </div>
 
-          {/* FINALIZAR JORNADA BUTTON */}
-          {showFinalizeButton && (
-            <div className="pt-8 pb-8 animate-in fade-in slide-in-from-bottom-4">
-              <div className="bg-black rounded-[28px] p-8 text-center relative overflow-hidden shadow-2xl shadow-gray-200">
-                {/* Decorative */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gray-800/30 rounded-full blur-2xl -mr-10 -mt-10"></div>
+          <div className="space-y-4 pt-8">
+            <TechnicianReportDialog
+              profile={profile}
+              stock={stock}
+              todaysInstallations={todaysInstallations}
+              activeClients={activeClients || []}
+            />
+            {/* FINALIZAR JORNADA BUTTON */}
+            {showFinalizeButton && (
+              <div className="pt-8 pb-8 animate-in fade-in slide-in-from-bottom-4">
+                <div className="bg-black rounded-[28px] p-8 text-center relative overflow-hidden shadow-2xl shadow-gray-200">
+                  {/* Decorative */}
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gray-800/30 rounded-full blur-2xl -mr-10 -mt-10"></div>
 
-                <div className="relative z-10">
-                  <h3 className="text-white text-xl font-bold mb-2">Fin de Jornada</h3>
-                  <p className="text-gray-400 mb-6 text-sm">Has completado tus instalaciones de hoy.</p>
-                  <FinalizeDayButton />
+                  <div className="relative z-10">
+                    <h3 className="text-white text-xl font-bold mb-2">Fin de Jornada</h3>
+                    <p className="text-gray-400 mb-6 text-sm">Has completado tus instalaciones de hoy.</p>
+                    <FinalizeDayButton />
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
 
 
