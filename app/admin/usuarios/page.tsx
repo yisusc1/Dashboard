@@ -18,8 +18,9 @@ import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import { UserCog, Mail, Calendar, Settings2, Building2, Briefcase, User as UserIcon, ArrowLeft, Pencil, Shield, LogIn } from "lucide-react"
 import Link from "next/link"
-import { updateProfileDetails, impersonateUserAction } from "./user-actions"
+import { updateProfileDetails, impersonateUserAction, createUserAction } from "./user-actions"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 import { DEPARTMENTS, JOB_TITLES_BY_DEPARTMENT } from "@/lib/constants"
 import {
     Select,
@@ -75,6 +76,17 @@ export default function AdminUsersPage() {
 
     // Permissions State
     const [permissionsUser, setPermissionsUser] = useState<Profile | null>(null)
+
+    // Create User State
+    const [isCreateOpen, setIsCreateOpen] = useState(false)
+    const [createForm, setCreateForm] = useState({
+        email: "",
+        password: "",
+        firstName: "",
+        lastName: "",
+        role: "tecnico"
+    })
+    const [creating, setCreating] = useState(false)
 
     useEffect(() => {
         loadProfiles()
@@ -179,6 +191,32 @@ export default function AdminUsersPage() {
         return "bg-zinc-100 text-zinc-700"
     }
 
+    const handleCreateUser = async () => {
+        if (!createForm.email || !createForm.password || !createForm.firstName) {
+            toast.error("Complete los campos obligatorios")
+            return
+        }
+
+        setCreating(true)
+        const result = await createUserAction({
+            email: createForm.email,
+            password: createForm.password,
+            firstName: createForm.firstName,
+            lastName: createForm.lastName,
+            role: createForm.role
+        })
+        setCreating(false)
+
+        if (result.error) {
+            toast.error(result.error)
+        } else {
+            toast.success("Usuario creado exitosamente")
+            setIsCreateOpen(false)
+            setCreateForm({ email: "", password: "", firstName: "", lastName: "", role: "tecnico" }) // Reset
+            loadProfiles()
+        }
+    }
+
     return (
         <div className="p-8 space-y-6 max-w-7xl mx-auto">
             <div className="flex items-center gap-3 mb-8">
@@ -193,6 +231,11 @@ export default function AdminUsersPage() {
                 <div>
                     <h1 className="text-3xl font-bold text-zinc-900 tracking-tight">Gestión de Usuarios</h1>
                     <p className="text-zinc-500">Administra los permisos y roles del personal</p>
+                </div>
+                <div className="ml-auto">
+                    <Button onClick={() => setIsCreateOpen(true)} className="bg-zinc-900 text-white hover:bg-zinc-800 rounded-xl">
+                        + Nuevo Usuario
+                    </Button>
                 </div>
             </div>
 
@@ -417,6 +460,84 @@ export default function AdminUsersPage() {
                     <DialogFooter>
                         <Button onClick={() => setPermissionsUser(null)}>
                             Listo, Cerrar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            {/* CREATE USER DIALOG */}
+            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Crear Nuevo Usuario</DialogTitle>
+                        <DialogDescription>
+                            Crea una cuenta con contraseña definida manualmente.
+                            El usuario podrá iniciar sesión inmediatamente.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-2">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Nombre</Label>
+                                <Input
+                                    value={createForm.firstName}
+                                    onChange={e => setCreateForm({ ...createForm, firstName: e.target.value })}
+                                    placeholder="Ej: Juan"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Apellido</Label>
+                                <Input
+                                    value={createForm.lastName}
+                                    onChange={e => setCreateForm({ ...createForm, lastName: e.target.value })}
+                                    placeholder="Ej: Pérez"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Correo Electrónico</Label>
+                            <Input
+                                type="email"
+                                value={createForm.email}
+                                onChange={e => setCreateForm({ ...createForm, email: e.target.value })}
+                                placeholder="usuario@empresa.com"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Contraseña Inicial</Label>
+                            <Input
+                                type="text"
+                                value={createForm.password}
+                                onChange={e => setCreateForm({ ...createForm, password: e.target.value })}
+                                placeholder="Clave segura..."
+                            />
+                            <p className="text-[10px] text-zinc-500">Mínimo 6 caracteres.</p>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Rol Inicial</Label>
+                            <Select
+                                value={createForm.role}
+                                onValueChange={v => setCreateForm({ ...createForm, role: v })}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Seleccionar Rol" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="tecnico">Técnico</SelectItem>
+                                    <SelectItem value="admin">Administrador</SelectItem>
+                                    <SelectItem value="supervisor">Supervisor</SelectItem>
+                                    <SelectItem value="chofer">Chofer</SelectItem>
+                                    <SelectItem value="invitado">Invitado</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancelar</Button>
+                        <Button onClick={handleCreateUser} disabled={creating} className="bg-zinc-900 text-white hover:bg-zinc-800">
+                            {creating ? "Creando..." : "Crear Cuenta"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

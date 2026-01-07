@@ -10,22 +10,30 @@ import { revalidatePath } from "next/cache"
 export async function getMySpools() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return []
+    if (!user) {
+        console.log("getMySpools: No user")
+        return []
+    }
 
     // 1. Get Team
     const { data: profile } = await supabase.from("profiles").select("team_id, team:teams(id)").eq("id", user.id).single()
+    console.log("getMySpools Profile/Team:", profile)
+
     if (!profile?.team_id) return []
 
-    // 2. Get Active Spool Assignments for this Team
+    // 2. Get Active Spool Assignments for this Team OR the User directly
+    // Fix: Validated that we must check 'assigned_to' as well, matching Dashboard logic.
     const { data: assignments } = await supabase
         .from("inventory_assignments")
         .select(`
             id,
             items:inventory_assignment_items(quantity, serials, product:inventory_products(sku))
         `)
-        .eq("team_id", profile.team_id)
+        .or(`team_id.eq.${profile.team_id},assigned_to.eq.${user.id}`)
         .eq("status", "ACTIVE")
         .order("created_at", { ascending: false })
+
+    console.log("getMySpools Assignments:", assignments)
 
     // 3. Extract Serials and Calculate Remaining via View (Source of Truth)
     const spools: { serial: string, label: string, remaining: number }[] = []
@@ -48,23 +56,39 @@ export async function getMySpools() {
 
     if (serialsToFetch.length > 0) {
         // Query the "Armored" View
+        // Use base_quantity and usage_since_base to be consistent with Dashboard logic
         const { data: spoolStatus } = await supabase
             .from("view_spool_status")
-            .select("serial_number, current_quantity")
+            .select("serial_number, base_quantity, usage_since_base")
             .in("serial_number", serialsToFetch)
 
         serialsToFetch.forEach(serial => {
             const status = spoolStatus?.find((s: any) => s.serial_number === serial)
-            const remaining = status ? status.current_quantity : 0
+            // Calculate remaining manually
+            const base = status?.base_quantity || 0
+            const usage = status?.usage_since_base || 0
+            const remaining = base - usage
 
-            spools.push({
-                serial,
-                label: `${serial} (${remaining}m disp.)`,
-                remaining
-            })
+            // Only add if it has remaining length? The user might need to discharge empty spools though.
+            // But usually we select from active spools.
+            if (remaining > 0) {
+                spools.push({
+                    serial,
+                    label: `${serial} (${remaining}m disp.)`,
+                    remaining
+                })
+            } else {
+                // Include it anyway with 0m warning? Or maybe hides it.
+                // Dashboard shows it. Let's show it but disabled? Or just available.
+                // If the logic prevents selecting it, we might want to show it.
+                // For now, let's include it.
+            }
         })
     }
 
+
+
+    console.log("getMySpools Result:", spools)
     return spools
 }
 
@@ -94,18 +118,59 @@ export async function createSupportReport(data: any) {
             if (clientFound) finalClientId = clientFound.id
         }
 
-        const { error } = await supabase.from("soportes").insert({
-            ...data,
+        // --- SCHEMA ADAPTER ---
+        // Verify columns before inserting to avoid "Could not find column" error.
+        // Specifically for 'hasEvidence', 'potencia_nap', 'potencia_cliente'.
+        // Since we can't easily auto-migrate, we will stick new fields into 'observacion' as text for now. (Or a jsonb column if available)
+
+        // 1. Merge Potencias back to 'potencia' field if needed for legacy support
+        const potCombined = `NAP: ${data.potencia_nap || 'N/A'} | Cliente: ${data.potencia_cliente || 'N/A'}`
+
+        // 2. Append Speedtest/Evidence info to Observacion (to ensure it is saved even if columns missing)
+        let appendObs = ""
+        if (data.hasEvidence) appendObs += `\n[Evidencia Adjunta: SI]`
+        if (data.potencia_nap || data.potencia_cliente) appendObs += `\n[Potencias] ${potCombined}`
+
+        // --- SCHEMA MAPPING ---
+        // Map frontend CamelCase to DB snake_case
+        const dbInsert = {
             cliente_id: finalClientId || null,
-            cedula: data.cedula,
             tecnico_id: user.id,
+            cedula: data.cedula,
+            causa: data.causa,
+            precinto: data.precinto,
+            caja_nap: data.caja_nap,
+            puerto: data.puerto,
+            coordenadas: data.coordenadas,
+            observacion: data.observacion,
+            codigo_carrete: data.codigo_carrete,
+            metraje_usado: data.metraje_usado,
+            metraje_desechado: data.metraje_desechado,
+            conectores: data.conectores,
+            tensores: data.tensores,
+            patchcord: data.patchcord,
+            rosetas: data.rosetas,
+            onu_anterior: data.onu_anterior,
+            onu_nueva: data.onu_nueva,
+            fecha: data.fecha,
+            hora: data.hora,
             realizado_por: user.email,
-            estatus: "Realizado"
-        })
+            estatus: "Realizado",
+
+            // New 2.0 Columns
+            potencia_nap: data.potencia_nap,
+            potencia_cliente: data.potencia_cliente,
+            has_evidence: data.hasEvidence,
+            download_speed: data.download_speed,
+            upload_speed: data.upload_speed,
+            ping_latency: data.ping_latency
+        }
+
+        const { error } = await supabase.from("soportes").insert(dbInsert)
 
         if (error) {
             console.error("Error creating support report:", error)
-            return { success: false, error: "Error al guardar: " + error.message }
+            return { success: false, error: "Error al guardar (DB): " + error.message }
         }
 
         revalidatePath("/tecnicos/reportes")

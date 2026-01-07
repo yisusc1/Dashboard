@@ -344,6 +344,10 @@ export function SupportReportDialog({ open, onOpenChange }: SupportReportDialogP
         setLoading(true)
         const res = await createSupportReport({
             ...formData,
+            // Map frontend state to DB columns
+            download_speed: speedTest.download,
+            upload_speed: speedTest.upload,
+            ping_latency: speedTest.ping,
             fecha: new Date().toLocaleDateString('es-VE'),
             hora: new Date().toLocaleTimeString('es-VE')
         })

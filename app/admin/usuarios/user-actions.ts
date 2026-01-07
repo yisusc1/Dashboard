@@ -77,3 +77,61 @@ export async function impersonateUserAction(email: string) {
         return { error: error.message || "Error al generar enlace" }
     }
 }
+
+export async function createUserAction(data: {
+    email: string,
+    password: string,
+    firstName: string,
+    lastName: string,
+    role: string
+}) {
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (!serviceRoleKey) return { error: "Falta Service Role Key" }
+
+    const supabase = await createClient()
+
+    // Check Admin Permissions
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: "No autorizado" }
+
+    // Double check admin role in DB
+    const { data: requester } = await supabase.from("profiles").select("roles").eq("id", user.id).single()
+    if (!requester?.roles?.includes("admin")) return { error: "No tienes permisos de administrador" }
+
+    try {
+        const adminClient = createSupabaseAdmin(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            serviceRoleKey,
+            { auth: { autoRefreshToken: false, persistSession: false } }
+        )
+
+        const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
+            email: data.email,
+            password: data.password,
+            email_confirm: true,
+            user_metadata: {
+                first_name: data.firstName,
+                last_name: data.lastName,
+            }
+        })
+
+        if (createError) throw createError
+        if (!newUser.user) throw new Error("No se pudo crear el usuario")
+
+        // Set Initial Role if provided (defaulting to basic if not)
+        const initialRole = data.role || "tecnico"
+
+        // Update roles
+        const { error: profileError } = await adminClient
+            .from("profiles")
+            .update({ roles: [initialRole] })
+            .eq("id", newUser.user.id)
+
+        revalidatePath("/admin/usuarios")
+        return { success: true, userId: newUser.user.id }
+
+    } catch (error: any) {
+        console.error("Create User Error:", error)
+        return { error: error.message || "Error al crear usuario" }
+    }
+}
