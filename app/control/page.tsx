@@ -6,6 +6,7 @@ import { getPendingAudits } from "./actions"
 
 import { Users, User, ShieldCheck, ChevronRight, ArrowLeft, AlertCircle, Disc, Fuel } from "lucide-react"
 import { DesktopModeToggle } from "@/components/desktop-mode-toggle"
+import { DailyReportDialog } from "@/components/daily-report-dialog"
 
 export default async function ControlPage() {
     const cookieStore = await cookies()
