@@ -128,15 +128,26 @@ export async function assignSpoolToTeam(teamId: string, serial: string, initialM
 
     try {
         // 0. Validate if Serial is ALREADY assigned (Active)
-        // We join Items -> Assignment to check status=ACTIVE and Serial Match
-        const { data: existing } = await supabase
-            .from("inventory_assignment_items")
-            .select("id, assignment:inventory_assignments!inner(status)")
-            .eq("inventory_assignments.status", "ACTIVE")
-            .contains("serials", [serial])
-            .limit(1)
+        // Robust check: Fetch all active items and check in Javascript to handle JSON variations (["A"] vs [{"serial":"A"}])
+        const { data: activeAssignments } = await supabase
+            .from("inventory_assignments")
+            .select(`
+                items:inventory_assignment_items(serials)
+            `)
+            .eq("status", "ACTIVE")
 
-        if (existing && existing.length > 0) {
+        const isDuplicate = activeAssignments?.some((a: any) => {
+            const item = a.items?.[0]
+            if (!item || !item.serials || item.serials.length === 0) return false
+
+            const existingSerial = typeof item.serials[0] === 'string'
+                ? item.serials[0]
+                : item.serials[0].serial
+
+            return existingSerial === serial
+        })
+
+        if (isDuplicate) {
             throw new Error(`El serial ${serial} ya se encuentra asignado y activo.`)
         }
 
