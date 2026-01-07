@@ -160,14 +160,9 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, to
 
         // Auto-calc remaining from stock?
         // Stock passed is "Current System Stock".
-        // Remaining = Stock - Used? Or is the "Used" already subtracted in some view?
-        // Usually Stock is real-time. But tech hasn't "Finalized" yet, so maybe not subtracted?
-        // Let's just suggest Stock Quantity as Remaining or 0. User should count.
-        // For convenience, we can pre-fill "Remaining" with (Stock - Used) just as an estimate.
-
-        const c_rem = activeStockQuantity(stock, "CONV") - c_used
-        const t_rem = activeStockQuantity(stock, "TENS") - t_used
-        const p_rem = activeStockQuantity(stock, "PATCH1") - p_used
+        const c_rem = activeStockQuantity(stock, "CONV")
+        const t_rem = activeStockQuantity(stock, "TENS")
+        const p_rem = activeStockQuantity(stock, "PATCH1")
 
         setMaterials({
             conectores_used: c_used,
@@ -202,7 +197,7 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, to
                 // Or we leave it as valid stock?
                 // Let's subtract for accuracy in suggestion.
                 detectedSpools[item.codigo_carrete].used += (u + w)
-                detectedSpools[item.codigo_carrete].remaining -= (u + w)
+                // detectedSpools[item.codigo_carrete].remaining -= (u + w)
             }
         }
 
