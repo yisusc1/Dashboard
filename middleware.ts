@@ -63,9 +63,9 @@ export async function middleware(request: NextRequest) {
     const path = request.nextUrl.pathname
 
     // Public paths
-    if (path.startsWith("/login") || path.startsWith("/auth")) {
-        // If logged in, redirect to home
-        if (user) {
+    if (path.startsWith("/login") || path.startsWith("/auth") || path.startsWith("/verification")) {
+        // If logged in, redirect to home (except verification)
+        if (user && !path.startsWith("/verification")) {
             return NextResponse.redirect(new URL("/", request.url))
         }
         return response

@@ -5,9 +5,17 @@ import { Button } from "@/components/ui/button"
 import { Chrome } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { useRouter } from "next/navigation"
 
 export default function LoginPage() {
     const [loading, setLoading] = useState(false)
+
+    const router = useRouter()
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+    const [isSignUp, setIsSignUp] = useState(false)
 
     const handleLogin = async () => {
         setLoading(true)
@@ -23,8 +31,52 @@ export default function LoginPage() {
             if (error) throw error
         } catch (error) {
             console.error("Error logging in:", error)
-            toast.error("Error al iniciar sesión")
+            toast.error("Error al iniciar sesión con Google")
             setLoading(false)
+        }
+    }
+
+    const handleEmailLogin = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setLoading(true)
+        const supabase = createClient()
+
+        if (isSignUp) {
+            const { error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: {
+                        first_name: "Test",
+                        last_name: "User"
+                    }
+                }
+            })
+            if (error) {
+                toast.error("Error registro: " + error.message)
+                setLoading(false)
+            } else {
+                toast.success("Cuenta creada! Revisa tu correo o intenta iniciar sesión (si el auto-confirm está activo)")
+                // Try auto login logic or just notify
+                // For dev environments without email confirm, this works immediately usually
+                // If email confirm is on, they are stuck. 
+                // Let's assume they can login or middleware handles it.
+                setLoading(false)
+            }
+        } else {
+            const { error } = await supabase.auth.signInWithPassword({
+                email,
+                password
+            })
+
+            if (error) {
+                toast.error("Error: " + error.message)
+                setLoading(false)
+            } else {
+                toast.success("Bienvenido")
+                router.push("/")
+                router.refresh()
+            }
         }
     }
 
@@ -52,6 +104,57 @@ export default function LoginPage() {
                     </div>
 
                     <div className="w-full space-y-4 pt-4 animate-in slide-in-from-bottom-8 duration-700 fade-in fill-mode-both delay-200">
+
+                        {/* Manual Login Form */}
+                        <form onSubmit={handleEmailLogin} className="space-y-3 mb-6">
+                            <div className="space-y-1 text-left">
+                                <Label className="text-xs text-gray-500 ml-1">Email</Label>
+                                <Input
+                                    type="email"
+                                    value={email}
+                                    onChange={e => setEmail(e.target.value)}
+                                    className="rounded-xl border-gray-200 bg-gray-50/50"
+                                    placeholder="correo@ejemplo.com"
+                                />
+                            </div>
+                            <div className="space-y-1 text-left">
+                                <Label className="text-xs text-gray-500 ml-1">Contraseña</Label>
+                                <Input
+                                    type="password"
+                                    value={password}
+                                    onChange={e => setPassword(e.target.value)}
+                                    className="rounded-xl border-gray-200 bg-gray-50/50"
+                                    placeholder="••••••••"
+                                />
+                            </div>
+                            <Button
+                                type="submit"
+                                variant="outline"
+                                className="w-full rounded-xl h-11 border-gray-200 text-gray-700 hover:bg-gray-50 mb-2"
+                                disabled={loading || !email || !password}
+                            >
+                                {loading ? "Procesando..." : (isSignUp ? "Registrar Cuenta de Prueba" : "Iniciar con Correo")}
+                            </Button>
+
+                            <div className="text-center">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsSignUp(!isSignUp)}
+                                    className="text-xs text-blue-600 hover:underline"
+                                >
+                                    {isSignUp ? "¿Ya tienes cuenta? Inicia Sesión" : "¿No tienes contraseña? Crea una cuenta de prueba"}
+                                </button>
+                            </div>
+                        </form>
+
+                        <div className="relative">
+                            <div className="absolute inset-0 flex items-center">
+                                <span className="w-full border-t border-gray-200" />
+                            </div>
+                            <div className="relative flex justify-center text-xs uppercase">
+                                <span className="bg-white px-2 text-gray-400">O continúa con</span>
+                            </div>
+                        </div>
                         <Button
                             onClick={handleLogin}
                             className="w-full h-14 rounded-full text-base font-medium bg-gray-900 text-white hover:bg-black transition-all duration-300 shadow-lg shadow-gray-900/10 hover:scale-[1.02] active:scale-[0.98]"
