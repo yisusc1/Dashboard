@@ -110,6 +110,50 @@ export function SupportReportDialog({ open, onOpenChange }: SupportReportDialogP
 
         if (res.success) {
             toast.success("Reporte de Soporte Guardado")
+
+            // BUILD WHATSAPP MESSAGE
+            let message = `*REPORTE DE SOPORTE*\n`
+            message += `*Fecha:* ${new Date().toLocaleDateString('es-VE')}\n`
+            message += `*Hora:* ${new Date().toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })}\n\n`
+
+            message += `*Cliente Cédula:* ${formData.cedula}\n`
+            message += `*Motivo:* ${formData.causa}\n\n`
+
+            message += `*DATOS TÉCNICOS*\n`
+            message += `Precinto: ${formData.precinto || 'N/A'}\n`
+            message += `Caja NAP: ${formData.caja_nap || 'N/A'}\n`
+            message += `Potencia: ${formData.potencia || 'N/A'} dBm\n`
+            message += `Puerto: ${formData.puerto || 'N/A'}\n`
+            message += `Coordenadas: ${formData.coordenadas || 'N/A'}\n\n`
+
+            if (formData.codigo_carrete || parseInt(formData.conectores) > 0 || parseInt(formData.patchcord) > 0) {
+                message += `*MATERIALES*\n`
+                if (formData.codigo_carrete) {
+                    const spoolLabel = spools.find(s => s.serial === formData.codigo_carrete)?.label || formData.codigo_carrete
+                    message += `- Bobina: ${spoolLabel} (Usado: ${formData.metraje_usado}m, Merma: ${formData.metraje_desechado}m)\n`
+                }
+                if (parseInt(formData.conectores) > 0) message += `- Conectores: ${formData.conectores}\n`
+                if (parseInt(formData.tensores) > 0) message += `- Tensores: ${formData.tensores}\n`
+                if (parseInt(formData.patchcord) > 0) message += `- Patchcords: ${formData.patchcord}\n`
+                if (parseInt(formData.rosetas) > 0) message += `- Rosetas: ${formData.rosetas}\n`
+                message += `\n`
+            }
+
+            if (isSwap && formData.onu_anterior) {
+                message += `*CAMBIO DE EQUIPO*\n`
+                message += `Retirado: ${formData.onu_anterior}\n`
+                message += `Instalado: ${formData.onu_nueva || 'N/A'}\n\n`
+            }
+
+            if (formData.observacion) {
+                message += `*Observaciones:* ${formData.observacion}\n`
+            }
+
+            // ENCODE AND OPEN
+            const encodedMessage = encodeURIComponent(message)
+            const whatsappUrl = `https://wa.me/?text=${encodedMessage}`
+            window.open(whatsappUrl, '_blank')
+
             onOpenChange(false)
             // Reset form
             setFormData({
