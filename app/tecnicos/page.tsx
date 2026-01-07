@@ -522,22 +522,38 @@ export default async function TechnicianDashboard() {
               </div>
             )}
 
-            {/* MAIN ACTION BUTTON */}
-            <Link href="/tecnicos/reportes?action=new" className="block group relative">
-              <div className="absolute inset-0 bg-blue-600 rounded-[28px] shadow-lg shadow-blue-500/30 transition-transform group-active:scale-[0.98]"></div>
-              <div className="relative bg-blue-600 h-28 rounded-[28px] flex items-center justify-between px-8 overflow-hidden">
-                <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-white/10 to-transparent"></div>
-
-                <div className="flex flex-col z-10">
-                  <span className="text-blue-100 text-sm font-bold uppercase tracking-wide mb-1">Comenzar Trabajo</span>
-                  <span className="text-white text-3xl font-bold">Nueva Instalación</span>
+            {/* MAIN ACTIONS */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* INSTALLATION CARD */}
+              <Link href="/tecnicos/reportes?action=new" className="block group relative">
+                <div className="absolute inset-0 bg-blue-600 rounded-[28px] shadow-lg shadow-blue-500/30 transition-transform group-active:scale-[0.98]"></div>
+                <div className="relative bg-blue-600 h-28 rounded-[28px] flex items-center justify-between px-6 overflow-hidden">
+                  <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-white/10 to-transparent"></div>
+                  <div className="flex flex-col z-10">
+                    <span className="text-blue-100 text-xs font-bold uppercase tracking-wide mb-1">Nueva</span>
+                    <span className="text-white text-2xl font-bold">Instalación</span>
+                  </div>
+                  <div className="h-12 w-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white z-10 group-hover:bg-white group-hover:text-blue-600 transition-colors">
+                    <Plus size={24} />
+                  </div>
                 </div>
+              </Link>
 
-                <div className="h-14 w-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white z-10 group-hover:bg-white group-hover:text-blue-600 transition-colors">
-                  <Plus size={28} />
+              {/* SUPPORT CARD */}
+              <Link href="/tecnicos/reportes?action=support" className="block group relative">
+                <div className="absolute inset-0 bg-orange-500 rounded-[28px] shadow-lg shadow-orange-500/30 transition-transform group-active:scale-[0.98]"></div>
+                <div className="relative bg-orange-500 h-28 rounded-[28px] flex items-center justify-between px-6 overflow-hidden">
+                  <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-white/10 to-transparent"></div>
+                  <div className="flex flex-col z-10">
+                    <span className="text-orange-100 text-xs font-bold uppercase tracking-wide mb-1">Reportar</span>
+                    <span className="text-white text-2xl font-bold">Soporte</span>
+                  </div>
+                  <div className="h-12 w-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white z-10 group-hover:bg-white group-hover:text-orange-600 transition-colors">
+                    <Wrench size={24} />
+                  </div>
                 </div>
-              </div>
-            </Link>
+              </Link>
+            </div>
           </div> {/* END MAIN CONTENT */}
 
           {/* SIDEBAR (Col 3) */}

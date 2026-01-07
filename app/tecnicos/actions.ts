@@ -69,6 +69,35 @@ export async function getMySpools() {
     return spools
 }
 
+// [New] Create Support Report
+export async function createSupportReport(data: any) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        return { success: false, error: "Usuario no autenticado" }
+    }
+
+    try {
+        const { error } = await supabase.from("soportes").insert({
+            ...data,
+            tecnico_id: user.id,
+            realizado_por: user.email, // Or fetch profile name if preferred
+            estatus: "Realizado"
+        })
+
+        if (error) {
+            console.error("Error creating support report:", error)
+            return { success: false, error: "Error al guardar el reporte: " + error.message }
+        }
+
+        revalidatePath("/tecnicos/reportes")
+        return { success: true }
+    } catch (e: any) {
+        return { success: false, error: e.message }
+    }
+}
+
 // [New] Purge Test Data
 export async function purgeTestData() {
     try {

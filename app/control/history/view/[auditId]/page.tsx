@@ -294,16 +294,17 @@ export default function AuditViewPage() {
                                 const used = Number(inst.metraje_usado) || 0
                                 const wasted = Number(inst.metraje_desechado) || 0
                                 const total = used + wasted
+                                const isSupport = inst.type === 'SUPPORT'
 
                                 return (
                                     <div key={inst.id} className="p-4 hover:bg-slate-50 transition-colors flex items-center justify-between group">
                                         <div className="flex items-center gap-4">
-                                            <div className="h-10 w-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">
-                                                {inst.tecnico_1 ? inst.tecnico_1.substring(0, 2).toUpperCase() : 'EQ'}
+                                            <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-xs ${isSupport ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
+                                                {isSupport ? <Wrench size={16} /> : (inst.tecnico_1 ? inst.tecnico_1.substring(0, 2).toUpperCase() : 'EQ')}
                                             </div>
                                             <div>
                                                 <p className="font-bold text-slate-900 text-sm">
-                                                    {inst.cliente?.nombre || inst.equipo || "Instalación"}
+                                                    {isSupport ? `Soporte: ${inst.causa || "General"}` : (inst.cliente?.nombre || inst.equipo || "Instalación")}
                                                 </p>
                                                 <div className="flex items-center gap-2 text-xs text-slate-500">
                                                     {inst.cliente?.cedula && <span className="font-mono text-slate-400">{inst.cliente.cedula} •</span>}

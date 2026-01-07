@@ -6,9 +6,10 @@ import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, CheckCircle, Pencil, Send, Trash2, User, Wifi, Cloud, PenTool, Ruler, LayoutGrid, Home, MapPin } from "lucide-react"
+import { ArrowLeft, CheckCircle, Pencil, Send, Trash2, User, Wifi, Cloud, PenTool, Ruler, LayoutGrid, Home, MapPin, Router } from "lucide-react"
 import { toast } from "sonner"
 import { AutoFillButton } from "@/components/auto-fill-button"
+import { Switch } from "@/components/ui/switch"
 
 type Client = {
   id: string
@@ -168,7 +169,22 @@ export function ClientForm({ client, phase, onBack, onPhaseComplete, teamData }:
         }
 
         if (assignmentData) {
+          // [Fix] Prioritize Assignment Data for Immutable Fields (ONU, Plan, etc.) unless explicitly saved in Closure
           newData = { ...newData, ...assignmentData }
+
+          // Re-apply Closure data if it exists to respect edits, BUT ensure ONU persists if closure has it empty/null
+          if (currentData) {
+            const keys = Object.keys(currentData)
+            keys.forEach(k => {
+              // Strict Garbage Filter: Don't let --- or N/A overwrite valid Assignment data
+              const val = currentData[k]
+              const isGarbage = val === null || val === "" || val === "N/A" || val === "---" || val === " "
+
+              if (!isGarbage) {
+                newData[k] = currentData[k]
+              }
+            })
+          }
         }
 
         if (reviewData) {
@@ -203,254 +219,353 @@ export function ClientForm({ client, phase, onBack, onPhaseComplete, teamData }:
     }
 
     loadPhaseData()
-  }, [phase, client.id, onBack])
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  }, [client.id, phase, onBack])
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target
-    setFormData({
-      ...formData,
-      [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
-    })
+    if (type === "checkbox") {
+      const checked = (e.target as HTMLInputElement).checked
+      setFormData((prev) => ({ ...prev, [name]: checked }))
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }))
+    }
+  }
+
+  // Handle Switch Change specifically
+  const handleSwitchChange = (name: string, checked: boolean) => {
+    setFormData((prev) => ({ ...prev, [name]: checked }))
   }
 
   const capturarUbicacion = () => {
     if (navigator.geolocation) {
+      toast.info("Obteniendo ubicación...")
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setFormData({
-            ...formData,
-            coordenadas: `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`,
-          })
+          const { latitude, longitude } = position.coords
+          setFormData((prev) => ({
+            ...prev,
+            coordenadas: `${latitude}, ${longitude}`,
+          }))
+          toast.success("Ubicación capturada")
         },
-        () => toast.error("No se pudo obtener la ubicación"),
+        (error) => {
+          console.error("Error geolocation:", error)
+          toast.error("Error al obtener ubicación. Verifique permisos.")
+        },
       )
-    }
-  }
-
-  const generarLinkWhatsapp = (data: any) => {
-    let texto = ""
-    // [Keep same Whatsapp logic as before for brevity, logic doesn't change with UI]
-    // ... Copying previous message logic
-    const onu = data.onu ? data.onu.toUpperCase() : ""
-
-    if (phase === "assignment") {
-      texto = `Solicitud de asignación\n\nEquipo: ${data.equipo}\nCliente: ${data.cliente}\nCédula: ${data.cedula}\nONU: ${onu}\nPlan: ${data.plan}\n\nTécnico 1: ${data.tecnico_1}\nTécnico 2: ${data.tecnico_2}`
-    } else if (phase === "review") {
-      texto = `Solicitud De Revisión:\n\nEquipo: ${data.equipo}\nCliente: ${data.cliente}\nUbicación: ${data.ubicacion}\nCédula: ${data.cedula}\nPrecinto: ${data.precinto}\nPON/ONU: ${onu}\nMAC ONU: ${data.mac_onu}\nPlan: ${data.plan}\nCaja-Nap: ${data.caja_nap}\nCantidad De Puertos: ${data.cant_puertos}\nPuerto Conectado: ${data.puerto_conectado}\nCoordenadas: ${data.coordenadas}\nPotencia Nap: ${data.potencia_nap}\nPotencia Cliente: ${data.potencia_cliente}\nObservación: ${data.observacion}`
     } else {
-      const routerTxt = data.venta_router ? data.router_serial : "N/A"
-      const macRouterTxt = data.venta_router ? data.mac_router : "N/A"
-      const pgoTxt = data.power_go === "INACTIVO" ? "No" : "Si"
-      texto = `Reporte de Instalación:\n\nFecha: ${new Date().toLocaleDateString("es-VE")}\nHora: ${new Date().toLocaleTimeString("es-VE", { hour: "2-digit", minute: "2-digit" })}\nEquipo: ${data.equipo}\nPrecinto: ${data.precinto}\nCliente: ${data.cliente}\nCédula: ${data.cedula}\nONU: ${onu}\nCarrete: ${data.codigo_carrete}\nRouter: ${routerTxt}\nMAC: ${macRouterTxt}\nZona: ${data.ubicacion}\nPower Go: ${pgoTxt}\nEstatus: ${data.estatus}\nPlan: ${data.plan}\nV. Descarga: ${data.v_descarga}\nV. Subida: ${data.v_subida}\nPuerto: ${data.puerto_conectado}\nCaja NAP: ${data.caja_nap}\nPotencia NAP: ${data.potencia_nap}\nPotencia Cliente: ${data.potencia_cliente}\nConectores Utilizados: ${data.conectores}\nMetraje Utilizado: ${data.metraje_usado}\nMetraje Desechado: ${data.metraje_desechado}\nTensores Utilizados: ${data.tensores}\nPatchcord Utilizado: ${data.patchcord ? "Si" : "No"}\nRosetas Utilizadas: ${data.rosetas ? "Si" : "No"}\nTécnico 1: ${data.tecnico_1}\nTécnico 2: ${data.tecnico_2}\nObservación: ${data.observacion_final}`
-      if (data.power_go === "INACTIVO") texto += `\nMotivo Power Go: ${data.motivo_power_go}`
+      toast.error("Geolocalización no soportada por el navegador.")
     }
-    return `https://wa.me/?text=${encodeURIComponent(texto)}`
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
     try {
       const supabase = createClient()
-      const now = new Date()
-      const fecha = now.toLocaleDateString("es-VE")
-      const hora = now.toLocaleTimeString("es-VE", { hour: "2-digit", minute: "2-digit" })
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
 
-      // [Previous Logic Preserved - Shortened for context but full logic for insert/update remains]
-      let result;
-      let dataToSave;
+      if (!user) throw new Error("No usuario autenticado")
 
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) {
-        toast.error("Error de sesión: No se identificó el usuario. Recargue la página.")
-        setLoading(false)
-        return
-      }
-
-      // VALIDATION: STRICT PHASE CHECKS
-      if (phase === "closure") {
-        if (!formData.codigo_carrete) {
-          toast.error("Error: Debes seleccionar una bobina para cerrar la instalación.")
-          setLoading(false)
-          return
-        }
-        if (mySpools.length === 0) {
-          toast.error("Error Crítico: No tienes bobinas asignadas. No puedes cerrar instalaciones.")
-          setLoading(false)
-          return
-        }
-
-        // STOCK VALIDATION
-        const selectedSpool = mySpools.find(s => s.serial === formData.codigo_carrete)
-        const usage = Number(formData.metraje_usado) || 0
-
-        if (selectedSpool && selectedSpool.remaining !== undefined) {
-          if (usage > selectedSpool.remaining) {
-            toast.error(`Error: El metraje usado (${usage}m) excede el disponible en la bobina (${selectedSpool.remaining}m).`)
-            setLoading(false)
-            return
-          }
-        }
-      }
+      let error = null
+      let insertedData = null
 
       if (phase === "assignment") {
-        dataToSave = {
-          cliente_id: client.id,
-          equipo: formData.equipo,
-          cliente: formData.cliente,
-          cedula: formData.cedula,
-          onu: formData.onu,
-          plan: formData.plan,
-          tecnico_1: formData.tecnico_1,
-          tecnico_2: formData.tecnico_2,
-          fecha, hora
-        }
-        if (lastRecordId) result = await supabase.from("asignaciones").update(dataToSave).eq("id", lastRecordId).select()
-        else result = await supabase.from("asignaciones").insert(dataToSave).select()
+        const { data, error: err } = lastRecordId
+          ? await supabase
+            .from("asignaciones")
+            .update({
+              tecnico_1: formData.tecnico_1,
+              tecnico_2: formData.tecnico_2,
+            })
+            .eq("id", lastRecordId)
+            .select()
+            .single()
+          : await supabase
+            .from("asignaciones")
+            .insert([
+              {
+                cliente_id: client.id,
+                user_id: user.id,
+                tecnico_1: formData.tecnico_1,
+                tecnico_2: formData.tecnico_2,
+                cliente: formData.cliente,
+                cedula: formData.cedula,
+                equipo: formData.equipo,
+                plan: formData.plan,
+                onu: formData.onu,
+              },
+            ])
+            .select()
+            .single()
+        error = err
+        insertedData = data
       } else if (phase === "review") {
-        dataToSave = {
-          cliente_id: client.id,
-          fecha, hora,
-          equipo: formData.equipo,
-          cliente: formData.cliente,
-          cedula: formData.cedula,
-          ubicacion: formData.ubicacion,
-          precinto: formData.precinto,
-          onu: formData.onu,
-          mac_onu: formData.mac_onu,
-          plan: formData.plan,
-          caja_nap: formData.caja_nap,
-          cant_puertos: formData.cant_puertos,
-          puerto_conectado: formData.puerto_conectado,
-          coordenadas: formData.coordenadas,
-          potencia_nap: formData.potencia_nap,
-          potencia_cliente: formData.potencia_cliente,
-          observacion: formData.observacion
-        }
-        if (lastRecordId) result = await supabase.from("revisiones").update(dataToSave).eq("id", lastRecordId).select()
-        else result = await supabase.from("revisiones").insert(dataToSave).select()
+        const { data, error: err } = lastRecordId
+          ? await supabase
+            .from("revisiones")
+            .update({
+              ubicacion: formData.ubicacion,
+              precinto: formData.precinto,
+              mac_onu: formData.mac_onu,
+              caja_nap: formData.caja_nap,
+              cant_puertos: formData.cant_puertos,
+              puerto_conectado: formData.puerto_conectado,
+              coordenadas: formData.coordenadas,
+              potencia_nap: formData.potencia_nap,
+              potencia_cliente: formData.potencia_cliente,
+              observacion: formData.observacion,
 
-        // Update client address
-        await supabase.from("clientes").update({ direccion: formData.ubicacion }).eq("id", client.id)
+              // [Fix] Context Fields Persistence for UPDATE
+              equipo: formData.equipo,
+              cliente: formData.cliente,
+              cedula: formData.cedula,
+              plan: formData.plan,
+              onu: formData.onu,
+            })
+            .eq("id", lastRecordId)
+            .select()
+            .single()
+          : await supabase
+            .from("revisiones")
+            .insert([
+              {
+                cliente_id: client.id,
+                user_id: user.id,
+                ubicacion: formData.ubicacion,
+                precinto: formData.precinto,
+                mac_onu: formData.mac_onu,
+                caja_nap: formData.caja_nap,
+                cant_puertos: formData.cant_puertos,
+                puerto_conectado: formData.puerto_conectado,
+                coordenadas: formData.coordenadas,
+                potencia_nap: formData.potencia_nap,
+                potencia_cliente: formData.potencia_cliente,
+                observacion: formData.observacion,
+
+                // [Fix] Context Fields Persistence
+                equipo: formData.equipo,
+                cliente: formData.cliente,
+                cedula: formData.cedula,
+                plan: formData.plan,
+                onu: formData.onu,
+              },
+            ])
+            .select()
+            .single()
+        error = err
+        insertedData = data
       } else if (phase === "closure") {
-        dataToSave = {
-          cliente_id: client.id,
-          fecha, hora,
-          equipo: formData.equipo,
-          precinto: formData.precinto,
-          cliente: formData.cliente,
-          cedula: formData.cedula,
-          onu: formData.onu,
-          codigo_carrete: formData.codigo_carrete,
-          router: formData.venta_router ? formData.router_serial : "N/A",
-          mac_router: formData.venta_router ? formData.mac_router : "N/A",
-          zona: formData.ubicacion,
-          power_go: formData.power_go,
-          motivo_power_go: formData.power_go === "INACTIVO" ? formData.motivo_power_go : "N/A",
-          estatus: formData.estatus,
-          plan: formData.plan,
-          v_descarga: formData.v_descarga,
-          v_subida: formData.v_subida,
-          puerto: formData.puerto_conectado,
-          caja_nap: formData.caja_nap,
-          potencia_nap: formData.potencia_nap,
-          potencia_cliente: formData.potencia_cliente,
-          conectores: formData.conectores,
-          metraje_usado: formData.metraje_usado,
-          metraje_desechado: formData.metraje_desechado,
-          tensores: formData.tensores,
-          patchcord: formData.patchcord ? "Si" : "No",
-          rosetas: formData.rosetas ? "Si" : "No",
-          tecnico_1: formData.tecnico_1,
-          tecnico_2: formData.tecnico_2,
-          observacion_final: formData.observacion_final,
-          tecnico_id: user.id, // Now safe due to strict check
-          user_id: user.id,
-        }
-        if (lastRecordId) result = await supabase.from("cierres").update(dataToSave).eq("id", lastRecordId).select()
-        else result = await supabase.from("cierres").insert(dataToSave).select()
+        const { data, error: err } = lastRecordId
+          ? await supabase
+            .from("cierres")
+            .update({
+              tecnico_id: user.id, // Support Legacy/Dual
+              equipo: formData.equipo,
+              tecnico_1: formData.tecnico_1,
+              tecnico_2: formData.tecnico_2,
+              onu: formData.onu,
+              cliente: formData.cliente,
+              cedula: formData.cedula,
+              plan: formData.plan,
+              zona: formData.ubicacion, // Map ubicacion to zona
+              caja_nap: formData.caja_nap,
+              potencia_nap: formData.potencia_nap,
+              potencia_cliente: formData.potencia_cliente,
+              puerto: formData.puerto_conectado,
+              precinto: formData.precinto, // [Fix] Persist Precinto
+
+              router: formData.venta_router ? formData.router_serial : "N/A",
+              mac_router: formData.venta_router ? formData.mac_router : "N/A",
+              power_go: formData.power_go,
+              motivo_power_go: formData.power_go === "INACTIVO" ? formData.motivo_power_go : "N/A",
+              v_descarga: formData.v_descarga,
+              v_subida: formData.v_subida,
+              codigo_carrete: formData.codigo_carrete,
+              conectores: formData.conectores,
+              metraje_usado: formData.metraje_usado,
+              metraje_desechado: formData.metraje_desechado,
+              tensores: formData.tensores,
+              patchcord: formData.patchcord ? "Si" : "No",
+              rosetas: formData.rosetas ? "Si" : "No",
+              observacion_final: formData.observacion_final,
+            })
+            .eq("id", lastRecordId)
+            .select()
+            .single()
+          : await supabase
+            .from("cierres")
+            .insert([
+              {
+                cliente_id: client.id,
+                user_id: user.id,
+                tecnico_id: user.id,
+
+                equipo: formData.equipo,
+                tecnico_1: formData.tecnico_1,
+                tecnico_2: formData.tecnico_2,
+                onu: formData.onu,
+                cliente: formData.cliente,
+                cedula: formData.cedula,
+                plan: formData.plan,
+                zona: formData.ubicacion,
+                caja_nap: formData.caja_nap,
+                potencia_nap: formData.potencia_nap,
+                potencia_cliente: formData.potencia_cliente,
+                puerto: formData.puerto_conectado,
+                precinto: formData.precinto, // [Fix] Persist Precinto
+
+                router: formData.venta_router ? formData.router_serial : "N/A",
+                mac_router: formData.venta_router ? formData.mac_router : "N/A",
+                power_go: formData.power_go,
+                motivo_power_go: formData.power_go === "INACTIVO" ? formData.motivo_power_go : "N/A",
+                estatus: "Activo",
+                v_descarga: formData.v_descarga,
+                v_subida: formData.v_subida,
+                codigo_carrete: formData.codigo_carrete,
+                conectores: formData.conectores,
+                metraje_usado: formData.metraje_usado,
+                metraje_desechado: formData.metraje_desechado,
+                tensores: formData.tensores,
+                patchcord: formData.patchcord ? "Si" : "No",
+                rosetas: formData.rosetas ? "Si" : "No",
+                observacion_final: formData.observacion_final,
+              },
+            ])
+            .select()
+            .single()
+        error = err
+        insertedData = data
       }
 
-      if (result?.error) throw result.error
+      if (error) throw error
 
-      let savedData = result?.data && result.data.length > 0 ? result.data[0] : null
-
-      // Fallback logic
-      if (!savedData && !lastRecordId) {
-        // Re-fetch logic if needed...
-        // For simplicity in this rewrite, trusting return or not blocking flow
-      } else if (savedData) {
-        setLastRecordId(savedData.id)
-      }
-
-      setSuccessData({ ...formData, fecha, hora })
+      setSuccessData(insertedData)
       setSuccess(true)
+      toast.success("Fase guardada correctamente")
 
     } catch (error: any) {
-      console.error("Error saving details:", error)
-      toast.error(`Error al guardar los datos: ${error.message || JSON.stringify(error)}`)
+      console.error("Error saving phase:", error)
+      toast.error("Error al guardar: " + error.message)
     } finally {
       setLoading(false)
     }
   }
 
-  // Common Input Clean Style
-  const inputClass = "w-full h-14 px-4 bg-zinc-50 border border-zinc-200 rounded-2xl text-lg text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
-  const labelClass = "block text-sm font-semibold text-zinc-900 mb-2 pl-1"
+  const inputClass = "w-full h-11 px-3 rounded-xl border border-zinc-200 bg-white text-sm focus:ring-1 focus:ring-black focus:border-black transition-all"
+  const labelClass = "block text-xs font-semibold text-zinc-500 mb-1.5 uppercase tracking-wide"
 
-  if (success && successData) {
-    const whatsappLink = generarLinkWhatsapp(successData)
-    const handleNextPhase = () => {
-      let nextPhase: "assignment" | "review" | "closure" | null = null
-      if (phase === "assignment") nextPhase = "review"
-      else if (phase === "review") nextPhase = "closure"
-      onPhaseComplete(nextPhase)
+  const handleWhatsApp = () => {
+    let message = ""
+    const currentDate = new Date().toLocaleDateString("es-ES")
+    const currentTime = new Date().toLocaleTimeString("es-ES", { hour: '2-digit', minute: '2-digit', hour12: true })
+
+    if (phase === "assignment") {
+      message = `*Solicitud de asignación*\n\n` +
+        `*Equipo:* ${formData.equipo}\n` +
+        `*Cliente:* ${formData.cliente}\n` +
+        `*Cédula:* ${formData.cedula}\n` +
+        `*ONU:* ${formData.onu || 'N/A'}\n` +
+        `*Plan:* ${formData.plan}\n\n` +
+        `*Técnico 1:* ${formData.tecnico_1}\n` +
+        `*Técnico 2:* ${formData.tecnico_2}`
+    } else if (phase === "review") {
+      message = `*Solicitud De Revisión*\n\n` +
+        `*Equipo:* ${formData.equipo || client.equipo}\n` +
+        `*Cliente:* ${client.nombre}\n` +
+        `*Ubicación:* ${formData.ubicacion}\n` +
+        `*Cédula:* ${client.cedula}\n` +
+        `*Precinto:* ${formData.precinto}\n` +
+        `*PON/ONU:* ${formData.onu || client.onu || 'N/A'}\n` +
+        `*MAC ONU:* ${formData.mac_onu}\n` +
+        `*Plan:* ${formData.plan || client.plan}\n` +
+        `*Caja-Nap:* ${formData.caja_nap}\n` +
+        `*Cantidad De Puertos:* ${formData.cant_puertos}\n` +
+        `*Puerto Conectado:* ${formData.puerto_conectado}\n` +
+        `*Coordenadas:* ${formData.coordenadas}\n` +
+        `*Potencia Nap:* ${formData.potencia_nap}\n` +
+        `*Potencia Cliente:* ${formData.potencia_cliente}\n` +
+        `*Observación:* ${formData.observacion}`
+    } else if (phase === "closure") {
+      message = `*Reporte de Instalación*\n\n` +
+        `*Fecha:* ${currentDate}\n` +
+        `*Hora:* ${currentTime}\n` +
+        `*Equipo:* ${formData.equipo || client.equipo}\n` +
+        `*Precinto:* ${formData.precinto}\n` +
+        `*Cliente:* ${client.nombre}\n` +
+        `*Cédula:* ${client.cedula}\n` +
+        `*ONU:* ${formData.onu || client.onu || 'N/A'}\n` +
+        `*Carrete:* ${formData.codigo_carrete}\n` +
+        `*Router:* ${formData.venta_router ? formData.router_serial : 'N/A'}\n` +
+        `*MAC:* ${formData.venta_router ? formData.mac_router : 'N/A'}\n` +
+        `*Zona:* ${formData.ubicacion}\n` +
+        `*Power Go:* ${formData.power_go}\n` +
+        `*Estatus:* ${formData.estatus}\n` +
+        `*Plan:* ${formData.plan || client.plan}\n` +
+        `*V. Descarga:* ${formData.v_descarga}\n` +
+        `*V. Subida:* ${formData.v_subida}\n` +
+        `*Puerto:* ${formData.puerto_conectado}\n` +
+        `*Caja NAP:* ${formData.caja_nap}\n` +
+        `*Potencia NAP:* ${formData.potencia_nap}\n` +
+        `*Potencia Cliente:* ${formData.potencia_cliente}\n` +
+        `*Conectores Utilizados:* ${formData.conectores}\n` +
+        `*Metraje Utilizado:* ${formData.metraje_usado}\n` +
+        `*Metraje Desechado:* ${formData.metraje_desechado}\n` +
+        `*Tensores Utilizados:* ${formData.tensores}\n` +
+        `*Patchcord Utilizado:* ${formData.patchcord ? 'Si' : 'No'}\n` +
+        `*Rosetas Utilizadas:* ${formData.rosetas ? 'Si' : 'No'}\n` +
+        `*Técnico 1:* ${formData.tecnico_1}\n` +
+        `*Técnico 2:* ${formData.tecnico_2}\n` +
+        `*Observación:* ${formData.observacion_final}\n` +
+        `*Motivo Power Go:* ${formData.power_go === 'INACTIVO' ? formData.motivo_power_go : ''}`
     }
 
+    const url = `https://wa.me/?text=${encodeURIComponent(message)}`
+    window.open(url, '_blank')
+  }
+
+  if (success) {
     return (
-      <main className="min-h-screen bg-zinc-50 flex items-center justify-center p-6">
-        <Card className="max-w-md w-full rounded-[32px] border-none shadow-xl bg-white">
-          <CardContent className="text-center pt-8 pb-8 px-6">
-            <div className="w-20 h-20 bg-zinc-900 text-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-zinc-200">
-              <CheckCircle size={36} />
+      <main className="min-h-screen bg-zinc-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md rounded-3xl border-none shadow-xl bg-white overflow-hidden">
+          <CardContent className="p-8 text-center space-y-6">
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto text-green-600 mb-2">
+              <CheckCircle size={40} strokeWidth={3} />
             </div>
-            <h2 className="text-2xl font-bold text-zinc-900 mb-2">Completado</h2>
-            <p className="text-zinc-500 mb-8 text-lg">Datos registrados correctamente.</p>
+            <div>
+              <h2 className="text-2xl font-bold text-zinc-900 mb-2">¡Fase Completada!</h2>
+              <p className="text-zinc-500">La información ha sido registrada exitosamente.</p>
+            </div>
 
-            <div className="space-y-4">
-              <a
-                href={whatsappLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full h-14 inline-flex items-center justify-center gap-3 bg-[#25D366] hover:bg-[#128C7E] text-white font-bold text-lg rounded-2xl transition-all"
-              >
-                <Send size={20} /> Enviar Reporte
-              </a>
-              <Button
-                onClick={() => setSuccess(false)}
-                variant="outline"
-                className="w-full h-14 rounded-2xl border-zinc-200 text-zinc-900 font-semibold text-base hover:bg-zinc-50"
-                disabled={!lastRecordId}
-              >
-                <Pencil size={18} className="mr-2" /> Editar
+            <div className="pt-4 space-y-3">
+              <Button onClick={handleWhatsApp} className="w-full h-12 rounded-xl bg-[#25D366] text-white font-bold hover:bg-[#128C7E] flex items-center justify-center gap-2">
+                <Send size={18} />
+                Enviar a WhatsApp
               </Button>
-              {phase !== "closure" && (
-                <Button onClick={handleNextPhase} className="w-full h-14 rounded-2xl bg-black text-white hover:bg-zinc-800 font-semibold text-base">
-                  Siguiente Fase
+
+              {(phase === 'assignment' || phase === 'review') ? (
+                <Button onClick={() => onPhaseComplete(phase === 'assignment' ? 'review' : 'closure')} className="w-full h-12 rounded-xl bg-black text-white font-bold hover:bg-zinc-800">
+                  Continuar a Siguiente Fase
+                </Button>
+              ) : (
+                <Button onClick={() => onPhaseComplete(null)} className="w-full h-12 rounded-xl bg-black text-white font-bold hover:bg-zinc-800">
+                  Finalizar Todo
                 </Button>
               )}
 
-              {phase === "closure" && (
-                <Button onClick={() => router.push("/tecnicos")} className="w-full h-14 rounded-2xl bg-black text-white hover:bg-zinc-800 font-semibold text-base">
-                  <Home className="mr-2" size={20} /> Ir al Dashboard
+              <div className="grid grid-cols-2 gap-3">
+                <Button onClick={() => setSuccess(false)} variant="outline" className="w-full h-12 rounded-xl font-bold border-zinc-200 text-zinc-700 hover:bg-zinc-50">
+                  <Pencil size={18} className="mr-2" />
+                  Editar
                 </Button>
-              )}
-
-              <Button onClick={onBack} variant="ghost" className="w-full h-14 rounded-2xl text-zinc-500 hover:text-zinc-900 font-medium">
-                Volver a Lista de Clientes
-              </Button>
+                <Button onClick={onBack} variant="ghost" className="w-full h-12 rounded-xl text-zinc-500 hover:text-zinc-900 font-medium">
+                  Volver
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -459,101 +574,78 @@ export function ClientForm({ client, phase, onBack, onPhaseComplete, teamData }:
   }
 
   return (
-    <main className="min-h-screen bg-zinc-50 p-4 sm:p-6 pb-20">
+    <main className="min-h-screen bg-zinc-50 p-2 sm:p-4 pb-20">
       <AutoFillButton
         phase={phase}
         onFill={(d) => setFormData((prev) => {
           const newState = { ...prev, ...d }
-          // Auto-select first spool if closure and none selected
           if (phase === 'closure' && mySpools.length > 0 && !newState.codigo_carrete) {
             newState.codigo_carrete = mySpools[0].serial
           }
           return newState
         })}
       />
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-xl mx-auto">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-zinc-500 hover:text-zinc-900 mb-8 font-medium transition-colors"
+          className="flex items-center gap-2 text-zinc-500 hover:text-zinc-900 mb-6 font-medium transition-colors text-sm"
         >
-          <div className="w-10 h-10 rounded-full bg-white border border-zinc-200 flex items-center justify-center">
-            <ArrowLeft size={20} />
+          <div className="w-8 h-8 rounded-full bg-white border border-zinc-200 flex items-center justify-center">
+            <ArrowLeft size={16} />
           </div>
           <span>Volver</span>
         </button>
 
-        <Card className="rounded-[32px] border-none shadow-sm bg-white overflow-hidden">
-          <CardHeader className="border-b border-zinc-100 pb-6 pt-8 px-6 sm:px-8 bg-white">
-            <CardTitle className="text-2xl font-bold text-zinc-900">
+        <Card className="rounded-[24px] border-none shadow-sm bg-white overflow-hidden">
+          <CardHeader className="border-b border-zinc-100 py-5 px-6 bg-white">
+            <CardTitle className="text-xl font-bold text-zinc-900">
               {phase === "assignment" && "Fase 1: Asignación"}
               {phase === "review" && "Fase 2: Revisión"}
               {phase === "closure" && "Fase 3: Cierre"}
             </CardTitle>
-            <p className="text-zinc-500 font-medium mt-1">
-              {client.nombre} • {client.cedula}
+            <p className="text-zinc-400 font-medium text-sm mt-0.5">
+              {client.nombre}
             </p>
           </CardHeader>
-          <CardContent className="p-6 sm:p-8 bg-white">
-            <form onSubmit={handleSubmit} className="space-y-8">
+          <CardContent className="p-5 sm:p-6 bg-white">
+            <form onSubmit={handleSubmit} className="space-y-6">
 
-              {/* READ ONLY INFO CARD within form */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-zinc-50 p-5 rounded-2xl border border-zinc-100">
+              {/* READ ONLY INFO */}
+              <div className="grid grid-cols-2 gap-3 bg-zinc-50/80 p-4 rounded-2xl border border-zinc-100">
                 <div>
-                  <span className="block text-xs font-bold text-zinc-400 uppercase tracking-widest mb-1">Equipo</span>
-                  <span className="font-semibold text-zinc-900">{formData.equipo || client.equipo}</span>
+                  <span className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Equipo</span>
+                  <span className="font-semibold text-zinc-900 text-sm">{formData.equipo || client.equipo}</span>
                 </div>
                 <div>
-                  <span className="block text-xs font-bold text-zinc-400 uppercase tracking-widest mb-1">Plan</span>
-                  <span className="font-semibold text-zinc-900">{formData.plan || client.plan}</span>
+                  <span className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Plan</span>
+                  <span className="font-semibold text-zinc-900 text-sm">{formData.plan || client.plan}</span>
                 </div>
-                <div className="col-span-2">
-                  <span className="block text-xs font-bold text-zinc-400 uppercase tracking-widest mb-1">ONU Serial</span>
-                  <input
-                    className="w-full bg-transparent font-mono font-medium text-zinc-900 border-none p-0 focus:ring-0"
-                    name="onu"
-                    value={formData.onu}
-                    onChange={handleChange}
-                    placeholder="---"
-                  />
+                <div className="col-span-2 pt-2 border-t border-zinc-100">
+                  <span className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">ONU Serial</span>
+                  <input className="w-full bg-transparent font-mono text-sm font-medium text-zinc-900 border-none p-0 focus:ring-0" name="onu" value={formData.onu} onChange={handleChange} placeholder="---" />
                 </div>
               </div>
 
               {phase === "assignment" && (
-                <div className="space-y-6">
+                <div className="space-y-4">
                   <div>
                     <label className={labelClass}>Técnico 1 *</label>
-                    <input
-                      name="tecnico_1"
-                      value={formData.tecnico_1}
-                      onChange={handleChange}
-                      required
-                      className={`${inputClass} ${teamData?.members[0] ? 'bg-zinc-100 text-zinc-500' : ''}`}
-                      readOnly={!!teamData?.members[0]}
-                      placeholder="Nombre del técnico"
-                    />
+                    <input name="tecnico_1" value={formData.tecnico_1} onChange={handleChange} required className={`${inputClass} ${teamData?.members[0] ? 'bg-zinc-100 text-zinc-500' : ''}`} readOnly={!!teamData?.members[0]} placeholder="Nombre del técnico" />
                   </div>
                   <div>
                     <label className={labelClass}>Técnico 2 *</label>
-                    <input
-                      name="tecnico_2"
-                      value={formData.tecnico_2}
-                      onChange={handleChange}
-                      required
-                      className={`${inputClass} ${teamData?.members[1] ? 'bg-zinc-100 text-zinc-500' : ''}`}
-                      readOnly={!!teamData?.members[1]}
-                      placeholder="Nombre del técnico"
-                    />
+                    <input name="tecnico_2" value={formData.tecnico_2} onChange={handleChange} required className={`${inputClass} ${teamData?.members[1] ? 'bg-zinc-100 text-zinc-500' : ''}`} readOnly={!!teamData?.members[1]} placeholder="Nombre del técnico" />
                   </div>
                 </div>
               )}
 
               {phase === "review" && (
-                <div className="space-y-6">
+                <div className="space-y-5">
                   <div>
                     <label className={labelClass}>Ubicación / Zona *</label>
                     <input name="ubicacion" value={formData.ubicacion} onChange={handleChange} required className={inputClass} />
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className={labelClass}>Precinto *</label>
                       <input name="precinto" value={formData.precinto} onChange={handleChange} required className={inputClass} maxLength={8} />
@@ -563,7 +655,7 @@ export function ClientForm({ client, phase, onBack, onPhaseComplete, teamData }:
                       <input name="mac_onu" value={formData.mac_onu} onChange={handleChange} required className={inputClass} placeholder="XX:XX:..." />
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className={labelClass}>Caja NAP *</label>
                       <input name="caja_nap" value={formData.caja_nap} onChange={handleChange} required className={inputClass} />
@@ -579,14 +671,14 @@ export function ClientForm({ client, phase, onBack, onPhaseComplete, teamData }:
                   </div>
                   <div>
                     <label className={labelClass}>Coordenadas</label>
-                    <div className="flex gap-3">
-                      <input name="coordenadas" value={formData.coordenadas} readOnly className={`${inputClass} bg-zinc-100 text-zinc-500`} />
-                      <Button type="button" onClick={capturarUbicacion} className="h-14 w-14 rounded-2xl bg-zinc-900 text-white hover:bg-zinc-700">
-                        <MapPin size={24} />
+                    <div className="flex gap-2">
+                      <input name="coordenadas" value={formData.coordenadas} readOnly className={`${inputClass} bg-zinc-50 text-zinc-500`} />
+                      <Button type="button" onClick={capturarUbicacion} size="icon" className="h-11 w-11 rounded-xl bg-zinc-900 text-white hover:bg-zinc-700 shrink-0">
+                        <MapPin size={20} />
                       </Button>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className={labelClass}>Potencia Nap *</label>
                       <input name="potencia_nap" value={formData.potencia_nap} onChange={handleChange} required className={inputClass} />
@@ -598,15 +690,14 @@ export function ClientForm({ client, phase, onBack, onPhaseComplete, teamData }:
                   </div>
                   <div>
                     <label className={labelClass}>Observación</label>
-                    <textarea name="observacion" value={formData.observacion} onChange={handleChange} className={`${inputClass} h-32 py-3`} />
+                    <textarea name="observacion" value={formData.observacion} onChange={handleChange} className={`${inputClass} h-24 py-2 resize-none`} />
                   </div>
                 </div>
               )}
 
               {phase === "closure" && (
-                <div className="space-y-6">
-                  {/* Re-using same style for closure fields - simplified for brevity in this replace but fully functional */}
-                  <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-5">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className={labelClass}>V. Descarga</label>
                       <input name="v_descarga" value={formData.v_descarga} onChange={handleChange} className={inputClass} />
@@ -617,44 +708,31 @@ export function ClientForm({ client, phase, onBack, onPhaseComplete, teamData }:
                     </div>
                   </div>
 
-                  {/* Spool Selection */}
-                  <div>
-                    <label className={labelClass}>Bobina Utilizada *</label>
-                    <div className="relative">
-                      <select
-                        name="codigo_carrete"
-                        value={formData.codigo_carrete}
-                        onChange={handleChange}
-                        required
-                        className={`${inputClass} appearance-none cursor-pointer`}
-                      >
-                        <option value="">Seleccione Bobina...</option>
-                        {mySpools.map((s) => (
-                          <option key={s.serial} value={s.serial}>{s.label}</option>
-                        ))}
-                      </select>
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-500">
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                      </div>
-                    </div>
+                  {/* Spool */}
+                  <div className="p-3 bg-blue-50/50 rounded-xl border border-blue-100">
+                    <label className="text-xs font-bold text-blue-600 mb-1.5 uppercase block">Bobina Utilizada *</label>
+                    <select name="codigo_carrete" value={formData.codigo_carrete} onChange={handleChange} required className={`${inputClass} border-blue-200 bg-white`}>
+                      <option value="">Seleccione Bobina...</option>
+                      {mySpools.map((s) => (
+                        <option key={s.serial} value={s.serial}>{s.label}</option>
+                      ))}
+                    </select>
                     {mySpools.length === 0 && (
-                      <p className="text-red-500 text-sm mt-1">
-                        ⚠ No tienes bobinas asignadas. Contacta a un supervisor.
-                      </p>
+                      <p className="text-red-500 text-[10px] mt-1 font-medium">⚠ Sin bobinas asignadas.</p>
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className={labelClass}>Metraje Usado *</label>
                       <input name="metraje_usado" value={formData.metraje_usado} onChange={handleChange} required className={inputClass} />
                     </div>
                     <div>
-                      <label className={labelClass}>Metraje Desechado *</label>
-                      <input name="metraje_desechado" value={formData.metraje_desechado} onChange={handleChange} required className={inputClass} />
+                      <label className={labelClass}>Merma *</label>
+                      <input name="metraje_desechado" value={formData.metraje_desechado} onChange={handleChange} required className={`${inputClass} text-red-600`} />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className={labelClass}>Conectores *</label>
                       <input name="conectores" value={formData.conectores} onChange={handleChange} required className={inputClass} />
@@ -665,70 +743,69 @@ export function ClientForm({ client, phase, onBack, onPhaseComplete, teamData }:
                     </div>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <div>
-                      <label className={labelClass}>Power Go *</label>
-                      <div className="relative">
-                        <select
-                          name="power_go"
-                          value={formData.power_go}
-                          onChange={handleChange}
-                          required
-                          className={`${inputClass} appearance-none cursor-pointer border-blue-200 bg-blue-50/50`}
-                        >
-                          <option value="ACTIVO">ACTIVO</option>
-                          <option value="INACTIVO">INACTIVO</option>
-                        </select>
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-500">
-                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                        </div>
-                      </div>
+                      <label className={labelClass}>Power Go</label>
+                      <select name="power_go" value={formData.power_go} onChange={handleChange} className={inputClass}>
+                        <option value="ACTIVO">ACTIVO</option>
+                        <option value="INACTIVO">INACTIVO</option>
+                      </select>
                     </div>
                     {formData.power_go === "INACTIVO" && (
-                      <div className="animate-in slide-in-from-top-2 fade-in duration-300">
-                        <label className={labelClass}>Motivo Power Go Inactivo *</label>
-                        <input name="motivo_power_go" value={formData.motivo_power_go} onChange={handleChange} required className={inputClass} placeholder="Explique la razón..." />
+                      <div className="animate-in slide-in-from-top-2 fade-in">
+                        <label className={labelClass}>Motivo</label>
+                        <input name="motivo_power_go" value={formData.motivo_power_go} onChange={handleChange} required className={inputClass} />
                       </div>
                     )}
                   </div>
 
-                  <div className="p-4 bg-zinc-50 rounded-2xl border border-zinc-100 space-y-4">
+                  {/* SWITCHES SECTION */}
+                  <div className="bg-zinc-50 p-4 rounded-xl border border-zinc-100 space-y-4">
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-zinc-900">Uso de Patchcord</span>
-                      <input type="checkbox" name="patchcord" checked={formData.patchcord} onChange={handleChange} className="w-6 h-6 rounded-md accent-black" />
+                      <div className="space-y-0.5">
+                        <h4 className="text-sm font-semibold text-zinc-900">Patchcord</h4>
+                        <p className="text-[10px] text-zinc-400">¿Se utilizó?</p>
+                      </div>
+                      <Switch checked={formData.patchcord} onCheckedChange={(c) => handleSwitchChange('patchcord', c)} />
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-zinc-900">Uso de Roseta</span>
-                      <input type="checkbox" name="rosetas" checked={formData.rosetas} onChange={handleChange} className="w-6 h-6 rounded-md accent-black" />
+                      <div className="space-y-0.5">
+                        <h4 className="text-sm font-semibold text-zinc-900">Roseta</h4>
+                        <p className="text-[10px] text-zinc-400">¿Se instaló?</p>
+                      </div>
+                      <Switch checked={formData.rosetas} onCheckedChange={(c) => handleSwitchChange('rosetas', c)} />
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-zinc-900">Venta de Router</span>
-                      <input type="checkbox" name="venta_router" checked={formData.venta_router} onChange={handleChange} className="w-6 h-6 rounded-md accent-black" />
+                      <div className="space-y-0.5">
+                        <h4 className="text-sm font-semibold text-zinc-900">Venta Router</h4>
+                        <p className="text-[10px] text-zinc-400">¿Cliente compró?</p>
+                      </div>
+                      <Switch checked={formData.venta_router} onCheckedChange={(c) => handleSwitchChange('venta_router', c)} />
                     </div>
                   </div>
 
                   {formData.venta_router && (
-                    <div className="animate-in slide-in-from-top-2 fade-in duration-300 space-y-4 pl-4 border-l-2 border-zinc-200">
+                    <div className="animate-in slide-in-from-top-2 fade-in duration-300 space-y-4 p-4 bg-purple-50 rounded-xl border border-purple-100">
                       <div>
-                        <label className={labelClass}>Serial Router</label>
-                        <input name="router_serial" value={formData.router_serial} onChange={handleChange} className={inputClass} />
+                        <label className="text-xs font-bold text-purple-600 mb-1.5 uppercase block">Serial Router</label>
+                        <input name="router_serial" value={formData.router_serial} onChange={handleChange} className={`${inputClass} border-purple-200 bg-white`} />
                       </div>
                       <div>
-                        <label className={labelClass}>MAC Router</label>
-                        <input name="mac_router" value={formData.mac_router} onChange={handleChange} className={inputClass} />
+                        <label className="text-xs font-bold text-purple-600 mb-1.5 uppercase block">MAC Router</label>
+                        <input name="mac_router" value={formData.mac_router} onChange={handleChange} className={`${inputClass} border-purple-200 bg-white`} />
                       </div>
                     </div>
                   )}
 
                   <div>
                     <label className={labelClass}>Observación Final</label>
-                    <textarea name="observacion_final" value={formData.observacion_final} onChange={handleChange} className={`${inputClass} h-32 py-3`} />
+                    <textarea name="observacion_final" value={formData.observacion_final} onChange={handleChange} className={`${inputClass} h-24 py-2 resize-none`} />
                   </div>
                 </div>
               )}
 
-              <div className="pt-6">
-                <Button type="submit" disabled={loading} className="w-full h-16 bg-black text-white text-xl font-bold rounded-2xl hover:bg-zinc-800 active:scale-[0.98] transition-all shadow-lg shadow-zinc-200">
+              <div className="pt-4">
+                <Button type="submit" disabled={loading} className="w-full h-14 bg-black text-white text-lg font-bold rounded-2xl hover:bg-zinc-800 active:scale-[0.98] transition-all shadow-lg shadow-zinc-200">
                   {loading ? "Guardando..." : "Guardar Registro"}
                 </Button>
               </div>

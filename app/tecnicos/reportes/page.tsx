@@ -1,12 +1,14 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
+import { useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { ClientCard } from "@/components/client-card"
 import { ClientForm } from "@/components/client-form"
 import { CreateClientDialog } from "@/components/create-client-dialog"
 import { EditClientDialog } from "@/components/edit-client-dialog"
-import { Plus, Search, AlertCircle, Home as HomeIcon } from "lucide-react"
+import { SupportReportDialog } from "@/components/support-report-dialog"
+import { Plus, Search, AlertCircle, Home as HomeIcon, Wrench } from "lucide-react"
 import { LogoutButton } from "@/components/ui/logout-button"
 import { toast } from "sonner"
 import {
@@ -34,7 +36,9 @@ type Client = {
   revisiones?: { id: string }[]
 }
 
-export default function Home() {
+function ReportsContent() {
+  const searchParams = useSearchParams()
+
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
@@ -47,27 +51,27 @@ export default function Home() {
   const [clientToFinalize, setClientToFinalize] = useState<string | null>(null)
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null)
   const [clientToEdit, setClientToEdit] = useState<Client | null>(null)
+  const [supportDialogOpen, setSupportDialogOpen] = useState(false)
   const [teamData, setTeamData] = useState<{ name: string, partner: string, members: string[] } | null>(null)
 
   const [availableOnus, setAvailableOnus] = useState<string[]>([])
   const [restrictionsEnabled, setRestrictionsEnabled] = useState(true)
 
+  useEffect(() => {
+    // Check for query params to auto-open dialogs
+    const action = searchParams.get('action')
+    if (action === 'new') {
+      setDialogOpen(true)
+    } else if (action === 'support') {
+      setSupportDialogOpen(true)
+    }
+  }, [searchParams])
 
   useEffect(() => {
     loadClients()
     loadTeamData()
     loadInventory()
     loadSettings()
-
-    // Check for direct action param
-    if (typeof window !== "undefined") {
-      const p = new URLSearchParams(window.location.search)
-      if (p.get("action") === "new") {
-        setDialogOpen(true)
-        // clean url
-        window.history.replaceState({}, "", "/tecnicos/reportes")
-      }
-    }
   }, [])
 
   async function loadSettings() {
@@ -77,7 +81,6 @@ export default function Home() {
     while (retries < maxRetries) {
       try {
         const settings = await getSystemSettings()
-        // Default to true if undefined, for safety
         setRestrictionsEnabled(settings["INSTALLATION_RESTRICTIONS_ENABLED"] !== false)
         break;
       } catch (e) {
@@ -93,13 +96,12 @@ export default function Home() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    // 1. Get Profile & Team (Same logic as Dashboard)
     const { data: profile } = await supabase
       .from("profiles")
       .select(`
-            *,
-            team:teams(id, name, profiles(id, first_name, last_name))
-        `)
+              *,
+              team:teams(id, name, profiles(id, first_name, last_name))
+          `)
       .eq("id", user.id)
       .single()
 
@@ -107,16 +109,12 @@ export default function Home() {
 
     const teamMembersIDs = profile.team?.profiles?.map((p: any) => p.id) || [user.id]
 
-    // 2. Fetch Assigned ONUs (Transactions)
-    // We filter by SKU containing "ONU" client-side or if possible in query
-    // The previous dashboard logic fetched ALL transactions. Here we just want ONUs for the dropdown.
     const { data: assignments } = await supabase
       .from("inventory_transactions")
       .select(`quantity, product:inventory_products(sku, name), type, serials`)
       .in("assigned_to", teamMembersIDs)
       .eq("type", "OUT")
 
-    // Collect all assigned ONU serials
     const assignedSerials: string[] = []
     assignments?.forEach((tx: any) => {
       if (tx.product?.sku?.includes("ONU") && Array.isArray(tx.serials)) {
@@ -124,24 +122,21 @@ export default function Home() {
       }
     })
 
-    // 3. Fetch Used Serials (Closures)
     const { data: usedClients } = await supabase
       .from("clientes")
       .select("onu")
-      .not("onu", "is", null) // Filter where ONU is not null
+      .not("onu", "is", null)
 
     const usedSerials = new Set(usedClients?.map((c: any) => c.onu) || [])
 
-    // 4. Fetch Returned Serials (WAREHOUSE RETURNS)
-    // We must exclude serials that have been returned to warehouse
     const { data: returns } = await supabase
       .from("inventory_returns")
       .select(`
-            inventory_return_items (
-                serials
-            ),
-            assignment:inventory_assignments!inner(assigned_to)
-        `)
+              inventory_return_items (
+                  serials
+              ),
+              assignment:inventory_assignments!inner(assigned_to)
+          `)
       .in("assignment.assigned_to", teamMembersIDs)
 
     const returnedSerials = new Set<string>()
@@ -153,10 +148,7 @@ export default function Home() {
       })
     })
 
-    // 5. Filter Available
-    // Available = Assigned - Used - Returned
     const available = assignedSerials.filter(s => !usedSerials.has(s) && !returnedSerials.has(s))
-
     setAvailableOnus(available)
   }
 
@@ -168,9 +160,9 @@ export default function Home() {
     const { data: profile } = await supabase
       .from("profiles")
       .select(`
-            *,
-            team:teams(id, name, profiles(id, first_name, last_name))
-        `)
+              *,
+              team:teams(id, name, profiles(id, first_name, last_name))
+          `)
       .eq("id", user.id)
       .single()
 
@@ -196,7 +188,6 @@ export default function Home() {
         return
       }
 
-      // 1. Get User's Team
       const { data: profile } = await supabase
         .from("profiles")
         .select(`*, team:teams(id, name, profiles(id))`)
@@ -206,30 +197,19 @@ export default function Home() {
       let query = supabase
         .from("clientes")
         .select("*, cierres(id), asignaciones(id), revisiones(id)")
-        .neq('estatus', 'finalizado') // Although user might want to see finalized ones? Assuming 'finalizado' moves them to Archive.
+        .neq('estatus', 'finalizado')
         .order("created_at", { ascending: false })
 
-      // 2. Filter by Team OR User
       if (profile?.team) {
-        // If in a team, show clients created by ANY team member OR assigned to this team name
-        // We get all member IDs
         const memberIds = profile.team.profiles.map((p: any) => p.id)
-        // We can use the 'in' filter for user_id to cover all members
-        // And also check 'equipo' name just in case
-        // Syntax: .or(`user_id.in.(${memberIds.join(',')}),equipo.eq.${profile.team.name}`)
-        // Actually, mixing AND conditions with OR in Supabase/PostgREST can be tricky with the JS client if not careful with parenthesis.
-        // Let's rely on user_id IN (...) list of members.
-        // Assuming all team members are in the profile.team.profiles list.
         query = query.in('user_id', memberIds)
       } else {
-        // Individual
         query = query.eq('user_id', user.id)
       }
 
       const { data, error } = await query
 
       if (error) {
-        console.log("[v0] Error details:", error)
         if (error.message.includes("Could not find the table")) {
           setError("Base de datos no inicializada")
           setShowInitInstructions(true)
@@ -277,13 +257,10 @@ export default function Home() {
 
     try {
       const supabase = createClient()
-
-      // Delete related records first to satisfy foreign key constraints
       await supabase.from("cierres").delete().eq("cliente_id", clientToDelete.id)
       await supabase.from("revisiones").delete().eq("cliente_id", clientToDelete.id)
       await supabase.from("asignaciones").delete().eq("cliente_id", clientToDelete.id)
 
-      // Now delete the client
       const { error } = await supabase
         .from("clientes")
         .delete()
@@ -365,13 +342,22 @@ export default function Home() {
               className="w-full h-14 pl-12 pr-4 bg-white border border-zinc-200 rounded-2xl text-lg text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all shadow-sm"
             />
           </div>
-          <button
-            onClick={() => setDialogOpen(true)}
-            className="w-full h-14 bg-black text-white font-semibold rounded-2xl flex items-center justify-center gap-2 hover:bg-zinc-800 transition-all active:scale-[0.98]"
-          >
-            <Plus size={24} />
-            Nuevo Cliente
-          </button>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => setSupportDialogOpen(true)}
+              className="w-full h-14 bg-white border-2 border-slate-200 text-slate-700 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-slate-50 transition-all active:scale-[0.98]"
+            >
+              <Wrench size={20} />
+              <span className="text-sm">Soporte</span>
+            </button>
+            <button
+              onClick={() => setDialogOpen(true)}
+              className="w-full h-14 bg-black text-white font-semibold rounded-2xl flex items-center justify-center gap-2 hover:bg-zinc-800 transition-all active:scale-[0.98]"
+            >
+              <Plus size={24} />
+              <span className="text-sm">Cliente</span>
+            </button>
+          </div>
         </div>
 
         {/* SQL INIT WARNING */}
@@ -418,21 +404,7 @@ export default function Home() {
           <div className="space-y-4">
             {filteredClients.map((client) => {
               const isClosureCompleted = client.cierres && client.cierres.length > 0;
-              // Assuming that if closure exists, assignment/review likely exist or implied completed workflow.
-              // Ideally we'd select 'asignaciones(id)' and 'revisiones(id)' in the query to be sure, 
-              // but for now user likely implies flow is sequential.
-              // Wait, 'loadClients' query (lines 206) only selects `cierres(id)`. 
-              // We need to update loadClients to fetch asignaciones and revisiones too. 
-              // BUT to avoid changing query complexity if not strictly needed... 
-              // Actually, user wants to see checks as they progress.
-              // So I must update the query in loadClients first. 
-              // But since I am editing this file now, I'll update props and assume I will fix query in next step or use existing if any.
-              // The 'client' object comes from 'clients' state.
-              // I will update the query in Step 4? No, I should do it here if possible or next.
-              // Let's assume the properties 'asignaciones' and 'revisiones' will be present after I update loadClients.
-              // @ts-ignore
               const isAssignmentCompleted = client.asignaciones && client.asignaciones.length > 0;
-              // @ts-ignore
               const isReviewCompleted = client.revisiones && client.revisiones.length > 0;
 
               return (
@@ -444,7 +416,6 @@ export default function Home() {
                     setCurrentPhase(phase)
                   }}
                   onFinalize={() => handleFinalize(client.id)}
-                  // Pass undefined to hide the button if closure exists
                   onDelete={isClosureCompleted ? undefined : () => setClientToDelete(client)}
                   onEdit={() => {
                     setClientToEdit(client)
@@ -464,7 +435,7 @@ export default function Home() {
         onClose={() => setDialogOpen(false)}
         onClientCreated={() => {
           loadClients();
-          loadInventory(); // Reload inventory to update available list
+          loadInventory();
         }}
         teamName={teamData?.name}
         availableOnus={availableOnus}
@@ -479,6 +450,12 @@ export default function Home() {
         }}
         onClientUpdated={loadClients}
         client={clientToEdit}
+      />
+
+      <SupportReportDialog
+        open={supportDialogOpen}
+        onOpenChange={setSupportDialogOpen}
+        clients={clients}
       />
 
       <AlertDialog open={!!clientToFinalize} onOpenChange={(open) => !open && setClientToFinalize(null)}>
@@ -515,5 +492,13 @@ export default function Home() {
         </AlertDialogContent>
       </AlertDialog>
     </main >
+  )
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ReportsContent />
+    </Suspense>
   )
 }

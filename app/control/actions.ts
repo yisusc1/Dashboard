@@ -230,11 +230,24 @@ export async function getAuditData(entityId: string) {
 
     // 2. Get Usage from Installations (Aggregated)
     // We try to match by Team Name (field 'equipo') OR by technician names.
+    // 2. Get Usage from Installations (Aggregated)
+    // We try to match by Team Name (field 'equipo') OR by technician names.
+    const idsString = `(${teamMembers.join(',')})`
     const { data: closes } = await supabase
         .from("cierres")
-        .select("metraje_usado, metraje_desechado, conectores, precinto, rosetas, tensores, patchcord, onu, tecnico_1, equipo")
+        .select("metraje_usado, metraje_desechado, conectores, precinto, rosetas, tensores, patchcord, onu, tecnico_1, equipo, user_id, tecnico_id")
+        // Use OR to catch both modern (user_id) and legacy/parallel (tecnico_id) records
+        .or(`user_id.in.${idsString},tecnico_id.in.${idsString}`)
+        .gte("created_at", minDate.toISOString())
+        .lte("created_at", maxDate.toISOString())
+        .not("codigo_carrete", "is", null)
+        .order("created_at", { ascending: false })
 
     const teamCloses = (closes || []).filter(c => {
+        // Robust ID Matching (Both User ID and Technician ID)
+        if (c.user_id && teamMembers.includes(c.user_id)) return true
+        if (c.tecnico_id && teamMembers.includes(c.tecnico_id)) return true
+
         // Match by Team Name
         if (teamName && c.equipo && c.equipo.trim().toLowerCase() === teamName.toLowerCase()) return true
 
@@ -298,31 +311,48 @@ export async function getAuditData(entityId: string) {
         Object.keys(KPI_MAP).forEach(sku => {
             const key = KPI_MAP[sku]
 
-            // Allow adding if not exists
-            if (!stockMap[sku]) {
+            // Fuzzy SKU Match:
+            // 1. Try Exact Match
+            // 2. Try 'starts with' (e.g. stock has 'ONU-ZTE', KPI has 'ONU')
+            // 3. Try 'includes'
+            let targetSku = sku
+            if (!stockMap[targetSku]) {
+                const fuzzyKey = Object.keys(stockMap).find(k => k.startsWith(sku) || k.includes(sku))
+                if (fuzzyKey) targetSku = fuzzyKey
+            }
+
+            // Allow adding if not exists (using generic KPI SKU)
+            if (!stockMap[targetSku]) {
                 const p = findProduct(sku)
                 // Only add if we can resolve the product (so we have ID/Name)
                 if (p) {
                     stockMap[sku] = { name: p.name, assigned: 0, reported: 0, sku: p.sku, productId: p.id }
+                    targetSku = sku
                 } else if (sku === 'CARRETE') {
-                    // Special retry for Carrete if exact SKU didn't match (e.g. CARRETE-FIBRA vs CARRETE)
-                    // But KPI_MAP uses "CARRETE" key. If database has "CARRETE 1000M", we might miss it.
-                    // For now, assume strict mapping or fallback.
                     stockMap[sku] = { name: "Bobina de Fibra (Genérico)", assigned: 0, reported: 0, sku, productId: "unknown" }
+                    targetSku = sku
                 }
             }
 
-            if (stockMap[sku]) {
+            if (stockMap[targetSku]) {
                 const rawVal = cierre[key]
+
                 if (sku === 'CARRETE') {
                     // Sum used + wasted
                     const used = cleanMeters(cierre['metraje_usado'])
-                    const wasted = cleanMeters(cierre['metraje_desechado']) // Needs to be selected in SQL
-                    stockMap[sku].reported += (used + wasted)
+                    const wasted = cleanMeters(cierre['metraje_desechado'])
+                    stockMap[targetSku].reported += (used + wasted)
+                } else if (sku === 'ONU' || sku === 'PREC') {
+                    // [Fix] Forced Count for Serialized/Coded items
+                    // If text exists and is long enough, count 1. Bypass heuristic.
+                    const valStr = String(rawVal || "").trim()
+                    if (valStr.length > 2 && valStr.toLowerCase() !== 'n/a' && valStr.toLowerCase() !== 'no') {
+                        stockMap[targetSku].reported += 1
+                    }
                 } else {
                     // @ts-ignore
                     const val = cleanQuantity(rawVal)
-                    stockMap[sku].reported += val
+                    stockMap[targetSku].reported += val
                 }
             }
         })
@@ -686,10 +716,11 @@ export async function getAuditDetails(auditId: string) {
             const memberIds = members?.map(m => m.id) || []
 
             if (memberIds.length > 0) {
+                // [Modified] Fetch Closures
                 const { data: closures } = await supabase
                     .from("cierres")
                     .select("id, metraje_usado, metraje_desechado, created_at, tecnico_1, codigo_carrete, equipo, cliente:clientes(nombre, cedula)")
-                    .in("tecnico_id", memberIds)
+                    .in("user_id", memberIds)
                     .gte("created_at", minDate.toISOString())
                     .lte("created_at", maxDate.toISOString())
                     .not("codigo_carrete", "is", null)
@@ -697,9 +728,38 @@ export async function getAuditDetails(auditId: string) {
 
                 installations = closures || []
 
+                // [New] Fetch Supports
+                const { data: supports } = await supabase
+                    .from("soportes")
+                    .select("id, metraje_usado, metraje_desechado, created_at, tecnico_id, codigo_carrete, causa, observacion, cliente:clientes(nombre, cedula)")
+                    .in("tecnico_id", memberIds)
+                    .gte("created_at", minDate.toISOString())
+                    .lte("created_at", maxDate.toISOString())
+                    .order("created_at", { ascending: false })
+
+                // Merge supports into installations list (polymorphic) or keep separate?
+                // Merging allows single timeline, but fields differ.
+                // Let's attach them to the return object separately first, OR merge them with a 'type' field.
+                // Merging with type is better for timeline.
+                if (supports) {
+                    const supportItems = supports.map((s: any) => ({
+                        ...s,
+                        type: 'SUPPORT',
+                        tecnico_1: s.tecnico_id, // Map for compatibility if needed
+                        equipo: 'SOPORTE' // Visual label
+                    }))
+                    installations = [...installations, ...supportItems].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                }
+
+                // Add spools from closures AND supports to the list to fetch
                 closures?.forEach((c: any) => {
                     if (c.codigo_carrete && !spools.includes(c.codigo_carrete)) {
                         spools.push(c.codigo_carrete)
+                    }
+                })
+                supports?.forEach((s: any) => {
+                    if (s.codigo_carrete && !spools.includes(s.codigo_carrete)) {
+                        spools.push(s.codigo_carrete)
                     }
                 })
             }

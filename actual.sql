@@ -21,8 +21,10 @@ CREATE TABLE public.asignaciones (
   hora text,
   created_at timestamp without time zone DEFAULT now(),
   updated_at timestamp without time zone DEFAULT now(),
+  user_id uuid,
   CONSTRAINT asignaciones_pkey PRIMARY KEY (id),
-  CONSTRAINT asignaciones_cliente_id_fkey FOREIGN KEY (cliente_id) REFERENCES public.clientes(id)
+  CONSTRAINT asignaciones_cliente_id_fkey FOREIGN KEY (cliente_id) REFERENCES public.clientes(id),
+  CONSTRAINT asignaciones_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
 );
 CREATE TABLE public.cierres (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -149,7 +151,6 @@ CREATE TABLE public.inventory_audit_items (
   item_name text,
   item_sku text,
   product_id uuid,
-  notes text,
   CONSTRAINT inventory_audit_items_pkey PRIMARY KEY (id),
   CONSTRAINT inventory_audit_items_audit_id_fkey FOREIGN KEY (audit_id) REFERENCES public.inventory_audits(id),
   CONSTRAINT inventory_audit_items_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.inventory_products(id)
@@ -355,8 +356,40 @@ CREATE TABLE public.revisiones (
   potencia_nap text,
   potencia_cliente text,
   observacion text,
+  user_id uuid,
   CONSTRAINT revisiones_pkey PRIMARY KEY (id),
-  CONSTRAINT revisiones_cliente_id_fkey FOREIGN KEY (cliente_id) REFERENCES public.clientes(id)
+  CONSTRAINT revisiones_cliente_id_fkey FOREIGN KEY (cliente_id) REFERENCES public.clientes(id),
+  CONSTRAINT revisiones_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.soportes (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  cliente_id uuid,
+  tecnico_id uuid,
+  fecha text,
+  hora text,
+  precinto text,
+  caja_nap text,
+  potencia text,
+  coordenadas text,
+  cantidad_puertos text,
+  puerto text,
+  zona text,
+  estatus text DEFAULT 'Realizado'::text,
+  causa text,
+  codigo_carrete text,
+  metraje_usado numeric DEFAULT 0,
+  metraje_desechado numeric DEFAULT 0,
+  conectores integer DEFAULT 0,
+  tensores integer DEFAULT 0,
+  patchcord integer DEFAULT 0,
+  rosetas integer DEFAULT 0,
+  onu_anterior text,
+  onu_nueva text,
+  observacion text,
+  realizado_por text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT soportes_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.system_settings (
   key text NOT NULL,

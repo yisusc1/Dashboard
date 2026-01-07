@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
@@ -369,15 +369,15 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId }: Entrada
                             <h4 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-2">
                                 Chequeo Técnico (Llegada)
                             </h4>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div className="flex items-center gap-3 p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                    <Checkbox id="aceite" checked={checks.aceite} onCheckedChange={() => toggleCheck('aceite')} className="w-6 h-6 rounded-md border-2 border-zinc-300 data-[state=checked]:bg-black data-[state=checked]:border-black transition-colors" />
-                                    <Label htmlFor="aceite" className="text-base font-medium text-zinc-700 cursor-pointer flex-1 py-1">Nivel de Aceite</Label>
+                            <div className="grid grid-cols-1 gap-3">
+                                <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                    <Label htmlFor="aceite" className="text-sm font-medium text-zinc-700 cursor-pointer">Nivel de Aceite</Label>
+                                    <Switch id="aceite" checked={checks.aceite} onCheckedChange={() => toggleCheck('aceite')} />
                                 </div>
                                 {!isMoto && (
-                                    <div className="flex items-center gap-3 p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                        <Checkbox id="agua" checked={checks.agua} onCheckedChange={() => toggleCheck('agua')} className="w-6 h-6 rounded-md border-2 border-zinc-300 data-[state=checked]:bg-black data-[state=checked]:border-black transition-colors" />
-                                        <Label htmlFor="agua" className="text-base font-medium text-zinc-700 cursor-pointer flex-1 py-1">Agua / Refrigerante</Label>
+                                    <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                        <Label htmlFor="agua" className="text-sm font-medium text-zinc-700 cursor-pointer">Agua / Refrigerante</Label>
+                                        <Switch id="agua" checked={checks.agua} onCheckedChange={() => toggleCheck('agua')} />
                                     </div>
                                 )}
                             </div>
@@ -389,26 +389,26 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId }: Entrada
                                 <h4 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-2 border-t border-zinc-100 pt-4">
                                     Herramientas (Verificar devolución)
                                 </h4>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div className="flex items-center gap-3 p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                        <Checkbox id="gato" checked={checks.gato} onCheckedChange={() => toggleCheck('gato')} className="w-6 h-6 rounded-md border-2 border-zinc-300 data-[state=checked]:bg-black data-[state=checked]:border-black" />
-                                        <Label htmlFor="gato" className="text-base font-medium text-zinc-700 cursor-pointer flex-1 py-1">Gato Hidráulico</Label>
+                                <div className="grid grid-cols-1 gap-3">
+                                    <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                        <Label htmlFor="gato" className="text-sm font-medium text-zinc-700 cursor-pointer">Gato Hidráulico</Label>
+                                        <Switch id="gato" checked={checks.gato} onCheckedChange={() => toggleCheck('gato')} />
                                     </div>
-                                    <div className="flex items-center gap-3 p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                        <Checkbox id="cruz" checked={checks.cruz} onCheckedChange={() => toggleCheck('cruz')} className="w-6 h-6 rounded-md border-2 border-zinc-300 data-[state=checked]:bg-black data-[state=checked]:border-black" />
-                                        <Label htmlFor="cruz" className="text-base font-medium text-zinc-700 cursor-pointer flex-1 py-1">Llave Cruz</Label>
+                                    <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                        <Label htmlFor="cruz" className="text-sm font-medium text-zinc-700 cursor-pointer">Llave Cruz</Label>
+                                        <Switch id="cruz" checked={checks.cruz} onCheckedChange={() => toggleCheck('cruz')} />
                                     </div>
-                                    <div className="flex items-center gap-3 p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                        <Checkbox id="triangulo" checked={checks.triangulo} onCheckedChange={() => toggleCheck('triangulo')} className="w-6 h-6 rounded-md border-2 border-zinc-300 data-[state=checked]:bg-black data-[state=checked]:border-black" />
-                                        <Label htmlFor="triangulo" className="text-base font-medium text-zinc-700 cursor-pointer flex-1 py-1">Triángulo</Label>
+                                    <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                        <Label htmlFor="triangulo" className="text-sm font-medium text-zinc-700 cursor-pointer">Triángulo</Label>
+                                        <Switch id="triangulo" checked={checks.triangulo} onCheckedChange={() => toggleCheck('triangulo')} />
                                     </div>
-                                    <div className="flex items-center gap-3 p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                        <Checkbox id="caucho" checked={checks.caucho} onCheckedChange={() => toggleCheck('caucho')} className="w-6 h-6 rounded-md border-2 border-zinc-300 data-[state=checked]:bg-black data-[state=checked]:border-black" />
-                                        <Label htmlFor="caucho" className="text-base font-medium text-zinc-700 cursor-pointer flex-1 py-1">Caucho Repuesto</Label>
+                                    <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                        <Label htmlFor="caucho" className="text-sm font-medium text-zinc-700 cursor-pointer">Caucho Repuesto</Label>
+                                        <Switch id="caucho" checked={checks.caucho} onCheckedChange={() => toggleCheck('caucho')} />
                                     </div>
-                                    <div className="flex items-center gap-3 p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                        <Checkbox id="carpeta" checked={checks.carpeta} onCheckedChange={() => toggleCheck('carpeta')} className="w-6 h-6 rounded-md border-2 border-zinc-300 data-[state=checked]:bg-black data-[state=checked]:border-black" />
-                                        <Label htmlFor="carpeta" className="text-base font-medium text-zinc-700 cursor-pointer flex-1 py-1">Carpeta / Permisos</Label>
+                                    <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                        <Label htmlFor="carpeta" className="text-sm font-medium text-zinc-700 cursor-pointer">Carpeta / Permisos</Label>
+                                        <Switch id="carpeta" checked={checks.carpeta} onCheckedChange={() => toggleCheck('carpeta')} />
                                     </div>
                                 </div>
                             </div>
@@ -420,18 +420,18 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId }: Entrada
                                 <h4 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-2 border-t border-zinc-100 pt-4">
                                     Seguridad Moto (Verificar devolución)
                                 </h4>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div className="flex items-center gap-3 p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                        <Checkbox id="casco" checked={checks.casco} onCheckedChange={() => toggleCheck('casco')} className="w-6 h-6 rounded-md border-2 border-zinc-300 data-[state=checked]:bg-black data-[state=checked]:border-black" />
-                                        <Label htmlFor="casco" className="text-base font-medium text-zinc-700 cursor-pointer flex-1 py-1">Casco</Label>
+                                <div className="grid grid-cols-1 gap-3">
+                                    <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                        <Label htmlFor="casco" className="text-sm font-medium text-zinc-700 cursor-pointer">Casco</Label>
+                                        <Switch id="casco" checked={checks.casco} onCheckedChange={() => toggleCheck('casco')} />
                                     </div>
-                                    <div className="flex items-center gap-3 p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                        <Checkbox id="luces" checked={checks.luces} onCheckedChange={() => toggleCheck('luces')} className="w-6 h-6 rounded-md border-2 border-zinc-300 data-[state=checked]:bg-black data-[state=checked]:border-black" />
-                                        <Label htmlFor="luces" className="text-base font-medium text-zinc-700 cursor-pointer flex-1 py-1">Luces Nuevas</Label>
+                                    <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                        <Label htmlFor="luces" className="text-sm font-medium text-zinc-700 cursor-pointer">Luces Nuevas</Label>
+                                        <Switch id="luces" checked={checks.luces} onCheckedChange={() => toggleCheck('luces')} />
                                     </div>
-                                    <div className="flex items-center gap-3 p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                        <Checkbox id="herramientas" checked={checks.herramientas} onCheckedChange={() => toggleCheck('herramientas')} className="w-6 h-6 rounded-md border-2 border-zinc-300 data-[state=checked]:bg-black data-[state=checked]:border-black" />
-                                        <Label htmlFor="herramientas" className="text-base font-medium text-zinc-700 cursor-pointer flex-1 py-1">Herramientas Básicas</Label>
+                                    <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                        <Label htmlFor="herramientas" className="text-sm font-medium text-zinc-700 cursor-pointer">Herramientas Básicas</Label>
+                                        <Switch id="herramientas" checked={checks.herramientas} onCheckedChange={() => toggleCheck('herramientas')} />
                                     </div>
                                 </div>
                             </div>
@@ -443,18 +443,18 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId }: Entrada
                                 <h4 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-2 border-t border-zinc-100 pt-4">
                                     Equipos Asignados
                                 </h4>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div className="flex items-center gap-3 p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                        <Checkbox id="onu" checked={checks.onu} onCheckedChange={() => toggleCheck('onu')} className="w-6 h-6 rounded-md border-2 border-zinc-300 data-[state=checked]:bg-black data-[state=checked]:border-black" />
-                                        <Label htmlFor="onu" className="text-base font-medium text-zinc-700 cursor-pointer flex-1 py-1">ONU / Router</Label>
+                                <div className="grid grid-cols-1 gap-3">
+                                    <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                        <Label htmlFor="onu" className="text-sm font-medium text-zinc-700 cursor-pointer">ONU / Router</Label>
+                                        <Switch id="onu" checked={checks.onu} onCheckedChange={() => toggleCheck('onu')} />
                                     </div>
-                                    <div className="flex items-center gap-3 p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                        <Checkbox id="ups" checked={checks.ups} onCheckedChange={() => toggleCheck('ups')} className="w-6 h-6 rounded-md border-2 border-zinc-300 data-[state=checked]:bg-black data-[state=checked]:border-black" />
-                                        <Label htmlFor="ups" className="text-base font-medium text-zinc-700 cursor-pointer flex-1 py-1">Mini-UPS</Label>
+                                    <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                        <Label htmlFor="ups" className="text-sm font-medium text-zinc-700 cursor-pointer">Mini-UPS</Label>
+                                        <Switch id="ups" checked={checks.ups} onCheckedChange={() => toggleCheck('ups')} />
                                     </div>
-                                    <div className="flex items-center gap-3 p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                        <Checkbox id="escalera" checked={checks.escalera} onCheckedChange={() => toggleCheck('escalera')} className="w-6 h-6 rounded-md border-2 border-zinc-300 data-[state=checked]:bg-black data-[state=checked]:border-black" />
-                                        <Label htmlFor="escalera" className="text-base font-medium text-zinc-700 cursor-pointer flex-1 py-1">Escalera</Label>
+                                    <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                        <Label htmlFor="escalera" className="text-sm font-medium text-zinc-700 cursor-pointer">Escalera</Label>
+                                        <Switch id="escalera" checked={checks.escalera} onCheckedChange={() => toggleCheck('escalera')} />
                                     </div>
                                 </div>
                             </div>
