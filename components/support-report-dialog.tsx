@@ -10,16 +10,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { createSupportReport, getMySpools } from "@/app/tecnicos/actions"
 import { toast } from "sonner"
-import { Loader2, MapPin, Wrench, RefreshCw, Box } from "lucide-react"
+import { Loader2, MapPin, Wrench, RefreshCw, Box, User, Hash } from "lucide-react"
 
-// Define Props
 interface SupportReportDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
-    clients: any[] // Pass clients for selection
+    // clients prop removed
 }
 
-export function SupportReportDialog({ open, onOpenChange, clients }: SupportReportDialogProps) {
+export function SupportReportDialog({ open, onOpenChange }: SupportReportDialogProps) {
     const [loading, setLoading] = useState(false)
     const [spools, setSpools] = useState<{ serial: string, label: string, remaining: number }[]>([])
     const [isSwap, setIsSwap] = useState(false)
@@ -27,7 +26,7 @@ export function SupportReportDialog({ open, onOpenChange, clients }: SupportRepo
 
     // Form State
     const [formData, setFormData] = useState({
-        cliente_id: "",
+        cedula: "", // Replaces client_id
         causa: "",
         precinto: "",
         caja_nap: "",
@@ -97,9 +96,8 @@ export function SupportReportDialog({ open, onOpenChange, clients }: SupportRepo
         e.preventDefault()
         setLoading(true)
 
-        // Validation for critical fields
-        if (!formData.cliente_id || !formData.causa) {
-            toast.error("Cliente y Causa son obligatorios")
+        if (!formData.cedula || !formData.causa) {
+            toast.error("Cédula y Causa son obligatorios")
             setLoading(false)
             return
         }
@@ -115,7 +113,7 @@ export function SupportReportDialog({ open, onOpenChange, clients }: SupportRepo
             onOpenChange(false)
             // Reset form
             setFormData({
-                cliente_id: "", causa: "", precinto: "", caja_nap: "", potencia: "", coordenadas: "",
+                cedula: "", causa: "", precinto: "", caja_nap: "", potencia: "", coordenadas: "",
                 cantidad_puertos: "", puerto: "", zona: "", codigo_carrete: "", metraje_usado: "",
                 metraje_desechado: "", conectores: "", tensores: "", patchcord: "", rosetas: "",
                 onu_anterior: "", onu_nueva: "", observacion: ""
@@ -129,85 +127,89 @@ export function SupportReportDialog({ open, onOpenChange, clients }: SupportRepo
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto rounded-[24px] p-0 gap-0 border-none shadow-2xl bg-[#F2F2F7]">
+            <DialogContent className="max-w-[95vw] md:max-w-md w-full max-h-[90vh] overflow-y-auto rounded-[32px] p-0 border-0 outline-none bg-[#F2F2F7]">
 
                 {/* Header iOS Style */}
-                <div className="bg-white/90 backdrop-blur-md px-5 py-3 sticky top-0 z-10 border-b border-slate-200/60 flex items-center justify-between">
+                <div className="bg-white/80 backdrop-blur-xl sticky top-0 z-50 border-b border-slate-200/50 px-6 py-4 flex items-center justify-between">
                     <div>
                         <DialogTitle className="text-lg font-bold text-slate-900 tracking-tight">Nuevo Soporte</DialogTitle>
-                        <p className="text-[11px] text-slate-500 font-medium">Reporte de incidente técnico</p>
-                    </div>
-                    <div className="h-8 w-8 bg-orange-50 rounded-full flex items-center justify-center text-orange-500">
-                        <Wrench size={16} />
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-4 space-y-4">
+                <form onSubmit={handleSubmit} className="px-6 py-6 space-y-6">
 
                     {/* SECTION 1: CLIENT & CAUSE */}
-                    <div className="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-100 space-y-3">
-                        <div className="space-y-1">
-                            <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Cliente</Label>
-                            <Select onValueChange={(val) => handleSelectChange("cliente_id", val)} value={formData.cliente_id}>
-                                <SelectTrigger className="h-10 rounded-xl bg-slate-50 border-slate-200 text-sm font-medium focus:ring-1 focus:ring-orange-200">
-                                    <SelectValue placeholder="Buscar Cliente..." />
-                                </SelectTrigger>
-                                <SelectContent className="max-h-[250px]">
-                                    {clients.map(c => (
-                                        <SelectItem key={c.id} value={c.id} className="py-2.5">
-                                            <div className="flex flex-col text-left">
-                                                <span className="font-bold text-slate-900 text-sm">{c.cedula}</span>
-                                                <span className="text-[11px] text-slate-500">{c.nombre}</span>
-                                            </div>
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                    <div className="space-y-2">
+                        <Label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider pl-1">Información Básica</Label>
+                        <div className="bg-white rounded-[20px] shadow-sm border border-slate-100 overflow-hidden divide-y divide-slate-50">
 
-                        <div className="space-y-1">
-                            <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Causa del Reporte</Label>
-                            <Select onValueChange={(val) => handleSelectChange("causa", val)} value={formData.causa}>
-                                <SelectTrigger className="h-10 rounded-xl bg-slate-50 border-slate-200 text-sm font-medium focus:ring-1 focus:ring-orange-200">
-                                    <SelectValue placeholder="Seleccionar Motivo" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Tendido Fracturado">Tendido Fracturado</SelectItem>
-                                    <SelectItem value="Cambio de Equipo (ONU/Router)">Cambio de Equipo</SelectItem>
-                                    <SelectItem value="Atenuación Alta">Atenuación Alta</SelectItem>
-                                    <SelectItem value="Conectores Dañados">Conectores Dañados</SelectItem>
-                                    <SelectItem value="Reubicación">Reubicación</SelectItem>
-                                    <SelectItem value="Otro">Otro</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            {/* CEDULA INPUT */}
+                            <div className="p-4 flex items-center gap-3">
+                                <div className="h-8 w-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 shrink-0">
+                                    <Hash size={16} />
+                                </div>
+                                <div className="flex-1 space-y-1">
+                                    <Label className="text-[11px] font-bold text-slate-900">Cédula del Cliente</Label>
+                                    <Input
+                                        name="cedula"
+                                        value={formData.cedula}
+                                        onChange={handleChange}
+                                        className="h-8 border-none p-0 text-base font-medium placeholder:text-slate-300 focus-visible:ring-0"
+                                        placeholder="Ej: 12345678"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* CAUSE SELECT */}
+                            <div className="p-4 flex items-center gap-3">
+                                <div className="h-8 w-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 shrink-0">
+                                    <Wrench size={16} />
+                                </div>
+                                <div className="flex-1 space-y-1">
+                                    <Label className="text-[11px] font-bold text-slate-900">Motivo</Label>
+                                    <Select onValueChange={(val) => handleSelectChange("causa", val)} value={formData.causa}>
+                                        <SelectTrigger className="h-8 border-none p-0 text-base font-medium focus:ring-0 shadow-none">
+                                            <SelectValue placeholder="Seleccionar..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Tendido Fracturado">Tendido Fracturado</SelectItem>
+                                            <SelectItem value="Cambio de Equipo (ONU/Router)">Cambio de Equipo</SelectItem>
+                                            <SelectItem value="Atenuación Alta">Atenuación Alta</SelectItem>
+                                            <SelectItem value="Conectores Dañados">Conectores Dañados</SelectItem>
+                                            <SelectItem value="Reubicación">Reubicación</SelectItem>
+                                            <SelectItem value="Otro">Otro</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     {/* SECTION 2: TECHNICAL DETAILS */}
-                    <div className="space-y-1.5">
-                        <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-3">Detalles Técnicos</Label>
-                        <div className="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-100 grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                        <Label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider pl-1">Datos Técnicos</Label>
+                        <div className="bg-white p-4 rounded-[20px] shadow-sm border border-slate-100 grid grid-cols-2 gap-4">
                             <div className="space-y-1">
                                 <Label className="text-[10px] text-slate-400 font-bold uppercase">Precinto</Label>
-                                <Input className="h-9 rounded-lg bg-slate-50 border-slate-200 font-mono text-xs" name="precinto" value={formData.precinto} onChange={handleChange} />
+                                <Input className="h-10 rounded-xl bg-slate-50 border-slate-100 font-mono text-xs" name="precinto" value={formData.precinto} onChange={handleChange} />
                             </div>
                             <div className="space-y-1">
                                 <Label className="text-[10px] text-slate-400 font-bold uppercase">Caja NAP</Label>
-                                <Input className="h-9 rounded-lg bg-slate-50 border-slate-200 text-xs" name="caja_nap" value={formData.caja_nap} onChange={handleChange} />
+                                <Input className="h-10 rounded-xl bg-slate-50 border-slate-100 text-xs" name="caja_nap" value={formData.caja_nap} onChange={handleChange} />
                             </div>
                             <div className="space-y-1">
-                                <Label className="text-[10px] text-slate-400 font-bold uppercase">Potencia (dBm)</Label>
-                                <Input className="h-9 rounded-lg bg-slate-50 border-slate-200 font-mono text-xs" name="potencia" value={formData.potencia} onChange={handleChange} />
+                                <Label className="text-[10px] text-slate-400 font-bold uppercase">Potencia</Label>
+                                <Input className="h-10 rounded-xl bg-slate-50 border-slate-100 font-mono text-xs" name="potencia" value={formData.potencia} onChange={handleChange} />
                             </div>
                             <div className="space-y-1">
                                 <Label className="text-[10px] text-slate-400 font-bold uppercase">Puerto</Label>
-                                <Input className="h-9 rounded-lg bg-slate-50 border-slate-200 text-xs" name="puerto" value={formData.puerto} onChange={handleChange} />
+                                <Input className="h-10 rounded-xl bg-slate-50 border-slate-100 text-xs" name="puerto" value={formData.puerto} onChange={handleChange} />
                             </div>
                             <div className="col-span-2 space-y-1 relative">
-                                <Label className="text-[10px] text-slate-400 font-bold uppercase">Coordenadas GPS</Label>
+                                <Label className="text-[10px] text-slate-400 font-bold uppercase">Coordenadas</Label>
                                 <div className="flex gap-2">
                                     <Input
-                                        className="h-9 rounded-lg bg-slate-50 border-slate-200 font-mono text-[10px]"
+                                        className="h-10 rounded-xl bg-slate-50 border-slate-100 font-mono text-xs"
                                         name="coordenadas"
                                         value={formData.coordenadas}
                                         onChange={handleChange}
@@ -217,11 +219,11 @@ export function SupportReportDialog({ open, onOpenChange, clients }: SupportRepo
                                         type="button"
                                         variant="outline"
                                         size="icon"
-                                        className="h-9 w-9 rounded-lg shrink-0 border-slate-200 text-blue-600 hover:bg-blue-50"
+                                        className="h-10 w-10 rounded-xl shrink-0 border-slate-200 text-blue-600 hover:bg-blue-50"
                                         onClick={handleGps}
                                         disabled={gpsLoading}
                                     >
-                                        {gpsLoading ? <Loader2 className="animate-spin h-3 w-3" /> : <MapPin size={16} />}
+                                        {gpsLoading ? <Loader2 className="animate-spin h-4 w-4" /> : <MapPin size={18} />}
                                     </Button>
                                 </div>
                             </div>
@@ -229,35 +231,33 @@ export function SupportReportDialog({ open, onOpenChange, clients }: SupportRepo
                     </div>
 
                     {/* SECTION 3: MATERIALS */}
-                    <div className="space-y-1.5">
-                        <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-3">Materiales</Label>
-                        <div className="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+                    <div className="space-y-2">
+                        <Label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider pl-1">Materiales Utilizados</Label>
+                        <div className="bg-white p-4 rounded-[20px] shadow-sm border border-slate-100 space-y-4">
                             {/* Spool */}
-                            <div className="p-2.5 bg-blue-50/50 rounded-xl border border-blue-100 flex items-start gap-3">
-                                <div className="mt-1 text-blue-500"><Box size={16} /></div>
-                                <div className="flex-1 space-y-2">
-                                    <div className="space-y-1">
-                                        <Label className="text-[10px] font-bold text-blue-600">Bobina</Label>
-                                        <Select onValueChange={(val) => handleSelectChange("codigo_carrete", val)}>
-                                            <SelectTrigger className="h-8 border-blue-200 bg-white text-[11px]">
-                                                <SelectValue placeholder="Seleccionar..." />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {spools.map(s => (
-                                                    <SelectItem key={s.serial} value={s.serial} className="text-xs">{s.label}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                            <div className="p-3 bg-blue-50/50 rounded-2xl border border-blue-100 flex flex-col gap-3">
+                                <div className="flex items-center gap-2 text-blue-600">
+                                    <Box size={16} />
+                                    <span className="text-xs font-bold uppercase">Bobina de Fibra</span>
+                                </div>
+                                <Select onValueChange={(val) => handleSelectChange("codigo_carrete", val)}>
+                                    <SelectTrigger className="h-9 border-blue-200 bg-white text-xs rounded-xl">
+                                        <SelectValue placeholder="Seleccionar Bobina..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {spools.map(s => (
+                                            <SelectItem key={s.serial} value={s.serial} className="text-xs">{s.label}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <Label className="text-[9px] uppercase text-blue-400 font-bold mb-1 block">Usado (m)</Label>
+                                        <Input type="number" name="metraje_usado" value={formData.metraje_usado} onChange={handleChange} className="h-9 bg-white border-blue-200 text-xs rounded-xl" />
                                     </div>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <div>
-                                            <Label className="text-[9px] uppercase text-blue-400 font-bold">Usado</Label>
-                                            <Input type="number" name="metraje_usado" value={formData.metraje_usado} onChange={handleChange} className="h-8 bg-white border-blue-200 text-xs" />
-                                        </div>
-                                        <div>
-                                            <Label className="text-[9px] uppercase text-red-400 font-bold">Merma</Label>
-                                            <Input type="number" name="metraje_desechado" value={formData.metraje_desechado} onChange={handleChange} className="h-8 bg-white border-red-200 text-red-600 text-xs" />
-                                        </div>
+                                    <div>
+                                        <Label className="text-[9px] uppercase text-red-400 font-bold mb-1 block">Merma (m)</Label>
+                                        <Input type="number" name="metraje_desechado" value={formData.metraje_desechado} onChange={handleChange} className="h-9 bg-white border-red-200 text-red-600 text-xs rounded-xl" />
                                     </div>
                                 </div>
                             </div>
@@ -266,53 +266,54 @@ export function SupportReportDialog({ open, onOpenChange, clients }: SupportRepo
                             <div className="grid grid-cols-4 gap-2">
                                 <div className="space-y-1 text-center">
                                     <Label className="text-[9px] uppercase font-bold text-slate-400">Conect.</Label>
-                                    <Input type="number" name="conectores" value={formData.conectores} onChange={handleChange} className="text-center h-9 rounded-lg bg-slate-50 text-xs" />
+                                    <Input type="number" name="conectores" value={formData.conectores} onChange={handleChange} className="text-center h-10 rounded-xl bg-slate-50 text-xs" />
                                 </div>
                                 <div className="space-y-1 text-center">
                                     <Label className="text-[9px] uppercase font-bold text-slate-400">Tensores</Label>
-                                    <Input type="number" name="tensores" value={formData.tensores} onChange={handleChange} className="text-center h-9 rounded-lg bg-slate-50 text-xs" />
+                                    <Input type="number" name="tensores" value={formData.tensores} onChange={handleChange} className="text-center h-10 rounded-xl bg-slate-50 text-xs" />
                                 </div>
                                 <div className="space-y-1 text-center">
                                     <Label className="text-[9px] uppercase font-bold text-slate-400">Patch</Label>
-                                    <Input type="number" name="patchcord" value={formData.patchcord} onChange={handleChange} className="text-center h-9 rounded-lg bg-slate-50 text-xs" />
+                                    <Input type="number" name="patchcord" value={formData.patchcord} onChange={handleChange} className="text-center h-10 rounded-xl bg-slate-50 text-xs" />
                                 </div>
                                 <div className="space-y-1 text-center">
                                     <Label className="text-[9px] uppercase font-bold text-slate-400">Rosetas</Label>
-                                    <Input type="number" name="rosetas" value={formData.rosetas} onChange={handleChange} className="text-center h-9 rounded-lg bg-slate-50 text-xs" />
+                                    <Input type="number" name="rosetas" value={formData.rosetas} onChange={handleChange} className="text-center h-10 rounded-xl bg-slate-50 text-xs" />
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     {/* SECTION 4: EQUIPMENT SWAP (TOGGLE) */}
-                    <div className="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+                    <div className="bg-white p-4 rounded-[20px] shadow-sm border border-slate-100 space-y-4">
                         <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2.5">
-                                <div className="h-7 w-7 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center">
-                                    <RefreshCw size={14} />
+                            <div className="flex items-center gap-3">
+                                <div className="h-8 w-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                                    <RefreshCw size={16} />
                                 </div>
                                 <div>
-                                    <Label className="text-sm font-bold text-slate-900 cursor-pointer" htmlFor="swap-mode">Cambio de Equipo</Label>
+                                    <Label className="text-sm font-bold text-slate-900 cursor-pointer block" htmlFor="swap-mode">Cambio de Equipo</Label>
+                                    <span className="text-[10px] text-slate-400 font-medium">Si se reemplazó ONU/Router</span>
                                 </div>
                             </div>
                             <Switch
                                 id="swap-mode"
                                 checked={isSwap}
                                 onCheckedChange={setIsSwap}
-                                className="scale-90 data-[state=checked]:bg-indigo-600"
+                                className="data-[state=checked]:bg-indigo-600"
                             />
                         </div>
 
                         {/* Animated Expand */}
                         {isSwap && (
-                            <div className="pt-1 grid grid-cols-2 gap-3 animate-in slide-in-from-top-2 fade-in duration-300">
+                            <div className="pt-2 grid grid-cols-2 gap-3 animate-in slide-in-from-top-2 fade-in duration-300">
                                 <div className="space-y-1">
                                     <Label className="text-[10px] text-slate-500 font-bold uppercase">ONU Anterior</Label>
                                     <Input
                                         name="onu_anterior"
                                         value={formData.onu_anterior}
                                         onChange={handleChange}
-                                        className="h-9 bg-slate-50 border-slate-200 rounded-lg text-xs"
+                                        className="h-10 bg-slate-50 border-slate-200 rounded-xl text-xs"
                                         placeholder="Serial Retirado"
                                     />
                                 </div>
@@ -322,7 +323,7 @@ export function SupportReportDialog({ open, onOpenChange, clients }: SupportRepo
                                         name="onu_nueva"
                                         value={formData.onu_nueva}
                                         onChange={handleChange}
-                                        className="h-9 bg-indigo-50 border-indigo-200 text-indigo-900 rounded-lg text-xs"
+                                        className="h-10 bg-indigo-50 border-indigo-200 text-indigo-900 rounded-xl text-xs"
                                         placeholder="Serial Instalado"
                                     />
                                 </div>
@@ -331,21 +332,21 @@ export function SupportReportDialog({ open, onOpenChange, clients }: SupportRepo
                     </div>
 
                     {/* OBSERVATIONS */}
-                    <div className="space-y-1">
-                        <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-3">Notas</Label>
+                    <div className="pb-4">
+                        <Label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider pl-1 mb-2 block">Notas Adicionales</Label>
                         <Textarea
                             name="observacion"
                             value={formData.observacion}
                             onChange={handleChange}
-                            placeholder="Detalles adicionales..."
-                            className="bg-white border-slate-200 rounded-2xl min-h-[60px] shadow-sm resize-none focus:ring-0 focus:border-slate-300 text-sm py-3"
+                            placeholder="Detalles sobre la reparación..."
+                            className="bg-white border-slate-200 rounded-2xl min-h-[80px] shadow-sm resize-none focus:ring-0 focus:border-slate-300 text-sm py-3"
                         />
                     </div>
 
-                    <div className="pt-2">
-                        <Button type="submit" disabled={loading} className="w-full h-12 text-base font-bold rounded-2xl bg-black hover:bg-zinc-800 text-white shadow-xl shadow-black/5 active:scale-[0.98]">
-                            {loading ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : null}
-                            Guardar Reporte
+                    <div className="pt-2 sticky bottom-0 pb-6 bg-[#F2F2F7]">
+                        <Button type="submit" disabled={loading} className="w-full h-14 text-base font-bold rounded-2xl bg-black hover:bg-zinc-800 text-white shadow-xl shadow-black/10 active:scale-[0.98] transition-all">
+                            {loading ? <Loader2 className="animate-spin mr-2 h-5 w-5" /> : null}
+                            Guardar Soporte
                         </Button>
                     </div>
 

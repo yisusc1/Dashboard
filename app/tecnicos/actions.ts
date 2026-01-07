@@ -68,17 +68,36 @@ export async function getMySpools() {
     return spools
 }
 
+// [New] Modified Support Report to support Cedula
 export async function createSupportReport(data: any) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user) {
-        return { success: false, error: "Usuario no autenticado" }
+    if (!user) return { success: false, error: "Usuario no autenticado" }
+
+    // Validation: Require either cedula OR cliente_id, and Cause
+    if ((!data.cliente_id && !data.cedula) || !data.causa) {
+        return { success: false, error: "Cédula y Causa son obligatorios" }
     }
 
     try {
+        let finalClientId = data.cliente_id
+
+        // Silent Lookup
+        if (!finalClientId && data.cedula) {
+            const { data: clientFound } = await supabase
+                .from("clientes")
+                .select("id")
+                .eq("cedula", data.cedula)
+                .maybeSingle() // Use maybeSingle to avoid 406 error if not found
+
+            if (clientFound) finalClientId = clientFound.id
+        }
+
         const { error } = await supabase.from("soportes").insert({
             ...data,
+            cliente_id: finalClientId || null,
+            cedula: data.cedula,
             tecnico_id: user.id,
             realizado_por: user.email,
             estatus: "Realizado"
@@ -86,7 +105,7 @@ export async function createSupportReport(data: any) {
 
         if (error) {
             console.error("Error creating support report:", error)
-            return { success: false, error: "Error al guardar el reporte: " + error.message }
+            return { success: false, error: "Error al guardar: " + error.message }
         }
 
         revalidatePath("/tecnicos/reportes")

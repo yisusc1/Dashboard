@@ -367,6 +367,7 @@ CREATE TABLE public.soportes (
   tecnico_id uuid,
   fecha text,
   hora text,
+  cedula text,
   precinto text,
   caja_nap text,
   potencia text,

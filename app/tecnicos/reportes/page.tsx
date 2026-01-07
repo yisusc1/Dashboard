@@ -455,7 +455,6 @@ function ReportsContent() {
       <SupportReportDialog
         open={supportDialogOpen}
         onOpenChange={setSupportDialogOpen}
-        clients={clients}
       />
 
       <AlertDialog open={!!clientToFinalize} onOpenChange={(open) => !open && setClientToFinalize(null)}>
