@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { MessageSquare, Send, Plus, Trash2, SlidersHorizontal, Car } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { saveTechnicianReport, getTechnicianReport } from "@/app/tecnicos/actions"
+import { toast } from "sonner"
 
 type Props = {
     profile: any
@@ -21,9 +23,10 @@ const parseNum = (val: any) => parseFloat(String(val).replace(/[^0-9.]/g, '')) |
 
 export function TechnicianReportDialog({ profile, stock, todaysInstallations, activeClients, vehicles }: Props) {
     const [open, setOpen] = useState(false)
+    const [loading, setLoading] = useState(false)
 
     // --- FORM STATE ---
-    const [selectedVehicle, setSelectedVehicle] = useState("")  // Was statusOnus
+    const [selectedVehicle, setSelectedVehicle] = useState("")
 
     // Dynamic Serials
     const [onuCount, setOnuCount] = useState<number>(0)
@@ -56,9 +59,45 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, ac
 
     useEffect(() => {
         if (open) {
-            calculateInitialValues()
+            loadExistingData()
         }
     }, [open])
+
+    async function loadExistingData() {
+        setLoading(true)
+        try {
+            // 1. Try to get saved report from DB
+            const saved = await getTechnicianReport()
+            if (saved) {
+                // Populate from DB
+                setSelectedVehicle(saved.vehicle_id || "")
+
+                // Serials
+                const onus = Array.isArray(saved.onu_serials) ? saved.onu_serials : []
+                setOnuCount(onus.length)
+                setOnuSerials(onus)
+
+                const routers = Array.isArray(saved.router_serials) ? saved.router_serials : []
+                setRouterCount(routers.length)
+                setRouterSerials(routers)
+
+                // Materials
+                if (saved.materials) setMaterials(saved.materials)
+
+                // Spools
+                if (saved.spools) setSpools(saved.spools)
+
+            } else {
+                // 2. Fallback to Auto-Calculation (First time)
+                calculateInitialValues()
+            }
+        } catch (e) {
+            console.error(e)
+            calculateInitialValues()
+        } finally {
+            setLoading(false)
+        }
+    }
 
     // Resize Serial Arrays when Count Changes
     useEffect(() => {
@@ -163,7 +202,7 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, ac
     }
 
     // --- GENERATOR ---
-    function generateAndSend() {
+    async function generateAndSend() {
         const teamName = profile.team?.name || "Sin Equipo"
         const partner = profile.team?.profiles?.find((p: any) => p.id !== profile.id)
 
@@ -171,6 +210,29 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, ac
         const vObj = vehicles.find(v => v.id === selectedVehicle)
         const vehicleStr = vObj ? `${vObj.modelo} (${vObj.placa})` : "No asignado"
 
+        // 1. Save to DB (Background)
+        const toastId = toast.loading("Guardando reporte...")
+
+        const payload = {
+            vehicle_id: selectedVehicle === "none" ? null : selectedVehicle,
+            onu_serials: onuSerials.filter(s => s.trim().length > 0),
+            router_serials: routerSerials.filter(s => s.trim().length > 0),
+            materials: materials,
+            spools: spools
+        }
+
+        const res = await saveTechnicianReport(payload)
+
+        if (!res?.success) {
+            toast.dismiss(toastId)
+            toast.error("Error al guardar: " + res?.error)
+            return // Block WhatsApp if save fails? Or allow? Better block to ensure consistency.
+        }
+
+        toast.dismiss(toastId)
+        toast.success("Reporte guardado")
+
+        // 2. Generate WhatsApp Text
         let t = `*Reporte De Entrada ${teamName}*\n`
         t += `*Fecha: ${new Date().toLocaleDateString("es-ES")}*\n`
         t += `*Nombre De Instaladores:* ${profile.first_name} ${profile.last_name}`

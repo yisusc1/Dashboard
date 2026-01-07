@@ -173,17 +173,18 @@ export default async function TechnicianDashboard() {
   const hasOpenAssignments = false // Check if Assignments table needed? 'activeDispatches'?
   // User mentioned "Installation" which links to Client. So activeClients is likely enough.
 
-  let showFinalizeButton = false
+  const hasWork = todaysInstallations.length > 0
 
-  if (hasOpenJobs) {
-    showFinalizeButton = false
-  } else if (!lastAuditOfToday) {
-    // No audit today -> Show if work exists
-    showFinalizeButton = todaysInstallations.length > 0
-  } else {
-    // Audit exists -> Show ONLY if work is newer than audit
-    showFinalizeButton = latestWorkTime > lastAuditTime
-  }
+  // Determine if day is finalized (Audit exists AND is later than last work)
+  const isDayCompleted = !!lastAuditOfToday && (
+    !hasWork || lastAuditTime >= latestWorkTime
+  )
+
+  // Show Finalize Button IF:
+  // 1. No open jobs
+  // 2. Has work (installations)
+  // 3. The day is NOT completed (i.e., no audit, or audit is older than latest work)
+  const showFinalizeButton = !hasOpenJobs && hasWork && !isDayCompleted
 
 
   // ... [Existing Logic for installedSerialsData etc] ...
@@ -614,15 +615,18 @@ export default async function TechnicianDashboard() {
           </div>
 
           <div className="space-y-4 pt-8">
-            <TechnicianReportDialog
-              profile={profile}
-              stock={stock}
-              vehicles={vehicles || []}
-              todaysInstallations={todaysInstallations}
-              activeClients={activeClients || []}
-            />
+            {isDayCompleted ? (
+              <TechnicianReportDialog
+                profile={profile}
+                stock={stock}
+                vehicles={vehicles || []}
+                todaysInstallations={todaysInstallations}
+                activeClients={activeClients || []}
+              />
+            ) : null}
+
             {/* FINALIZAR JORNADA BUTTON */}
-            {showFinalizeButton && (
+            {(!isDayCompleted) && (
               <div className="pt-8 pb-8 animate-in fade-in slide-in-from-bottom-4">
                 <div className="bg-black rounded-[28px] p-8 text-center relative overflow-hidden shadow-2xl shadow-gray-200">
                   {/* Decorative */}

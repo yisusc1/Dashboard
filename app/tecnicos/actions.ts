@@ -2,8 +2,10 @@
 
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
-import { createClient } from "@/lib/supabase/server" // fallback if needed or use ssr directly
+import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
+
+// --- EXISTING FUNCTIONS ABOVE ---
 
 export async function getMySpools() {
     const supabase = await createClient()
@@ -25,7 +27,6 @@ export async function getMySpools() {
         .eq("status", "ACTIVE")
         .order("created_at", { ascending: false })
 
-    // 3. Extract Serials and Calculate Remaining
     // 3. Extract Serials and Calculate Remaining via View (Source of Truth)
     const spools: { serial: string, label: string, remaining: number }[] = []
     const serialsToFetch: string[] = []
@@ -54,8 +55,6 @@ export async function getMySpools() {
 
         serialsToFetch.forEach(serial => {
             const status = spoolStatus?.find((s: any) => s.serial_number === serial)
-            // If view returns null, it usually means no usage yet logic or initial qty. 
-            // The view handles defaults, so if missing it's truly missing.
             const remaining = status ? status.current_quantity : 0
 
             spools.push({
@@ -69,7 +68,6 @@ export async function getMySpools() {
     return spools
 }
 
-// [New] Create Support Report
 export async function createSupportReport(data: any) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -82,7 +80,7 @@ export async function createSupportReport(data: any) {
         const { error } = await supabase.from("soportes").insert({
             ...data,
             tecnico_id: user.id,
-            realizado_por: user.email, // Or fetch profile name if preferred
+            realizado_por: user.email,
             estatus: "Realizado"
         })
 
@@ -98,7 +96,69 @@ export async function createSupportReport(data: any) {
     }
 }
 
-// [New] Purge Test Data
+// [New] Save Technician Daily Report
+export async function saveTechnicianReport(data: any) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { success: false, error: "Usuario no autenticado" }
+
+    try {
+        // Get team
+        const { data: profile } = await supabase.from("profiles").select("team_id").eq("id", user.id).single()
+        const date = new Date().toLocaleDateString("es-ES")
+
+        // Use UPSERT on user_id + date
+        // Note: If 'date' format changes, adjust constraint. We use standard formatted string to keep it daily.
+        // Actually, date formats can be tricky in DB key. 
+        // Let's rely on valid ISO string YYYY-MM-DD for uniqueness if possible, but user UI uses DD/MM/YYYY.
+        // I'll stick to a canonical YYYY-MM-DD for database uniqueness to be safe.
+        const canonicalDate = new Date().toISOString().split('T')[0] // 2024-01-01
+
+        const payload = {
+            user_id: user.id,
+            team_id: profile?.team_id,
+            date: canonicalDate,
+            vehicle_id: data.vehicle_id,
+            onu_serials: data.onu_serials,
+            router_serials: data.router_serials,
+            materials: data.materials,
+            spools: data.spools,
+            updated_at: new Date().toISOString()
+        }
+
+        const { error } = await supabase
+            .from("technician_daily_reports")
+            .upsert(payload, { onConflict: 'user_id, date' })
+
+        if (error) throw error
+        return { success: true }
+
+    } catch (error: any) {
+        console.error("Error saving report:", error)
+        return { success: false, error: error.message }
+    }
+}
+
+// [New] Get Today's Report
+export async function getTechnicianReport() {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
+
+    const canonicalDate = new Date().toISOString().split('T')[0]
+
+    const { data } = await supabase
+        .from("technician_daily_reports")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("date", canonicalDate)
+        .single()
+
+    return data
+}
+
+
 export async function purgeTestData() {
     try {
         const cookieStore = await cookies()
@@ -132,6 +192,13 @@ export async function purgeTestData() {
             .delete()
             .or(`tecnico_id.eq.${user.id},user_id.eq.${user.id}`)
             .gte("created_at", todayStr)
+
+        // 3. Delete Reports (Optional, but good for reset)
+        await supabase
+            .from("technician_daily_reports")
+            .delete()
+            .eq("user_id", user.id)
+            .eq("date", todayStr)
 
         revalidatePath("/tecnicos")
         return { success: true, message: "Datos de hoy eliminados." }
