@@ -46,6 +46,13 @@ export default async function TechnicianDashboard() {
   const teamMembersIDs = profile.team?.profiles?.map((p: any) => p.id) || [user.id]
 
   // 4. Calculate Inventory (Mi Salida)
+
+  // ROBUST DATE LOGIC
+  const veFormatter = new Intl.DateTimeFormat("en-US", { timeZone: "America/Caracas", year: 'numeric', month: 'numeric', day: 'numeric' })
+  const todayVE = veFormatter.format(new Date())
+  const getVeDate = (d: string) => veFormatter.format(new Date(d))
+
+  // Fetch Items from ACTIVE Assignments
   // 4. Calculate Inventory (Mi Salida)
   // Fetch Items from ACTIVE Assignments
   // We switch from 'transactions' (history) to 'assignment_items' (state) to support closing assignments.
@@ -75,12 +82,16 @@ export default async function TechnicianDashboard() {
     .limit(50)
 
   // Fetch Supports (Today)
-  const { data: supports } = await supabase
+  // Fetch more history and filter in JS using robust date util
+  const { data: rawSupports } = await supabase
     .from("soportes")
     .select("created_at, tecnico_id, user_id, conectores, tensores, patchcord, rosetas, metraje_usado, metraje_desechado, codigo_carrete, onu_nueva")
     .or(`tecnico_id.in.(${teamMembersIDs.join(',')}),user_id.in.(${teamMembersIDs.join(',')})`)
-    .gte("created_at", new Date().toISOString().split('T')[0])
     .order("created_at", { ascending: false })
+    .limit(20)
+
+  // Filter Supports by TZ
+  const supports = rawSupports?.filter((s: any) => getVeDate(s.created_at) === todayVE) || []
 
 
   if (closuresError) {
@@ -143,11 +154,6 @@ export default async function TechnicianDashboard() {
     // Fetch recent audits and filter in JS to be safe with timezone
     .order("created_at", { ascending: false })
     .limit(10)
-
-  // ROBUST DATE LOGIC
-  const veFormatter = new Intl.DateTimeFormat("en-US", { timeZone: "America/Caracas", year: 'numeric', month: 'numeric', day: 'numeric' })
-  const todayVE = veFormatter.format(new Date())
-  const getVeDate = (d: string) => veFormatter.format(new Date(d))
 
   // Filter Today's Installations
   const todaysInstallations = myClosures.filter((c: any) => getVeDate(c.created_at) === todayVE)
