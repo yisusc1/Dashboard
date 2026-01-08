@@ -210,7 +210,8 @@ export default async function TechnicianDashboard() {
   const hasOpenAssignments = false // Check if Assignments table needed? 'activeDispatches'?
   // User mentioned "Installation" which links to Client. So activeClients is likely enough.
 
-  const hasWork = todaysInstallations.length > 0 || (supports && supports.length > 0)
+  const hasWork = todaysInstallations.some((c: any) => c.tecnico_id === user.id || c.user_id === user.id) ||
+    (supports && supports.some((s: any) => s.tecnico_id === user.id))
 
   // Determine if day is finalized (Audit exists AND is later than last work)
   const isDayCompleted = !!lastAuditOfToday && (

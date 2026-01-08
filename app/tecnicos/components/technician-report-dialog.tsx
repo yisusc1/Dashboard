@@ -182,17 +182,41 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, to
             const spoolCode = item.codigo_carrete ? String(item.codigo_carrete).trim() : null
 
             if (spoolCode) {
-                // Find matching spool in available list (loose match)
-                const match = availableSpools.find(s => s.includes(spoolCode) || spoolCode.includes(s))
+                // Find matching spool in available list (Strict Match > Fuzzy ending)
+                // Normalize: remove "CARRETE", "BOBINA", whitespace, toUpperCase
+                const cleanInput = spoolCode.toUpperCase().replace(/CARRETE|BOBINA|[-\s]/g, "")
 
-                if (match) {
-                    if (!detectedSpools[match]) {
+                const match = availableSpools.find(s => {
+                    const cleanSerial = s.toUpperCase().replace(/[-\s]/g, "")
+                    // 1. Exact Match of cleaned strings (e.g. "123" === "123")
+                    if (cleanInput === cleanSerial) return true
+                    // 2. Input ends with Serial (e.g. "C-123" ends with "123") - Safer than includes
+                    // But check length ratio to avoid "123" matching "0123" if that's an issue? 
+                    // Let's stick to Exact Match of what we likely see.
+                    return cleanInput === cleanSerial
+                })
+
+                // Fallback: If no strict match, try original string strict inclusion ONLY if distinct enough?
+                // Actually, let's keep it strict. If user typed "1234" and we have "123", pure clean match fails. Good.
+                // If user typed "C-123" and we have "123". Clean: "C123" vs "123". Fail.
+                // Maybe just .includes() is bad.
+                // Let's try: check if the serial is found as a distinct word or at end.
+
+                const match2 = match || availableSpools.find(s => {
+                    // If Input contains Serial as a distinct token? 
+                    // Or just check if strings are substantially similar.
+                    // Let's revert to a simpler "EndsWith" check for the serial part.
+                    return spoolCode.toUpperCase().endsWith(s.toUpperCase()) || s.toUpperCase() === spoolCode.toUpperCase()
+                })
+
+                if (match2) {
+                    if (!detectedSpools[match2]) {
                         // Find initial stock remaining
-                        const stockKey = Object.keys(stock).find(k => k.includes(match))
+                        const stockKey = Object.keys(stock).find(k => k.includes(match2))
                         const rem = stockKey ? stock[stockKey].quantity : 0
 
-                        detectedSpools[match] = {
-                            serial: match,
+                        detectedSpools[match2] = {
+                            serial: match2,
                             used: 0,
                             remaining: rem
                         }
@@ -200,10 +224,20 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, to
                     const u = parseNum(item.metraje_usado)
                     const w = parseNum(item.metraje_desechado)
 
-                    detectedSpools[match].used += (u + w)
-                    // We assume 'remaining' in stock is the starting value for the day/shift.
-                    // So we subtract usage from that starting value to estimate current remaining.
-                    detectedSpools[match].remaining = Math.max(0, detectedSpools[match].remaining - (u + w))
+                    detectedSpools[match2].used += (u + w)
+                    detectedSpools[match2].remaining = Math.max(0, detectedSpools[match2].remaining - (u + w))
+                } else {
+                    // [Fix] Fallback: If not in stock list, still add it (maybe emptied or legacy)
+                    if (!detectedSpools[spoolCode]) {
+                        detectedSpools[spoolCode] = {
+                            serial: spoolCode,
+                            used: 0,
+                            remaining: 0
+                        }
+                    }
+                    const u = parseNum(item.metraje_usado)
+                    const w = parseNum(item.metraje_desechado)
+                    detectedSpools[spoolCode].used += (u + w)
                 }
             }
         }

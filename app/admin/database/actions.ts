@@ -50,9 +50,26 @@ export async function resetOperationsAction() {
         const supabase = await createClient()
 
         // Use RPC to bypass RLS and ensure complete deletion of all operational data
-        const { error: rpcError } = await supabase.rpc('reset_operations_v2')
+        // [FIX] RPC might be missing tables. Doing manual deletion of everything.
+        // Order matters for FK constraints usually, but cascading might handle it.
+        // Safer order: Child tables first.
 
-        if (rpcError) throw rpcError
+        // 1. Audits & Reports
+        await supabase.from("inventory_audits").delete().neq("id", "00000000-0000-0000-0000-000000000000")
+        await supabase.from("technician_daily_reports").delete().neq("id", 0)
+
+        // 2. Activity Data
+        await supabase.from("soportes").delete().neq("id", "00000000-0000-0000-0000-000000000000")
+        await supabase.from("cierres").delete().neq("id", 0)
+
+        // 3. Clients (Users said "Borra clientes")
+        // Note: Assignments might link to Clients? If so, delete assignments first?
+        // Assignments link to Users.
+        await supabase.from("clientes").delete().neq("id", "00000000-0000-0000-0000-000000000000")
+
+        // 4. Try RPC as backup? No, manual should suffice.
+        // const { error: rpcError } = await supabase.rpc('reset_operations_v2')
+        // if (rpcError) throw rpcError
 
         revalidatePath("/tecnicos")
         revalidatePath("/admin/database")

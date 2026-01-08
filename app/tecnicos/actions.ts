@@ -75,8 +75,7 @@ export async function getMySpools() {
 
         // [PATCH] Fetch Usage from Supports (Soportes) 
         // The View currently ignores 'soportes', so we manually deduct it.
-        // REMOVED: Support usage manual fetch to avoid double counting (user report)
-        /*
+        // [PATCH] Fetch Usage from Supports (Soportes)
         const { data: supportUsage } = await supabase
             .from("soportes")
             .select("codigo_carrete, metraje_usado")
@@ -88,7 +87,6 @@ export async function getMySpools() {
             if (!supportUsageMap[s.codigo_carrete]) supportUsageMap[s.codigo_carrete] = 0
             supportUsageMap[s.codigo_carrete] += usage
         })
-        */
 
         serialsToFetch.forEach(serial => {
             const status = spoolStatus?.find((s: any) => s.serial_number === serial)
@@ -100,9 +98,8 @@ export async function getMySpools() {
             if (status) {
                 const base = status.base_quantity || 0
                 const usageInstallations = status.usage_since_base || 0
-                const usageSupports = 0 // supportUsageMap[serial] || 0
-
-                remaining = base - usageInstallations // - usageSupports (REMOVED: View already handles it, avoiding double subtraction)
+                const usageSupports = supportUsageMap[serial] || 0
+                remaining = base - usageInstallations - usageSupports
                 labelDetails = `${remaining}m disp.`
             } else {
                 // If not found in status view, assume it's available but unknown length (or 1000m default)
