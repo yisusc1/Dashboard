@@ -65,10 +65,13 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, to
     const [spools, setSpools] = useState<SpoolEntry[]>([])
 
     // Available Spools (from Stock) for Dropdown
+    console.log("DEBUG DIALOG STOCK:", stock)
     const availableSpools = Object.keys(stock)
         .filter(k => {
             // Robust check using the isSpool flag from server or fallback to name/sku
             const entry = stock[k]
+            const match = entry?.isSpool || k.includes("CARRETE") || k.includes("I002")
+            console.log(`Checking key: ${k}, isSpool: ${entry?.isSpool}, MATCH: ${match}`)
             if (entry?.isSpool) return true
             return k.includes("CARRETE") || k.includes("I002")
         })
