@@ -64,6 +64,12 @@ export async function getAuditData(entityId: string) {
     )
 
     // A. DETERMINE IF ENTITY IS USER OR TEAM
+    const now = new Date()
+    const minDate = new Date(now)
+    minDate.setHours(0, 0, 0, 0)
+    const maxDate = new Date(now)
+    maxDate.setHours(23, 59, 59, 999)
+
     let teamMembers: string[] = []
     let teamName = ""
     let entityName = ""
@@ -680,138 +686,155 @@ export async function getAuditDetails(auditId: string) {
         if (profile) teamId = profile.team_id
     }
 
+    const spools: string[] = []
+
+    // 1. Determine Scope (Team vs Individual)
+    let memberIds: string[] = []
     if (teamId) {
-        const spools: string[] = []
+        const { data: members } = await supabase.from("profiles").select("id").eq("team_id", teamId)
+        memberIds = members?.map(m => m.id) || []
+    } else if (audit.technician_id) {
+        memberIds = [audit.technician_id]
+    }
 
-        // 1. Get Active Assignments for Team
-        const { data: assignments } = await supabase
-            .from("inventory_assignments")
-            .select(`
-                id,
-                items:inventory_assignment_items(serials, product:inventory_products(sku))
-            `)
-            .eq("team_id", teamId)
-            .eq("status", "ACTIVE")
+    // 2. Fetch Active Assignments (Team or User)
+    let assignQuery = supabase
+        .from("inventory_assignments")
+        .select(`
+            id,
+            items:inventory_assignment_items(serials, product:inventory_products(sku))
+        `)
+        .eq("status", "ACTIVE")
 
-        if (assignments && assignments.length > 0) {
-            assignments.forEach((a: any) => {
-                a.items?.forEach((item: any) => {
-                    if (item.product?.sku?.includes("CARRETE") && Array.isArray(item.serials)) {
-                        item.serials.forEach((s: any) => spools.push(typeof s === 'string' ? s : s.serial))
-                    }
-                })
-            })
-        }
+    if (teamId) {
+        assignQuery = assignQuery.eq("team_id", teamId)
+    } else {
+        // Individual assignments
+        assignQuery = assignQuery.in("assigned_to", memberIds)
+    }
 
-        // 2. [New] Get Used Spools (Finalized) from Closures on Audit Date
-        if (audit.created_at) {
-            const date = new Date(audit.created_at)
-            const minDate = new Date(date)
-            minDate.setHours(0, 0, 0, 0)
-            const maxDate = new Date(date)
-            maxDate.setHours(23, 59, 59, 999)
+    const { data: assignments } = await assignQuery
 
-            // Get Team Members to query their closures
-            const { data: members } = await supabase.from("profiles").select("id").eq("team_id", teamId)
-            const memberIds = members?.map(m => m.id) || []
-
-            if (memberIds.length > 0) {
-                // [Modified] Fetch Closures
-                const { data: closures } = await supabase
-                    .from("cierres")
-                    .select("id, metraje_usado, metraje_desechado, created_at, tecnico_1, codigo_carrete, equipo, cliente:clientes(nombre, cedula)")
-                    .in("user_id", memberIds)
-                    .gte("created_at", minDate.toISOString())
-                    .lte("created_at", maxDate.toISOString())
-                    .not("codigo_carrete", "is", null)
-                    .order("created_at", { ascending: false })
-
-                installations = closures || []
-
-                // [New] Fetch Supports
-                const { data: supports } = await supabase
-                    .from("soportes")
-                    .select("id, metraje_usado, metraje_desechado, created_at, tecnico_id, codigo_carrete, causa, observacion, cliente:clientes(nombre, cedula)")
-                    .in("tecnico_id", memberIds)
-                    .gte("created_at", minDate.toISOString())
-                    .lte("created_at", maxDate.toISOString())
-                    .order("created_at", { ascending: false })
-
-                // Merge supports into installations list (polymorphic) or keep separate?
-                // Merging allows single timeline, but fields differ.
-                // Let's attach them to the return object separately first, OR merge them with a 'type' field.
-                // Merging with type is better for timeline.
-                if (supports) {
-                    const supportItems = supports.map((s: any) => ({
-                        ...s,
-                        type: 'SUPPORT',
-                        tecnico_1: s.tecnico_id, // Map for compatibility if needed
-                        equipo: 'SOPORTE' // Visual label
-                    }))
-                    installations = [...installations, ...supportItems].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    if (assignments && assignments.length > 0) {
+        assignments.forEach((a: any) => {
+            a.items?.forEach((item: any) => {
+                if (item.product?.sku?.includes("CARRETE") && Array.isArray(item.serials)) {
+                    item.serials.forEach((s: any) => spools.push(typeof s === 'string' ? s : s.serial))
                 }
-
-                // Add spools from closures AND supports to the list to fetch
-                closures?.forEach((c: any) => {
-                    if (c.codigo_carrete && !spools.includes(c.codigo_carrete)) {
-                        spools.push(c.codigo_carrete)
-                    }
-                })
-                supports?.forEach((s: any) => {
-                    if (s.codigo_carrete && !spools.includes(s.codigo_carrete)) {
-                        spools.push(s.codigo_carrete)
-                    }
-                })
-            }
-        }
-
-        // 3. For each Spool, fetch status from VIEW (Project Armor)
-        const uniqueSpools = Array.from(new Set(spools)) // Deduplicate
-
-        const { data: viewData } = await supabase
-            .from("view_spool_status")
-            .select("serial_number, base_quantity, usage_since_base")
-            .in("serial_number", uniqueSpools)
-
-        uniqueSpools.forEach(serial => {
-            const viewRec = viewData?.find(v => v.serial_number === serial)
-            const savedItem = audit.items?.find((i: any) => i.product_sku === serial)
-            const isCompleted = audit.status === 'COMPLETED'
-
-            // Determine Values
-            // If Completed: Trust the Snapshot (savedItem) absolutely.
-            // If Pending: Trust the View (Live Data) -> Override Snapshot.
-            // Fallback: If View missing, use SavedItem or Zero.
-
-            let currentQty = 0
-            let reportedQty = 0
-            let physicalQty = undefined
-
-            if (isCompleted && savedItem) {
-                currentQty = savedItem.theoretical_quantity
-                reportedQty = savedItem.reported_quantity
-                physicalQty = savedItem.physical_quantity
-            } else if (viewRec) {
-                currentQty = viewRec.base_quantity
-                reportedQty = viewRec.usage_since_base
-                // If we have a saved physical count (draft), keep it
-                if (savedItem) physicalQty = savedItem.physical_quantity
-            } else if (savedItem) {
-                // Fallback if View has no data (unlikely if active)
-                currentQty = savedItem.theoretical_quantity
-                reportedQty = savedItem.reported_quantity
-                physicalQty = savedItem.physical_quantity
-            }
-
-            spoolData.push({
-                serial_number: serial,
-                current_quantity: currentQty,
-                reported_quantity: reportedQty, // This is 'Usage since Base'
-                physical_quantity: physicalQty,
-                assignment_id: assignments?.find(a => a.items.some((i: any) => i.serials && i.serials.includes(serial)))?.id
             })
         })
     }
+
+    // 2. [New] Get Used Spools (Finalized) from Closures on Audit Date
+    if (audit.created_at) {
+        const date = new Date(audit.created_at)
+        const minDate = new Date(date)
+        minDate.setHours(0, 0, 0, 0)
+        const maxDate = new Date(date)
+        maxDate.setHours(23, 59, 59, 999)
+
+        // Get Team Members to query their closures
+        // We already have 'memberIds' computed above
+        // const { data: members } = await supabase.from("profiles").select("id").eq("team_id", teamId)
+        // const memberIds = members?.map(m => m.id) || []
+
+        if (memberIds.length > 0) {
+            // [Modified] Fetch Closures
+            const { data: closures } = await supabase
+                .from("cierres")
+                .select("id, metraje_usado, metraje_desechado, created_at, tecnico_1, codigo_carrete, equipo, cliente:clientes(nombre, cedula)")
+                .in("user_id", memberIds)
+                .gte("created_at", minDate.toISOString())
+                .lte("created_at", maxDate.toISOString())
+                .not("codigo_carrete", "is", null)
+                .order("created_at", { ascending: false })
+
+            installations = closures || []
+
+            // [New] Fetch Supports
+            const { data: supports } = await supabase
+                .from("soportes")
+                .select("id, metraje_usado, metraje_desechado, created_at, tecnico_id, codigo_carrete, causa, observacion, cliente:clientes(nombre, cedula)")
+                .in("tecnico_id", memberIds)
+                .gte("created_at", minDate.toISOString())
+                .lte("created_at", maxDate.toISOString())
+                .order("created_at", { ascending: false })
+
+            // Merge supports into installations list (polymorphic) or keep separate?
+            // Merging allows single timeline, but fields differ.
+            // Let's attach them to the return object separately first, OR merge them with a 'type' field.
+            // Merging with type is better for timeline.
+            if (supports) {
+                const supportItems = supports.map((s: any) => ({
+                    ...s,
+                    type: 'SUPPORT',
+                    tecnico_1: s.tecnico_id, // Map for compatibility if needed
+                    equipo: 'SOPORTE' // Visual label
+                }))
+                installations = [...installations, ...supportItems].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+            }
+
+            // Add spools from closures AND supports to the list to fetch
+            closures?.forEach((c: any) => {
+                if (c.codigo_carrete && !spools.includes(c.codigo_carrete)) {
+                    spools.push(c.codigo_carrete)
+                }
+            })
+            supports?.forEach((s: any) => {
+                if (s.codigo_carrete && !spools.includes(s.codigo_carrete)) {
+                    spools.push(s.codigo_carrete)
+                }
+            })
+        }
+    } // End if audit.created_at
+
+    // 3. For each Spool, fetch status from VIEW (Project Armor)
+    const uniqueSpools = Array.from(new Set(spools)) // Deduplicate
+
+    const { data: viewData } = await supabase
+        .from("view_spool_status")
+        .select("serial_number, base_quantity, usage_since_base")
+        .in("serial_number", uniqueSpools)
+
+    uniqueSpools.forEach(serial => {
+        const viewRec = viewData?.find(v => v.serial_number === serial)
+        const savedItem = audit.items?.find((i: any) => i.product_sku === serial)
+        const isCompleted = audit.status === 'COMPLETED'
+
+        // Determine Values
+        // If Completed: Trust the Snapshot (savedItem) absolutely.
+        // If Pending: Trust the View (Live Data) -> Override Snapshot.
+        // Fallback: If View missing, use SavedItem or Zero.
+
+        let currentQty = 0
+        let reportedQty = 0
+        let physicalQty = undefined
+
+        if (isCompleted && savedItem) {
+            currentQty = savedItem.theoretical_quantity
+            reportedQty = savedItem.reported_quantity
+            physicalQty = savedItem.physical_quantity
+        } else if (viewRec) {
+            currentQty = viewRec.base_quantity
+            reportedQty = viewRec.usage_since_base
+            // If we have a saved physical count (draft), keep it
+            if (savedItem) physicalQty = savedItem.physical_quantity
+        } else if (savedItem) {
+            // Fallback if View has no data (unlikely if active)
+            currentQty = savedItem.theoretical_quantity
+            reportedQty = savedItem.reported_quantity
+            physicalQty = savedItem.physical_quantity
+        }
+
+        spoolData.push({
+            serial_number: serial,
+            current_quantity: currentQty,
+            reported_quantity: reportedQty, // This is 'Usage since Base'
+            physical_quantity: physicalQty,
+            assignment_id: assignments?.find(a => a.items.some((i: any) => i.serials && i.serials.includes(serial)))?.id
+        })
+    })
+
 
     // [New] Filter out items that are actually Spool Records (identified by matching product_sku with spool serials)
     // This prevents them from appearing in the generic items list

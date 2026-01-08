@@ -75,18 +75,20 @@ export async function getMySpools() {
 
         // [PATCH] Fetch Usage from Supports (Soportes) 
         // The View currently ignores 'soportes', so we manually deduct it.
+        // REMOVED: Support usage manual fetch to avoid double counting (user report)
+        /*
         const { data: supportUsage } = await supabase
             .from("soportes")
             .select("codigo_carrete, metraje_usado")
             .in("codigo_carrete", serialsToFetch)
 
-        // Aggregate support usage by serial
         const supportUsageMap: Record<string, number> = {}
         supportUsage?.forEach((s: any) => {
             const usage = parseFloat(s.metraje_usado) || 0
             if (!supportUsageMap[s.codigo_carrete]) supportUsageMap[s.codigo_carrete] = 0
             supportUsageMap[s.codigo_carrete] += usage
         })
+        */
 
         serialsToFetch.forEach(serial => {
             const status = spoolStatus?.find((s: any) => s.serial_number === serial)
@@ -98,9 +100,9 @@ export async function getMySpools() {
             if (status) {
                 const base = status.base_quantity || 0
                 const usageInstallations = status.usage_since_base || 0
-                const usageSupports = supportUsageMap[serial] || 0
+                const usageSupports = 0 // supportUsageMap[serial] || 0
 
-                remaining = base - usageInstallations - usageSupports
+                remaining = base - usageInstallations // - usageSupports (REMOVED: View already handles it, avoiding double subtraction)
                 labelDetails = `${remaining}m disp.`
             } else {
                 // If not found in status view, assume it's available but unknown length (or 1000m default)
@@ -389,6 +391,20 @@ export async function finalizeDayAction() {
 
         const { data: closes } = await closureQuery
 
+        // [Fix] Include Soportes in Audit
+        let supportQuery = supabase
+            .from("soportes")
+            .select("metraje_usado, metraje_desechado, conectores, tensores, patchcord, rosetas, onu_nueva, codigo_carrete, created_at")
+            .eq("tecnico_id", user.id)
+
+        if (todaysAudit) {
+            supportQuery = supportQuery.gt("created_at", cutoffTime)
+        } else {
+            supportQuery = supportQuery.gte("created_at", todayStr)
+        }
+
+        const { data: supports } = await supportQuery
+
         // Setup Helpers (Moved here for scope clarity)
         const cleanMeters = (val: any) => {
             if (!val) return 0
@@ -420,6 +436,21 @@ export async function finalizeDayAction() {
             usageMap["PATCH1"] = (usageMap["PATCH1"] || 0) + countItem(c.patchcord, true)
             usageMap["ONU"] = (usageMap["ONU"] || 0) + countItem(c.onu, true)
             usageMap["CARRETE"] = (usageMap["CARRETE"] || 0) + cleanMeters(c.metraje_usado) + cleanMeters(c.metraje_desechado)
+        })
+
+        // Process Soportes (Supports)
+        supports?.forEach((s: any) => {
+            if (s.codigo_carrete) {
+                const used = cleanMeters(s.metraje_usado) + cleanMeters(s.metraje_desechado)
+                spoolUsageMap[s.codigo_carrete] = (spoolUsageMap[s.codigo_carrete] || 0) + used
+            }
+            usageMap["CONV"] = (usageMap["CONV"] || 0) + (s.conectores || 0)
+            // Supports don't usually have precintos? If they do, add here if column exists. Assuming no precinto col in soportes based on previous schema check.
+            usageMap["ROSETA"] = (usageMap["ROSETA"] || 0) + (s.rosetas || 0)
+            usageMap["TENS"] = (usageMap["TENS"] || 0) + (s.tensores || 0)
+            usageMap["PATCH1"] = (usageMap["PATCH1"] || 0) + (s.patchcord || 0)
+            usageMap["ONU"] = (usageMap["ONU"] || 0) + countItem(s.onu_nueva, true)
+            usageMap["CARRETE"] = (usageMap["CARRETE"] || 0) + cleanMeters(s.metraje_usado) + cleanMeters(s.metraje_desechado)
         })
 
         // 5. Audit Upsert (Append Mode Logic)

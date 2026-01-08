@@ -96,8 +96,8 @@ export default async function TechnicianDashboard() {
   // Fetch more history and filter in JS using robust date util
   const { data: rawSupports } = await supabase
     .from("soportes")
-    .select("created_at, tecnico_id, user_id, conectores, tensores, patchcord, rosetas, metraje_usado, metraje_desechado, codigo_carrete, onu_nueva")
-    .or(`tecnico_id.in.(${teamMembersIDs.join(',')}),user_id.in.(${teamMembersIDs.join(',')})`)
+    .select("created_at, tecnico_id, conectores, tensores, patchcord, rosetas, metraje_usado, metraje_desechado, codigo_carrete, onu_nueva, cedula, causa")
+    .in("tecnico_id", teamMembersIDs)
     .order("created_at", { ascending: false })
     .limit(20)
 

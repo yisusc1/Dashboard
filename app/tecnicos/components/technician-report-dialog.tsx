@@ -279,6 +279,14 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, to
             t += `${c.cedula || 'S/I'}\n\n`
         })
 
+        // Soportes Count & List
+        if (todaysSupports.length > 0) {
+            t += `*Total De Soportes Realizados:* ${String(todaysSupports.length).padStart(2, '0')}\n\n`
+            todaysSupports.forEach((s: any) => {
+                t += `${s.cedula || 'S/I'} - ${s.causa || 'Sin Causa'}\n\n`
+            })
+        }
+
         // Materials
         t += `*Conectores Utilizados:*  ${String(materials.conectores_used).padStart(2, '0')}\n`
         t += `*Conectores  Restantes:* ${String(materials.conectores_remaining).padStart(2, '0')}\n`
