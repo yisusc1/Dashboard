@@ -138,8 +138,8 @@ export function SupportReportDialog({ open, onOpenChange }: SupportReportDialogP
         // -----------------------
         // 2. DOWNLOAD PHASE (15s - Multi-Stream)
         // -----------------------
-        // We use 4 parallel streams to saturate the bandwidth (standard for speedtests)
-        const downloadUrl = "https://upload.wikimedia.org/wikipedia/commons/3/3f/Fronalpstock_big.jpg"
+        // We use 8 parallel streams to saturate the bandwidth (Cloudflare CDN)
+        const downloadUrl = "https://speed.cloudflare.com/__down?bytes=50000000" // 50MB chunks
         const dlDuration = 15000 // 15s
         const dlStartTime = performance.now()
 
@@ -155,7 +155,7 @@ export function SupportReportDialog({ open, onOpenChange }: SupportReportDialogP
             try {
                 // Continuous download loop for this worker
                 while (performance.now() - dlStartTime < dlDuration) {
-                    const response = await fetch(`${downloadUrl}?t=${Date.now()}-${id}`, {
+                    const response = await fetch(`${downloadUrl}&t=${Date.now()}-${id}`, {
                         signal: controller.signal,
                         cache: 'no-store'
                     })
@@ -173,8 +173,8 @@ export function SupportReportDialog({ open, onOpenChange }: SupportReportDialogP
             }
         }
 
-        // Launch 4 Parallel Workers
-        const workers = [0, 1, 2, 3].map(i => startWorker(i))
+        // Launch 8 Parallel Workers to SATURATE 500Mbps+
+        const workers = [0, 1, 2, 3, 4, 5, 6, 7].map(i => startWorker(i))
 
         // Monitor Loop (Updates UI)
         let finalDownload = 0
