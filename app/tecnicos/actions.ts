@@ -19,19 +19,23 @@ export async function getMySpools() {
     const { data: profile } = await supabase.from("profiles").select("team_id, team:teams(id)").eq("id", user.id).single()
     console.log("getMySpools Profile/Team:", profile)
 
-    if (!profile?.team_id) return []
-
     // 2. Get Active Spool Assignments for this Team OR the User directly
-    // Fix: Validated that we must check 'assigned_to' as well, matching Dashboard logic.
-    const { data: assignments } = await supabase
+    let query = supabase
         .from("inventory_assignments")
         .select(`
             id,
-            items:inventory_assignment_items(quantity, serials, product:inventory_products(sku))
+            items:inventory_assignment_items(quantity, serials, product:inventory_products(sku, name))
         `)
-        .or(`team_id.eq.${profile.team_id},assigned_to.eq.${user.id}`)
         .eq("status", "ACTIVE")
         .order("created_at", { ascending: false })
+
+    if (profile?.team_id) {
+        query = query.or(`team_id.eq.${profile.team_id},assigned_to.eq.${user.id}`)
+    } else {
+        query = query.eq("assigned_to", user.id)
+    }
+
+    const { data: assignments } = await query
 
     console.log("getMySpools Assignments:", assignments)
 
@@ -43,7 +47,14 @@ export async function getMySpools() {
         if (!a.items) continue
         for (const item of a.items) {
             const prod = Array.isArray(item.product) ? item.product[0] : item.product // Handle array/obj
-            if (prod?.sku?.includes("CARRETE")) {
+
+            // Filter Logic: SKU 'I002', 'CARRETE' inside SKU, or 'Bobina'/'Carrete' in Name
+            const sku = prod?.sku?.toUpperCase() || ""
+            const name = prod?.name?.toUpperCase() || ""
+
+            const isSpool = sku === "I002" || sku.includes("CARRETE") || name.includes("BOBINA") || name.includes("CARRETE")
+
+            if (isSpool) {
                 if (Array.isArray(item.serials)) {
                     for (const s of item.serials) {
                         const val = typeof s === 'string' ? s : s.serial
