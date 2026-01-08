@@ -73,17 +73,15 @@ export async function getMySpools() {
             .select("serial_number, base_quantity, usage_since_base")
             .in("serial_number", serialsToFetch)
 
-        // [PATCH] Fetch Usage from Supports (Soportes) 
-        // The View currently ignores 'soportes', so we manually deduct it.
         // [PATCH] Fetch Usage from Supports (Soportes)
         const { data: supportUsage } = await supabase
             .from("soportes")
-            .select("codigo_carrete, metraje_usado")
+            .select("codigo_carrete, metraje_usado, metraje_desechado")
             .in("codigo_carrete", serialsToFetch)
 
         const supportUsageMap: Record<string, number> = {}
         supportUsage?.forEach((s: any) => {
-            const usage = parseFloat(s.metraje_usado) || 0
+            const usage = (parseFloat(s.metraje_usado) || 0) + (parseFloat(s.metraje_desechado) || 0)
             if (!supportUsageMap[s.codigo_carrete]) supportUsageMap[s.codigo_carrete] = 0
             supportUsageMap[s.codigo_carrete] += usage
         })

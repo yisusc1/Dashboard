@@ -2,6 +2,8 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
+import { createServerClient } from "@supabase/ssr"
+import { cookies } from "next/headers"
 
 // 1. RESET INVENTORY (Keeps Products)
 export async function resetInventoryAction() {
@@ -40,32 +42,47 @@ export async function resetInventoryAction() {
     }
 }
 
-// 2. RESET OPERATIONS (Keeps Clients? No, User said "dependiendo del proceso". But Reset Ops usually clears active jobs.
-// The user said: "never delete created vehicles or products".
-// `reset_operations_v2` deletes Clients. Is that OK?
-// "dependiendo del proceso que este testeando" implies they might want to clear Clients too.
-// I will keep using the RPC as it's the tested "Factory Reset" for Ops.
+// 2. RESET OPERATIONS 
 export async function resetOperationsAction() {
     try {
-        const supabase = await createClient()
+        // [FIX] Use Service Role Key to BYPASS RLS
+        // Standard user token might not have permission to delete Other Users' reports/assignments.
+        const cookieStore = await cookies()
+        const key = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-        // Use RPC to bypass RLS and ensure complete deletion of all operational data
-        // [FIX] RPC might be missing tables. Doing manual deletion of everything.
-        // Order matters for FK constraints usually, but cascading might handle it.
-        // Safer order: Child tables first.
+        let supabase
+        if (key) {
+            supabase = createServerClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                key,
+                { cookies: { getAll: () => [], setAll: () => { } } }
+            )
+        } else {
+            // [CRITICAL] If key is missing, throw error so user knows why it failed.
+            // Falling back to user client won't work for global wipe.
+            throw new Error("Clave Maestra de Admin no configurada (SUPABASE_SERVICE_ROLE_KEY). No se puede reiniciar.")
+        }
 
-        // 1. Audits & Reports
+        // 1. Audits & Reports (Child Tables)
         await supabase.from("inventory_audits").delete().neq("id", "00000000-0000-0000-0000-000000000000")
         await supabase.from("technician_daily_reports").delete().neq("id", 0)
 
         // 2. Activity Data
         await supabase.from("soportes").delete().neq("id", "00000000-0000-0000-0000-000000000000")
         await supabase.from("cierres").delete().neq("id", 0)
+        await supabase.from("revisiones").delete().neq("id", "00000000-0000-0000-0000-000000000000")
 
-        // 3. Clients (Users said "Borra clientes")
-        // Note: Assignments might link to Clients? If so, delete assignments first?
-        // Assignments link to Users.
+        // 3. Assignments (Asignaciones)
+        // Must delete items first, then headers.
+        await supabase.from("inventory_assignment_items").delete().neq("id", "00000000-0000-0000-0000-000000000000")
+        await supabase.from("inventory_assignments").delete().neq("id", "00000000-0000-0000-0000-000000000000")
+
+        // 4. Clients (Users said "Borra clientes")
         await supabase.from("clientes").delete().neq("id", "00000000-0000-0000-0000-000000000000")
+
+        // 5. Serials (User requested removal)
+        // This might kill stock tracking, but it's what they asked for "Reiniciar Operaciones -> inventory_serials"
+        await supabase.from("inventory_serials").delete().neq("serial_number", "00000_IGNORE")
 
         // 4. Try RPC as backup? No, manual should suffice.
         // const { error: rpcError } = await supabase.rpc('reset_operations_v2')
