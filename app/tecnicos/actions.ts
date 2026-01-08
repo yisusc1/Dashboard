@@ -75,25 +75,30 @@ export async function getMySpools() {
 
         serialsToFetch.forEach(serial => {
             const status = spoolStatus?.find((s: any) => s.serial_number === serial)
-            // Calculate remaining manually
-            const base = status?.base_quantity || 0
-            const usage = status?.usage_since_base || 0
-            const remaining = base - usage
 
-            // Only add if it has remaining length? The user might need to discharge empty spools though.
-            // But usually we select from active spools.
-            if (remaining > 0) {
-                spools.push({
-                    serial,
-                    label: `${serial} (${remaining}m disp.)`,
-                    remaining
-                })
+            // Fallback if status is missing (brand new spool or sync issue)
+            // Ensure we show it rather than hiding it.
+            let remaining = 0
+            let labelDetails = ""
+
+            if (status) {
+                const base = status.base_quantity || 0
+                const usage = status.usage_since_base || 0
+                remaining = base - usage
+                labelDetails = `${remaining}m disp.`
             } else {
-                // Include it anyway with 0m warning? Or maybe hides it.
-                // Dashboard shows it. Let's show it but disabled? Or just available.
-                // If the logic prevents selecting it, we might want to show it.
-                // For now, let's include it.
+                // If not found in status view, assume it's available but unknown length (or 1000m default)
+                // We mark it so it appears in the dropdown.
+                remaining = 1000
+                labelDetails = "Disp."
             }
+
+            // ALWAYS add it, even if 0, so tech can see it (maybe to consume the last meter)
+            spools.push({
+                serial,
+                label: `${serial} (${labelDetails})`,
+                remaining
+            })
         })
     }
 
