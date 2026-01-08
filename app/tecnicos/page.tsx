@@ -289,7 +289,9 @@ export default async function TechnicianDashboard() {
       const name = item.product.name
 
       // LOGIC MODIFICATION: Separate Spools by Serial
-      if (sku.includes("CARRETE")) {
+      const isSpool = sku === "I002" || sku.includes("CARRETE") || name.toUpperCase().includes("BOBINA") || name.toUpperCase().includes("CARRETE")
+
+      if (isSpool) {
         // Iterate over serials and create individual entries
         if (Array.isArray(item.serials) && item.serials.length > 0) {
           item.serials.forEach((s: any) => {
@@ -623,16 +625,16 @@ export default async function TechnicianDashboard() {
                     <div key={sku} className="bg-white p-4 rounded-[20px] border border-gray-100 shadow-sm flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         {/* Minimal Icon */}
-                        <div className={`h-12 w-12 rounded-[16px] flex items-center justify-center ${sku.includes('CARRETE') ? 'bg-blue-50 text-blue-600' :
+                        <div className={`h-12 w-12 rounded-[16px] flex items-center justify-center ${item.isSpool ? 'bg-blue-50 text-blue-600' :
                           sku.includes('ONU') ? 'bg-purple-50 text-purple-600' :
                             'bg-gray-50 text-gray-500'
                           }`}>
-                          {sku.includes('CARRETE') ? <div className="w-5 h-5 rounded-full border-[3px] border-current" /> : <Package size={22} />}
+                          {item.isSpool ? <div className="w-5 h-5 rounded-full border-[3px] border-current" /> : <Package size={22} />}
                         </div>
 
                         <div>
                           <p className="font-bold text-gray-900 leading-tight">{item.name}</p>
-                          {sku.includes('CARRETE') && item.serials.length > 0 && (
+                          {item.isSpool && item.serials.length > 0 && (
                             <p className="text-xs text-gray-400 font-mono mt-1 font-medium bg-gray-50 inline-block px-1.5 rounded">
                               {item.serials[0]} {item.serials.length > 1 && `+${item.serials.length - 1}`}
                             </p>
@@ -642,7 +644,7 @@ export default async function TechnicianDashboard() {
 
                       <div className="text-right">
                         <span className="text-xl font-bold text-gray-900">{item.quantity}</span>
-                        {sku.includes('CARRETE') && (item.waste || 0) > 0 && (
+                        {item.isSpool && (item.waste || 0) > 0 && (
                           <p className="text-[10px] font-bold text-red-400 mt-0.5">- {item.waste}m</p>
                         )}
                       </div>

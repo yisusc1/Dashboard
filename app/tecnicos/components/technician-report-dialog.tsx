@@ -66,7 +66,12 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, to
 
     // Available Spools (from Stock) for Dropdown
     const availableSpools = Object.keys(stock)
-        .filter(k => k.includes("CARRETE"))
+        .filter(k => {
+            // Robust check using the isSpool flag from server or fallback to name/sku
+            const entry = stock[k]
+            if (entry?.isSpool) return true
+            return k.includes("CARRETE") || k.includes("I002")
+        })
         .map(k => {
             const parts = k.split("__")
             return parts[1] || parts[0]
