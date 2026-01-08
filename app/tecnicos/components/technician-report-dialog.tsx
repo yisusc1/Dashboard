@@ -65,13 +65,10 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, to
     const [spools, setSpools] = useState<SpoolEntry[]>([])
 
     // Available Spools (from Stock) for Dropdown
-    console.log("DEBUG DIALOG STOCK:", stock)
     const availableSpools = Object.keys(stock)
         .filter(k => {
             // Robust check using the isSpool flag from server or fallback to name/sku
             const entry = stock[k]
-            const match = entry?.isSpool || k.includes("CARRETE") || k.includes("I002")
-            console.log(`Checking key: ${k}, isSpool: ${entry?.isSpool}, MATCH: ${match}`)
             if (entry?.isSpool) return true
             return k.includes("CARRETE") || k.includes("I002")
         })
@@ -461,6 +458,9 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, to
                         <div className="flex justify-between items-center px-1">
                             <Label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Carretes</Label>
                             <Button size="sm" variant="ghost" className="text-blue-600 hover:bg-blue-50 h-8 rounded-lg text-xs font-bold" onClick={addSpool}><Plus size={16} className="mr-1" /> Añadir</Button>
+                        </div>
+                        <div className="p-2 bg-yellow-100 text-xs font-mono mb-2 rounded">
+                            DEBUG KEYS: {JSON.stringify(Object.keys(stock))}
                         </div>
                         {spools.map((spool, idx) => (
                             <div key={idx} className="bg-white p-4 rounded-[24px] border border-slate-100 shadow-sm space-y-4 relative">

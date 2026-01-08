@@ -56,7 +56,9 @@ export default async function TechnicianDashboard() {
   // 4. Calculate Inventory (Mi Salida)
   // Fetch Items from ACTIVE Assignments
   // We switch from 'transactions' (history) to 'assignment_items' (state) to support closing assignments.
-  const { data: assignments } = await supabase
+  // Fetch Items from ACTIVE Assignments
+  // We switch from 'transactions' (history) to 'assignment_items' (state) to support closing assignments.
+  let query = supabase
     .from("inventory_assignments")
     .select(`
         id,
@@ -67,8 +69,17 @@ export default async function TechnicianDashboard() {
             product:inventory_products(sku, name)
         )
     `)
-    .or(`assigned_to.in.(${teamMembersIDs.join(',')}),team_id.eq.${profile.team?.id}`)
     .in("status", ["ACTIVE", "PARTIAL_RETURN"]) // Filters out RETURNED/CLOSED
+
+  // Safe OR filter construction
+  if (profile.team?.id) {
+    query = query.or(`assigned_to.in.(${teamMembersIDs.join(',')}),team_id.eq.${profile.team.id}`)
+  } else {
+    query = query.eq('assigned_to', user.id)
+  }
+
+  const { data: assignments, error: assignError } = await query
+
 
 
   // Fetch Usage (Closures) by Team or Techs
@@ -353,6 +364,19 @@ export default async function TechnicianDashboard() {
       .select("serial_number, base_quantity, usage_since_base")
       .in("serial_number", monitoredSpools)
 
+    // [Patch] Fetch Support Usage for these spools
+    const { data: supportUsage } = await supabase
+      .from("soportes")
+      .select("codigo_carrete, metraje_usado")
+      .in("codigo_carrete", monitoredSpools)
+
+    const supportUsageMap: Record<string, number> = {}
+    supportUsage?.forEach((s: any) => {
+      const usage = parseFloat(s.metraje_usado) || 0
+      if (!supportUsageMap[s.codigo_carrete]) supportUsageMap[s.codigo_carrete] = 0
+      supportUsageMap[s.codigo_carrete] += usage
+    })
+
     // Apply View Data to Stock Items
     Object.keys(stock).forEach(key => {
       const item = stock[key]
@@ -362,8 +386,10 @@ export default async function TechnicianDashboard() {
 
         if (status) {
           // The View is the Single Source of Truth
-          // Remaining = Base - Usage
-          item.quantity = (status.base_quantity || 0) - (status.usage_since_base || 0)
+          const usageSupports = supportUsageMap[serial] || 0
+
+          // Remaining = Base - UsageInstallations - UsageSupports
+          item.quantity = (status.base_quantity || 0) - (status.usage_since_base || 0) - usageSupports
 
           // Optional: Track waste if needed for display, but View aggregates it into usage_since_base usually?
           // View definitions sum used + wasted into 'total_usage' usually?

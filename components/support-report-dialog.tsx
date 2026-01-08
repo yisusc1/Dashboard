@@ -596,16 +596,19 @@ export function SupportReportDialog({ open, onOpenChange }: SupportReportDialogP
                                     <Box size={18} />
                                     <span className="text-xs font-bold uppercase">Bobina de Fibra</span>
                                 </div>
-                                <Select onValueChange={(val) => handleSelectChange("codigo_carrete", val)}>
-                                    <SelectTrigger className="h-10 border-blue-200 bg-white text-base rounded-xl">
-                                        <SelectValue placeholder="Seleccionar Bobina..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {spools.map(s => (
-                                            <SelectItem key={s.serial} value={s.serial} className="text-base">{s.label}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <select
+                                    name="codigo_carrete"
+                                    value={formData.codigo_carrete}
+                                    onChange={(e) => handleSelectChange("codigo_carrete", e.target.value)}
+                                    className="h-10 w-full rounded-xl border border-blue-200 bg-white px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    <option value="" disabled>Seleccionar Bobina...</option>
+                                    {spools.map((s) => (
+                                        <option key={s.serial} value={s.serial}>
+                                            {s.label}
+                                        </option>
+                                    ))}
+                                </select>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
                                         <Label className="text-[9px] uppercase text-blue-400 font-bold mb-1 block">Usado (m)</Label>

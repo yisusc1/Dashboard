@@ -21,10 +21,13 @@ export default function LoginPage() {
         setLoading(true)
         try {
             const supabase = createClient()
+            const redirectTo = `${window.location.origin}/auth/callback`
+            console.log("DEBUG LOGIN: Redirecting to:", redirectTo)
+
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: "google",
                 options: {
-                    redirectTo: `${window.location.origin}/auth/callback`,
+                    redirectTo,
                 },
             })
 
