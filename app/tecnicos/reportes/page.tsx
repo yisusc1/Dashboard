@@ -320,7 +320,7 @@ function ReportsContent() {
           </div>
           <div className="flex gap-2">
             <a
-              href="/"
+              href="/tecnicos"
               className="p-2 text-zinc-400 hover:text-zinc-900 transition-colors rounded-full hover:bg-zinc-100 flex items-center justify-center"
               title="Ir al inicio"
             >
