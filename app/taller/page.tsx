@@ -36,7 +36,8 @@ export default function TallerPage() {
     const [pendingResolveId, setPendingResolveId] = useState<string | null>(null)
 
     // History State
-    const [view, setView] = useState<'board' | 'history'>('board')
+    // [Mod] Expanded View State
+    const [view, setView] = useState<'board' | 'pending' | 'review' | 'history'>('pending')
     const [historyLogs, setHistoryLogs] = useState<any[]>([])
     const [loadingHistory, setLoadingHistory] = useState(false)
 
@@ -49,6 +50,16 @@ export default function TallerPage() {
             loadHistory()
         }
     }, [view])
+
+    // ... (keep existing loadFaults and loadHistory) ... (Wait, I need to make sure I don't delete them if I use replace_file_content with a range.
+    // The previous tool call view_file showed lines 1-644. I need to be careful not to delete the helper functions.
+    // I will use multi_replace to target specific blocks to be safer, or just replace the component body if I can match it well.
+    // The render part is the complex one.
+
+    // Let's use multi_replace for safer editing of the render method and state.
+
+    // ...
+
 
     async function loadFaults() {
         try {
@@ -357,19 +368,21 @@ export default function TallerPage() {
         <main className="min-h-screen bg-zinc-50 pb-20">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-12">
                 {/* HEADER */}
-                <div className="flex flex-col md:flex-row md:justify-between md:items-end mb-6 gap-4">
+                <div className="flex flex-col gap-4 mb-6">
                     <div>
                         <h1 className="text-3xl font-bold text-zinc-900 tracking-tight">Taller Mecánico</h1>
                         <p className="text-zinc-500 font-medium mt-1">Gestión de Fallas y Mantenimiento</p>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-                        <div className="bg-white p-1 rounded-xl border border-zinc-200 flex gap-1 shrink-0">
+
+                    {/* PC CONTROLS (Top Right) */}
+                    <div className="hidden md:flex justify-between items-center bg-white p-2 rounded-2xl border border-zinc-200">
+                        <div className="flex gap-1">
                             <Button
                                 variant={view === 'board' ? 'secondary' : 'ghost'}
                                 onClick={() => setView('board')}
                                 className="text-xs h-9 rounded-lg px-4"
                             >
-                                Tablero
+                                Tablero Completo
                             </Button>
                             <Button
                                 variant={view === 'history' ? 'secondary' : 'ghost'}
@@ -379,8 +392,7 @@ export default function TallerPage() {
                                 Historial
                             </Button>
                         </div>
-
-                        <div className="flex gap-2 ml-auto md:ml-0">
+                        <div className="flex gap-2">
                             <Button
                                 onClick={() => {
                                     setSelectedVehicleId(undefined)
@@ -388,27 +400,69 @@ export default function TallerPage() {
                                     setPendingResolveId(null)
                                     setMaintenanceOpen(true)
                                 }}
-                                className="bg-zinc-900 text-white hover:bg-zinc-800 gap-2 shadow-lg shadow-zinc-200 h-11 shrink-0 px-4 rounded-xl"
+                                className="bg-zinc-900 text-white hover:bg-zinc-800 gap-2 h-9 px-4 rounded-xl text-xs"
                             >
-                                <Wrench size={18} />
-                                <span className="hidden sm:inline">Registrar Mantenimiento</span>
-                                <span className="inline sm:hidden">Registrar</span>
+                                <Wrench size={14} />
+                                Registrar Mantenimiento
                             </Button>
-                            <a
-                                href="/"
-                                className="h-11 w-11 text-zinc-400 hover:text-zinc-900 transition-colors rounded-xl border border-zinc-100 bg-white hover:bg-zinc-50 flex items-center justify-center shrink-0"
-                                title="Ir al inicio"
+                            <a href="/" className="h-9 w-9 text-zinc-400 hover:text-zinc-900 rounded-xl border border-zinc-100 flex items-center justify-center">
+                                <HomeIcon size={16} />
+                            </a>
+                            <LogoutButton />
+                        </div>
+                    </div>
+
+                    {/* MOBILE CONTROLS (Stacked) */}
+                    <div className="md:hidden flex flex-col gap-3">
+                        {/* 1. Toggle Filter (3-way) */}
+                        <div className="bg-zinc-100 p-1 rounded-xl flex">
+                            <button
+                                onClick={() => setView('pending')}
+                                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${view === 'pending' || view === 'board' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500'}`}
                             >
-                                <HomeIcon size={20} />
+                                Pendientes
+                            </button>
+                            <button
+                                onClick={() => setView('review')}
+                                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${view === 'review' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500'}`}
+                            >
+                                En Revisión
+                            </button>
+                            <button
+                                onClick={() => setView('history')}
+                                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${view === 'history' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500'}`}
+                            >
+                                Historial
+                            </button>
+                        </div>
+
+                        {/* 2. Distinct Register Button (Below Filter) */}
+                        <Button
+                            onClick={() => {
+                                setSelectedVehicleId(undefined)
+                                setSelectedServiceType(undefined)
+                                setPendingResolveId(null)
+                                setMaintenanceOpen(true)
+                            }}
+                            className="w-full h-12 bg-zinc-900 text-white font-bold rounded-xl shadow-lg shadow-zinc-200 active:scale-[0.98] transition-all"
+                        >
+                            <Wrench size={18} className="mr-2" />
+                            Registrar Falla / Mantenimiento
+                        </Button>
+
+                        {/* 3. Navigation */}
+                        <div className="flex justify-between items-center px-1">
+                            <a href="/" className="flex items-center gap-2 text-zinc-400 text-sm font-medium">
+                                <HomeIcon size={16} /> Ir al Inicio
                             </a>
                             <LogoutButton />
                         </div>
                     </div>
                 </div>
 
-                {view === 'board' ? (
+                {view !== 'history' ? (
                     <>
-                        {/* CONTROLS */}
+                        {/* CONTROLS (Search) */}
                         <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 mb-8">
                             <div className="relative flex-1">
                                 <Search className="absolute left-4 top-3.5 text-zinc-400" size={20} />
@@ -435,51 +489,55 @@ export default function TallerPage() {
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
                                 {/* PENDIENTES */}
-                                <div className="space-y-4">
-                                    <h2 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
-                                        <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse"></div>
-                                        Pendientes ({pending.length})
-                                    </h2>
+                                {(view === 'board' || view === 'pending') && (
+                                    <div className={`space-y-4 ${view !== 'board' ? 'lg:col-span-2' : ''}`}>
+                                        <h2 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
+                                            <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse"></div>
+                                            Pendientes ({pending.length})
+                                        </h2>
 
-                                    {pending.length === 0 && (
-                                        <div className="p-8 text-center bg-white rounded-2xl border border-dashed border-zinc-200 text-zinc-400">
-                                            No hay fallas pendientes por revisar
-                                        </div>
-                                    )}
+                                        {pending.length === 0 && (
+                                            <div className="p-8 text-center bg-white rounded-2xl border border-dashed border-zinc-200 text-zinc-400">
+                                                No hay fallas pendientes por revisar
+                                            </div>
+                                        )}
 
-                                    {pending.map(fault => (
-                                        <FaultCard
-                                            key={fault.id}
-                                            fault={fault}
-                                            onMoveToReview={() => handleReview(fault)}
-                                            onResolve={() => handleResolve(fault)}
-                                        />
-                                    ))}
-                                </div>
+                                        {pending.map(fault => (
+                                            <FaultCard
+                                                key={fault.id}
+                                                fault={fault}
+                                                onMoveToReview={() => handleReview(fault)}
+                                                onResolve={() => handleResolve(fault)}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
 
                                 {/* EN REVISIÓN */}
-                                <div className="space-y-4">
-                                    <h2 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
-                                        <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                                        En Revisión ({inProgress.length})
-                                    </h2>
+                                {(view === 'board' || view === 'review') && (
+                                    <div className={`space-y-4 ${view !== 'board' ? 'lg:col-span-2' : ''}`}>
+                                        <h2 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
+                                            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                                            En Revisión ({inProgress.length})
+                                        </h2>
 
-                                    {inProgress.length === 0 && (
-                                        <div className="p-8 text-center bg-white rounded-2xl border border-dashed border-zinc-200 text-zinc-400">
-                                            No hay vehículos en el taller
-                                        </div>
-                                    )}
+                                        {inProgress.length === 0 && (
+                                            <div className="p-8 text-center bg-white rounded-2xl border border-dashed border-zinc-200 text-zinc-400">
+                                                No hay vehículos en el taller
+                                            </div>
+                                        )}
 
-                                    {inProgress.map(fault => (
-                                        <FaultCard
-                                            key={fault.id}
-                                            fault={fault}
-                                            isReviewing
-                                            onResolve={() => handleResolve(fault)}
-                                            onDiscard={() => updateStatus(fault.id, 'Pendiente')}
-                                        />
-                                    ))}
-                                </div>
+                                        {inProgress.map(fault => (
+                                            <FaultCard
+                                                key={fault.id}
+                                                fault={fault}
+                                                isReviewing
+                                                onResolve={() => handleResolve(fault)}
+                                                onDiscard={() => updateStatus(fault.id, 'Pendiente')}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
 
                             </div>
                         )}
