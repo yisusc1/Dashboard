@@ -365,18 +365,8 @@ export default async function TechnicianDashboard() {
       .select("serial_number, base_quantity, usage_since_base")
       .in("serial_number", monitoredSpools)
 
-    // [Patch] Fetch Support Usage for these spools
-    const { data: supportUsage } = await supabase
-      .from("soportes")
-      .select("codigo_carrete, metraje_usado")
-      .in("codigo_carrete", monitoredSpools)
-
-    const supportUsageMap: Record<string, number> = {}
-    supportUsage?.forEach((s: any) => {
-      const usage = parseFloat(s.metraje_usado) || 0
-      if (!supportUsageMap[s.codigo_carrete]) supportUsageMap[s.codigo_carrete] = 0
-      supportUsageMap[s.codigo_carrete] += usage
-    })
+    // [Patch Removed] Usage is already covered by view_spool_status
+    // const { data: supportUsage } = await supabase...
 
     // Apply View Data to Stock Items
     Object.keys(stock).forEach(key => {
@@ -387,10 +377,9 @@ export default async function TechnicianDashboard() {
 
         if (status) {
           // The View is the Single Source of Truth
-          const usageSupports = supportUsageMap[serial] || 0
-
-          // Remaining = Base - UsageInstallations - UsageSupports
-          item.quantity = (status.base_quantity || 0) - (status.usage_since_base || 0) - usageSupports
+          // Remaining = Base - UsageInstallations
+          // Usage from Soportes is ALREADY in the View (usage_since_base)
+          item.quantity = (status.base_quantity || 0) - (status.usage_since_base || 0)
 
           // Optional: Track waste if needed for display, but View aggregates it into usage_since_base usually?
           // View definitions sum used + wasted into 'total_usage' usually?
