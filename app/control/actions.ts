@@ -727,11 +727,42 @@ export async function getAuditDetails(auditId: string) {
 
     // 2. [New] Get Used Spools (Finalized) from Closures on Audit Date
     if (audit.created_at) {
-        const date = new Date(audit.created_at)
-        const minDate = new Date(date)
-        minDate.setHours(0, 0, 0, 0)
-        const maxDate = new Date(date)
-        maxDate.setHours(23, 59, 59, 999)
+        // [Fix] Use Venezuela Timezone Range
+        const auditDate = new Date(audit.created_at)
+
+        // Create formatter for Venezuela
+        const veFormatter = new Intl.DateTimeFormat("en-US", {
+            timeZone: "America/Caracas",
+            year: 'numeric', month: '2-digit', day: '2-digit'
+        })
+
+        // Get YYYY-MM-DD parts in Venezuela Time
+        const parts = veFormatter.formatToParts(auditDate)
+        const find = (type: string) => parts.find(p => p.type === type)?.value
+        const y = find('year')
+        const m = find('month')
+        const d = find('day')
+
+        // Construct Start and End ISO strings for that day in UTC
+        // Since we want 00:00:00 VET to 23:59:59 VET
+        // And VET is UTC-4 fixed (no DST currently)
+        // 00:00 VET = 04:00 UTC
+        // 23:59 VET = 03:59 UTC (Next Day)
+
+        // Safer approach: string comparison or ISO construction
+        const veDayStartISO = `${y}-${m}-${d}T00:00:00.000` // implied VET
+        const veDayEndISO = `${y}-${m}-${d}T23:59:59.999`
+
+        // Converting these 'Local VET' strings to UTC Dates implies offset
+        // We can manually add offset Z+4? No, simply use format logic
+        // Let's rely on simple Date manipulation with Offset
+
+        // Hardcode Offset for VET (-04:00)
+        const startTimestamp = new Date(`${y}-${m}-${d}T00:00:00-04:00`).toISOString()
+        const endTimestamp = new Date(`${y}-${m}-${d}T23:59:59.999-04:00`).toISOString()
+
+        const minDate = new Date(startTimestamp)
+        const maxDate = new Date(endTimestamp)
 
         // Get Team Members to query their closures
         // We already have 'memberIds' computed above
