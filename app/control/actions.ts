@@ -790,9 +790,11 @@ export async function getAuditDetails(auditId: string) {
             installations = closures || []
 
             // [New] Fetch Supports
+            // Note: 'soportes' might not have a strict FK to 'clientes' in some schemas, causing join to fail.
+            // Removing join to ensure data retrieval.
             const { data: supports } = await supabase
                 .from("soportes")
-                .select("id, metraje_usado, metraje_desechado, created_at, tecnico_id, codigo_carrete, causa, observacion, cliente:clientes(nombre, cedula)")
+                .select("id, metraje_usado, metraje_desechado, created_at, tecnico_id, codigo_carrete, causa, observacion") // Removed cliente join
                 .in("tecnico_id", memberIds)
                 .gte("created_at", minDate.toISOString())
                 .lte("created_at", maxDate.toISOString())
