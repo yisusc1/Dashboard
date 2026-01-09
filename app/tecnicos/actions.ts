@@ -73,18 +73,8 @@ export async function getMySpools() {
             .select("serial_number, base_quantity, usage_since_base")
             .in("serial_number", serialsToFetch)
 
-        // [PATCH] Fetch Usage from Supports (Soportes)
-        const { data: supportUsage } = await supabase
-            .from("soportes")
-            .select("codigo_carrete, metraje_usado, metraje_desechado")
-            .in("codigo_carrete", serialsToFetch)
-
-        const supportUsageMap: Record<string, number> = {}
-        supportUsage?.forEach((s: any) => {
-            const usage = (parseFloat(s.metraje_usado) || 0) + (parseFloat(s.metraje_desechado) || 0)
-            if (!supportUsageMap[s.codigo_carrete]) supportUsageMap[s.codigo_carrete] = 0
-            supportUsageMap[s.codigo_carrete] += usage
-        })
+        // [PATCH REMOVED] Usage is already covered by view_spool_status
+        // const { data: supportUsage } = await supabase...
 
         serialsToFetch.forEach(serial => {
             const status = spoolStatus?.find((s: any) => s.serial_number === serial)
@@ -96,8 +86,8 @@ export async function getMySpools() {
             if (status) {
                 const base = status.base_quantity || 0
                 const usageInstallations = status.usage_since_base || 0
-                const usageSupports = supportUsageMap[serial] || 0
-                remaining = base - usageInstallations - usageSupports
+                // const usageSupports = supportUsageMap[serial] || 0  <-- REMOVED
+                remaining = base - usageInstallations // - usageSupports
                 labelDetails = `${remaining}m disp.`
             } else {
                 // If not found in status view, assume it's available but unknown length (or 1000m default)
