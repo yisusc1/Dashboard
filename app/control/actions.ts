@@ -726,9 +726,16 @@ export async function getAuditDetails(auditId: string) {
     }
 
     // 2. [New] Get Used Spools (Finalized) from Closures on Audit Date
-    if (audit.created_at) {
+    // 2. [New] Get used spools from closures on Audit Date
+    // If PENDING, use TODAY (Now). If COMPLETED, use Audit Creation Date.
+    let refDateStr = audit.created_at
+    if (audit.status === 'PENDING') {
+        refDateStr = new Date().toISOString()
+    }
+
+    if (refDateStr) {
         // [Fix] Use Venezuela Timezone Range
-        const auditDate = new Date(audit.created_at)
+        const auditDate = new Date(refDateStr)
 
         // Create formatter for Venezuela
         const veFormatter = new Intl.DateTimeFormat("en-US", {
