@@ -103,12 +103,48 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, to
                 setRouterSerials(routers)
 
                 // Materials
+                // [Fix] Refresh Materials Usage from Latest Calculation
+                // While keeping Manual "Defective" or other fields if possible?
+                // Let's overwrite Usage columns with Calculated to ensure new supports are counted.
+                const calculated = getCalculatedData()
+
                 if (saved.materials) {
-                    setMaterials(prev => ({ ...prev, ...saved.materials }))
+                    setMaterials(prev => ({
+                        ...prev,
+                        ...saved.materials,
+                        // Force Update Usage from Live Data
+                        conectores_used: calculated.materials.conectores_used,
+                        tensores_used: calculated.materials.tensores_used,
+                        patchcords_used: calculated.materials.patchcords_used,
+                        rosetas_used: calculated.materials.rosetas_used
+                    }))
+                } else {
+                    setMaterials(calculated.materials)
                 }
 
                 // Spools
-                if (saved.spools) setSpools(saved.spools)
+                if (saved.spools) {
+                    // MERGE Logic for Spools
+                    // We prefer Calculated Usage (Live) but keep Saved Manual Entries?
+                    // Strategy: Take Calculated Spools. If Saved has extra serials not in Calculated, add them.
+                    // Usage: Always use Calculated Usage for matching serials. Meaning "Live Update".
+
+                    const mergedSpools = [...calculated.spools]
+                    saved.spools.forEach((sSpy: any) => {
+                        const existing = mergedSpools.find(m => m.serial === sSpy.serial)
+                        if (!existing) {
+                            // It's a manual entry (or deleted one), keep it
+                            mergedSpools.push(sSpy)
+                        } else {
+                            // It exists in calculated. Use Calculated Usage?
+                            // Yes, to update with new supports. 
+                            // existing.used is already up to date from 'calculated'.
+                        }
+                    })
+                    setSpools(mergedSpools)
+                } else {
+                    setSpools(calculated.spools)
+                }
 
             } else {
                 // 2. Fallback to Auto-Calculation (First time)
@@ -139,7 +175,8 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, to
         })
     }, [routerCount])
 
-    function calculateInitialValues() {
+    // Extracted Calculation Logic
+    function getCalculatedData() {
         // A. Materials
         let c_used = 0, t_used = 0, p_used = 0, r_used = 0
 
@@ -159,12 +196,12 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, to
             r_used += parseIntSafe(s.rosetas)
         })
 
-        // Auto-calc remaining from stock?
+        // Auto-calc remaining from stock
         const c_rem = activeStockQuantity(stock, "CONV")
         const t_rem = activeStockQuantity(stock, "TENS")
         const p_rem = activeStockQuantity(stock, "PATCH1")
 
-        setMaterials({
+        const calculatedMaterials = {
             conectores_used: c_used,
             conectores_remaining: c_rem > 0 ? c_rem : 0,
             conectores_defective: 0,
@@ -173,48 +210,30 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, to
             patchcords_used: p_used,
             patchcords_remaining: p_rem > 0 ? p_rem : 0,
             rosetas_used: r_used
-        })
+        }
 
-        // B. Spools (Auto-detect usage) - IMPROVED MATCHING
+        // B. Spools (Auto-detect usage)
         const detectedSpools: Record<string, SpoolEntry> = {}
 
         const processUsage = (item: any) => {
             const spoolCode = item.codigo_carrete ? String(item.codigo_carrete).trim() : null
 
             if (spoolCode) {
-                // Find matching spool in available list (Strict Match > Fuzzy ending)
-                // Normalize: remove "CARRETE", "BOBINA", whitespace, toUpperCase
+                // Find matching spool in available list
                 const cleanInput = spoolCode.toUpperCase().replace(/CARRETE|BOBINA|[-\s]/g, "")
-
                 const match = availableSpools.find(s => {
                     const cleanSerial = s.toUpperCase().replace(/[-\s]/g, "")
-                    // 1. Exact Match of cleaned strings (e.g. "123" === "123")
-                    if (cleanInput === cleanSerial) return true
-                    // 2. Input ends with Serial (e.g. "C-123" ends with "123") - Safer than includes
-                    // But check length ratio to avoid "123" matching "0123" if that's an issue? 
-                    // Let's stick to Exact Match of what we likely see.
                     return cleanInput === cleanSerial
                 })
 
-                // Fallback: If no strict match, try original string strict inclusion ONLY if distinct enough?
-                // Actually, let's keep it strict. If user typed "1234" and we have "123", pure clean match fails. Good.
-                // If user typed "C-123" and we have "123". Clean: "C123" vs "123". Fail.
-                // Maybe just .includes() is bad.
-                // Let's try: check if the serial is found as a distinct word or at end.
-
                 const match2 = match || availableSpools.find(s => {
-                    // If Input contains Serial as a distinct token? 
-                    // Or just check if strings are substantially similar.
-                    // Let's revert to a simpler "EndsWith" check for the serial part.
                     return spoolCode.toUpperCase().endsWith(s.toUpperCase()) || s.toUpperCase() === spoolCode.toUpperCase()
                 })
 
                 if (match2) {
                     if (!detectedSpools[match2]) {
-                        // Find initial stock remaining
                         const stockKey = Object.keys(stock).find(k => k.includes(match2))
                         const rem = stockKey ? stock[stockKey].quantity : 0
-
                         detectedSpools[match2] = {
                             serial: match2,
                             used: 0,
@@ -223,11 +242,8 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, to
                     }
                     const u = parseNum(item.metraje_usado)
                     const w = parseNum(item.metraje_desechado)
-
                     detectedSpools[match2].used += (u + w)
-                    // detectedSpools[match2].remaining = Math.max(0, detectedSpools[match2].remaining - (u + w)) // REMOVED: Remaining is already net from stock
                 } else {
-                    // [Fix] Fallback: If not in stock list, still add it (maybe emptied or legacy)
                     if (!detectedSpools[spoolCode]) {
                         detectedSpools[spoolCode] = {
                             serial: spoolCode,
@@ -245,7 +261,13 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, to
         todaysInstallations.forEach(processUsage)
         todaysSupports.forEach(processUsage)
 
-        setSpools(Object.values(detectedSpools))
+        return { materials: calculatedMaterials, spools: Object.values(detectedSpools) }
+    }
+
+    function calculateInitialValues() {
+        const { materials: m, spools: s } = getCalculatedData()
+        setMaterials(m)
+        setSpools(s)
     }
 
     // --- ACTIONS ---
@@ -434,9 +456,9 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, to
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl mt-4 h-12 gap-2 shadow-sm">
-                    <MessageSquare size={20} />
-                    Reporte WhatsApp
+                <Button className="w-full bg-[#34C759] hover:bg-[#2DB84C] text-white font-bold rounded-2xl mt-4 h-14 gap-2 shadow-lg shadow-[#34C759]/20 transition-all active:scale-[0.98] text-lg">
+                    <MessageSquare size={22} className="text-white fill-white/20" />
+                    Reporte Final
                 </Button>
             </DialogTrigger>
             <DialogContent className="max-w-[95vw] md:max-w-2xl w-full max-h-[92vh] flex flex-col rounded-[32px] bg-[#F2F2F7] p-0 border-0 outline-none">
