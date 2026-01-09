@@ -455,7 +455,7 @@ export function SupportReportDialog({ open, onOpenChange }: SupportReportDialogP
                             cantidad_puertos: "8",
                             puerto: "3",
                             zona: "Centro",
-                            codigo_carrete: "BOB-TEST-001",
+                            codigo_carrete: spools.length > 0 ? spools[0].serial : "",
                             metraje_usado: "45",
                             metraje_desechado: "2",
                             conectores: "2",
