@@ -225,7 +225,7 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, to
                     const w = parseNum(item.metraje_desechado)
 
                     detectedSpools[match2].used += (u + w)
-                    detectedSpools[match2].remaining = Math.max(0, detectedSpools[match2].remaining - (u + w))
+                    // detectedSpools[match2].remaining = Math.max(0, detectedSpools[match2].remaining - (u + w)) // REMOVED: Remaining is already net from stock
                 } else {
                     // [Fix] Fallback: If not in stock list, still add it (maybe emptied or legacy)
                     if (!detectedSpools[spoolCode]) {
@@ -501,9 +501,7 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, to
                             <Label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Carretes</Label>
                             <Button size="sm" variant="ghost" className="text-blue-600 hover:bg-blue-50 h-8 rounded-lg text-xs font-bold" onClick={addSpool}><Plus size={16} className="mr-1" /> Añadir</Button>
                         </div>
-                        <div className="p-2 bg-yellow-100 text-xs font-mono mb-2 rounded">
-                            DEBUG KEYS: {JSON.stringify(Object.keys(stock))}
-                        </div>
+                        {/* Debug Removed */}
                         {spools.map((spool, idx) => (
                             <div key={idx} className="bg-white p-4 rounded-[24px] border border-slate-100 shadow-sm space-y-4 relative">
                                 <Button variant="ghost" size="icon" className="absolute top-3 right-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl" onClick={() => removeSpool(idx)}><Trash2 size={18} /></Button>
