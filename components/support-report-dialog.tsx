@@ -321,10 +321,13 @@ export function SupportReportDialog({ open, onOpenChange }: SupportReportDialogP
         }
 
         // New Mandatory Fields
+        // Validation Removed as per User Request (Speedtest Optional)
+        /*
         if (!formData.hasEvidence) {
             toast.error("Debe confirmar que tiene la evidencia (Foto Speedtest)")
             return
         }
+        */
 
         if (isSwap && !formData.onu_nueva) {
             toast.error("Para cambios de equipo, el serial de la ONU Nueva es obligatorio")
@@ -698,8 +701,8 @@ export function SupportReportDialog({ open, onOpenChange }: SupportReportDialogP
                                     <Camera size={20} />
                                 </div>
                                 <div>
-                                    <Label className="text-sm font-bold text-slate-900 block">Evidencia Speedtest</Label>
-                                    <span className="text-[11px] text-slate-400 font-medium">Requerido para finalizar</span>
+                                    <Label className="text-sm font-bold text-slate-900 block">Realizar prueba de velocidad</Label>
+                                    <span className="text-[11px] text-slate-400 font-medium">Opcional</span>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
