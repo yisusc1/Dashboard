@@ -8,6 +8,13 @@ import Image from "next/image"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { MaintenanceRegistrationDialog } from "@/components/maintenance-registration-dialog"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 
 type Fault = {
     id: string
@@ -40,6 +47,8 @@ export default function TallerPage() {
     const [view, setView] = useState<'board' | 'pending' | 'review' | 'history'>('pending')
     const [historyLogs, setHistoryLogs] = useState<any[]>([])
     const [loadingHistory, setLoadingHistory] = useState(false)
+    const [vehicles, setVehicles] = useState<any[]>([])
+    const [historyFilter, setHistoryFilter] = useState("all")
 
     useEffect(() => {
         loadFaults()
@@ -86,9 +95,13 @@ export default function TallerPage() {
             if (error) throw error
 
             // 2. Fetch Vehicles & Mileage for Maintenance Checks
-            const { data: vehicles } = await supabase
+            const { data: vehiclesData } = await supabase
                 .from('vehiculos')
                 .select('*')
+                .order('modelo', { ascending: true })
+
+            setVehicles(vehiclesData || [])
+            const vehicles = vehiclesData
 
             const { data: mileageData } = await supabase.from('vista_ultimos_kilometrajes').select('*')
 
@@ -544,45 +557,69 @@ export default function TallerPage() {
                     </>
                 ) : (
                     <div className="max-w-4xl mx-auto">
-                        <h2 className="text-xl font-bold mb-6">Historial de Servicios y Reparaciones</h2>
+                        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+                            <h2 className="text-xl font-bold">Historial de Servicios y Reparaciones</h2>
+
+                            <div className="w-full md:w-64">
+                                <Select value={historyFilter} onValueChange={setHistoryFilter}>
+                                    <SelectTrigger className="bg-white border-zinc-200 rounded-xl h-11">
+                                        <div className="flex items-center gap-2">
+                                            <Search size={14} className="text-zinc-400" />
+                                            <SelectValue placeholder="Filtrar por vehículo" />
+                                        </div>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Todos los vehículos</SelectItem>
+                                        {vehicles.map((v) => (
+                                            <SelectItem key={v.id} value={v.placa}>
+                                                {v.modelo} <span className="text-zinc-400 text-xs ml-2">({v.placa})</span>
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
                         {loadingHistory ? (
                             <div className="text-center py-10 text-zinc-400">Cargando historial...</div>
                         ) : (
                             <div className="space-y-4">
-                                {historyLogs.map((log: any) => (
-                                    <div key={log.id} className="bg-white p-4 rounded-xl border border-zinc-200 flex items-center justify-between shadow-sm">
-                                        <div className="flex items-center gap-4">
-                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${log.type === 'REPAIR' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'
-                                                }`}>
-                                                {log.type === 'REPAIR' ? <CheckCircle size={18} /> : <Wrench size={18} />}
+                                {historyLogs
+                                    .filter(log => historyFilter === "all" || log.placa === historyFilter)
+                                    .map((log: any) => (
+                                        <div key={log.id} className="bg-white p-4 rounded-xl border border-zinc-200 flex items-center justify-between shadow-sm">
+                                            <div className="flex items-center gap-4">
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${log.type === 'REPAIR' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'
+                                                    }`}>
+                                                    {log.type === 'REPAIR' ? <CheckCircle size={18} /> : <Wrench size={18} />}
+                                                </div>
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-bold text-zinc-900">{log.vehicle}</span>
+                                                        <span className="text-xs text-zinc-500 font-mono bg-zinc-100 px-1.5 py-0.5 rounded">{log.placa}</span>
+                                                    </div>
+                                                    <div className="text-sm text-zinc-600">
+                                                        <span className="font-medium">
+                                                            {log.type === 'MAINTENANCE'
+                                                                ? (log.category === 'OIL_CHANGE' ? 'Cambio de Aceite' :
+                                                                    log.category === 'TIMING_BELT' ? 'Correa de Tiempo' :
+                                                                        log.category === 'CHAIN_KIT' ? 'Kit de Arrastre' :
+                                                                            log.category === 'WASH' ? 'Lavado' : log.category)
+                                                                : `Reparación: ${log.category}`
+                                                            }
+                                                        </span>
+                                                        <span className="mx-2 text-zinc-300">|</span>
+                                                        {log.description}
+                                                        {log.mileage && <span className="text-zinc-400 ml-2">({log.mileage.toLocaleString()} km)</span>}
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="font-bold text-zinc-900">{log.vehicle}</span>
-                                                    <span className="text-xs text-zinc-500 font-mono bg-zinc-100 px-1.5 py-0.5 rounded">{log.placa}</span>
-                                                </div>
-                                                <div className="text-sm text-zinc-600">
-                                                    <span className="font-medium">
-                                                        {log.type === 'MAINTENANCE'
-                                                            ? (log.category === 'OIL_CHANGE' ? 'Cambio de Aceite' :
-                                                                log.category === 'TIMING_BELT' ? 'Correa de Tiempo' :
-                                                                    log.category === 'CHAIN_KIT' ? 'Kit de Arrastre' :
-                                                                        log.category === 'WASH' ? 'Lavado' : log.category)
-                                                            : `Reparación: ${log.category}`
-                                                        }
-                                                    </span>
-                                                    <span className="mx-2 text-zinc-300">|</span>
-                                                    {log.description}
-                                                    {log.mileage && <span className="text-zinc-400 ml-2">({log.mileage.toLocaleString()} km)</span>}
-                                                </div>
+                                            <div className="text-right text-xs text-zinc-400">
+                                                <div>{new Date(log.date).toLocaleDateString()}</div>
+                                                <div>{new Date(log.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                                             </div>
                                         </div>
-                                        <div className="text-right text-xs text-zinc-400">
-                                            <div>{new Date(log.date).toLocaleDateString()}</div>
-                                            <div>{new Date(log.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                                        </div>
-                                    </div>
-                                ))}
+                                    ))}
                                 {historyLogs.length === 0 && (
                                     <div className="text-center py-10 text-zinc-400 bg-white rounded-xl border border-dashed">
                                         No hay historial registrado
