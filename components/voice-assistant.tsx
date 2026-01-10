@@ -197,16 +197,28 @@ export function VoiceAssistant() {
                         </div>
 
                         {/* Status Text */}
-                        <div className="text-center space-y-2 max-w-[80%]">
-                            <h3 className="text-xl font-bold text-zinc-900">
-                                {isProcessing ? "Procesando..." : "Te escucho..."}
-                            </h3>
-                            <p className="text-lg font-medium text-blue-600 min-h-[1.75rem]">
-                                {transcript || "Di un comando..."}
-                            </p>
-                            <p className="text-sm text-zinc-400">
-                                Prueba: "Ir a Taller", "Escanear QR", "Volver"
-                            </p>
+                        {/* Status Text */}
+                        <div className="text-center space-y-2 max-w-[90%] w-full">
+                            {feedback ? (
+                                <div className="p-3 bg-red-50 border border-red-100 rounded-lg text-left max-h-60 overflow-y-auto">
+                                    <p className="text-sm font-bold text-red-800 mb-1">Mensaje del Sistema:</p>
+                                    <p className="text-sm text-red-700 font-mono break-words select-text whitespace-pre-wrap">
+                                        {feedback}
+                                    </p>
+                                </div>
+                            ) : (
+                                <>
+                                    <h3 className="text-xl font-bold text-zinc-900">
+                                        {isProcessing ? "Procesando..." : "Te escucho..."}
+                                    </h3>
+                                    <p className="text-lg font-medium text-blue-600 min-h-[1.75rem]">
+                                        {transcript || "Di un comando..."}
+                                    </p>
+                                    <p className="text-sm text-zinc-400">
+                                        Prueba: "Ir a Taller", "Escanear QR", "Volver"
+                                    </p>
+                                </>
+                            )}
                         </div>
 
                         {/* Feedback Toast style in-card */}
