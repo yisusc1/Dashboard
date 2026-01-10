@@ -18,7 +18,7 @@ export type AIActionResponse = {
 }
 
 export async function processWithGemini(transcript: string): Promise<AIActionResponse> {
-    const API_KEY = process.env.GEMINI_API_KEY || ""
+    const API_KEY = (process.env.GEMINI_API_KEY || "").trim()
 
     if (!API_KEY) {
         console.error("Gemini API Key is missing in environment variables")
@@ -27,7 +27,8 @@ export async function processWithGemini(transcript: string): Promise<AIActionRes
 
     try {
         const genAI = new GoogleGenerativeAI(API_KEY)
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
+        // Try specific version -001 to avoid alias issues
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-001" })
 
         const systemPrompt = `
     Eres el asistente inteligente del "Sistema de Gestión de Operaciones".
@@ -76,6 +77,9 @@ export async function processWithGemini(transcript: string): Promise<AIActionRes
 
     } catch (error: any) {
         console.error("Gemini API Error:", error)
-        return { success: false, error: "API_ERROR", errorMessage: error.message || String(error) }
+        const isServer = typeof window === 'undefined'
+        const region = process.env.VERCEL_REGION || "local"
+        const debugPrefix = `[Server:${isServer}, Region:${region}] `
+        return { success: false, error: "API_ERROR", errorMessage: debugPrefix + (error.message || String(error)) }
     }
 }

@@ -133,7 +133,11 @@ export function VoiceAssistant() {
             }
         } catch (e) {
             console.error("Client processing failed", e)
-            response = "Error de conexión."
+            response = "Error de conexión con el servidor (Cliente)."
+        }
+
+        if (!response) {
+            response = "Error: La respuesta estaba vacía. Intente de nuevo."
         }
 
         setFeedback(response)
