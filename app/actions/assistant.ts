@@ -5,17 +5,21 @@ import { GoogleGenerativeAI } from "@google/generative-ai"
 const API_KEY = process.env.GEMINI_API_KEY || ""
 
 export type AIActionResponse = {
-    response: string
-    action: {
-        type: 'NAVIGATE' | 'SPEAK' | 'NONE'
-        path?: string
+    success: boolean
+    data?: {
+        response: string
+        action: {
+            type: 'NAVIGATE' | 'SPEAK' | 'NONE'
+            path?: string
+        }
     }
+    error?: string
 }
 
-export async function processWithGemini(transcript: string): Promise<AIActionResponse | null> {
+export async function processWithGemini(transcript: string): Promise<AIActionResponse> {
     if (!API_KEY) {
-        console.warn("Gemini API Key missing")
-        return null
+        console.error("Gemini API Key is missing in environment variables")
+        return { success: false, error: "MISSING_KEY" }
     }
 
     try {
@@ -49,13 +53,6 @@ export async function processWithGemini(transcript: string): Promise<AIActionRes
         "path": "/ruta/correspondiente" (solo si type es NAVIGATE)
       }
     }
-    
-    Ejemplos:
-    User: "Llévale a donde reparan los carros"
-    JSON: { "response": "Abriendo el módulo de taller mecácnico.", "action": { "type": "NAVIGATE", "path": "/taller" } }
-
-    User: "¿Qué haces?"
-    JSON: { "response": "Ayudo a gestionar la flota y el almacén. Puedo llevarte a cualquier módulo.", "action": { "type": "SPEAK" } }
     `
 
         const result = await model.generateContent({
@@ -64,18 +61,18 @@ export async function processWithGemini(transcript: string): Promise<AIActionRes
         })
 
         const text = result.response.text()
-        console.log("Gemini Response:", text)
+        console.log("Gemini Raw Response:", text)
 
         try {
-            const data = JSON.parse(text) as AIActionResponse
-            return data
+            const data = JSON.parse(text)
+            return { success: true, data }
         } catch (parseError) {
             console.error("Error parsing Gemini JSON", parseError)
-            return null
+            return { success: false, error: "PARSE_ERROR" }
         }
 
     } catch (error) {
         console.error("Gemini API Error:", error)
-        return null
+        return { success: false, error: "API_ERROR" }
     }
 }

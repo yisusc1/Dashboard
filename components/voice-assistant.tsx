@@ -110,23 +110,18 @@ export function VoiceAssistant() {
         let response = ""
         let action: any = { type: 'NONE' }
 
-        // 1. Try AI (Gemini)
+        // Use AI (Gemini) ONLY
         try {
             const aiResult = await processWithGemini(text)
             if (aiResult) {
                 response = aiResult.response
                 action = aiResult.action
+            } else {
+                response = "No pude conectar con el asistente inteligente. Verifica la configuración."
             }
         } catch (e) {
             console.error("AI processing failed", e)
-        }
-
-        // 2. Fallback to Local Logic if AI failed/skipped
-        if (!response) {
-            console.log("Falling back to local logic")
-            const localResult = processLocalCommand(text)
-            response = localResult.response
-            action = localResult.action
+            response = "Hubo un error al procesar tu solicitud."
         }
 
         setFeedback(response)
