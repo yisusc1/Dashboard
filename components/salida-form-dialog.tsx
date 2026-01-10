@@ -11,13 +11,11 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
+import { VehicleSelector, Vehicle } from "@/components/vehicle-selector"
 
-type Vehiculo = {
-    id: string
-    modelo: string
-    placa: string
-    codigo: string
-    tipo?: string
+// Use Vehicle type from component but extend if needed or just use it
+// The local type had 'department', let's extend
+interface Vehiculo extends Vehicle {
     department?: string
 }
 
@@ -63,7 +61,8 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId }: SalidaFo
         if (isOpen) {
             loadVehicles().then((loadedVehicles) => {
                 if (initialVehicleId && loadedVehicles) {
-                    handleVehicleChange(initialVehicleId, loadedVehicles)
+                    const found = loadedVehicles.find(v => v.id === initialVehicleId)
+                    if (found) handleVehicleChange(found)
                 }
             })
         }
@@ -83,6 +82,8 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId }: SalidaFo
         // 2. Get Vehicles
         const { data: allVehicles } = await supabase.from('vehiculos').select('*').order('codigo')
         const { data: busyReports } = await supabase.from('reportes').select('vehiculo_id').is('km_entrada', null)
+        const { data: kData } = await supabase.from('vista_ultimos_kilometrajes').select('*') // [NEW] Fetch mileage
+
         const busyIds = new Set(busyReports?.map(r => r.vehiculo_id))
 
         const available = allVehicles?.filter(v => {
@@ -90,17 +91,16 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId }: SalidaFo
 
             // Filter by department if set
             if (v.department && userDept) {
-                // Special case: Transporte (Admin-like for vehicles) or specific role might see all? 
-                // Creating strict filter as requested:
                 return v.department === userDept
             }
 
-            // If vehicle has NO department, show it? Or hide it?
-            // Let's hide it to force assignment, OR show it if user is 'Transporte'
-            if (!v.department) return true // Legacy behavior: show generic vehicles
+            if (!v.department) return true
 
-            return false // Mismatch department
-        }) || []
+            return false
+        }).map(v => ({
+            ...v,
+            kilometraje: kData?.find(k => k.vehiculo_id === v.id)?.ultimo_kilometraje || 0
+        })) || []
 
         setVehiculos(available)
 
@@ -110,13 +110,21 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId }: SalidaFo
         return available
     }
 
-    async function handleVehicleChange(value: string, currentVehicles?: Vehiculo[]) {
+    async function handleVehicleChange(selected: Vehicle | null) {
+        if (!selected) {
+            setVehiculoId("")
+            setSelectedVehicle(null)
+            setLastKm(null)
+            return
+        }
+
+        const value = selected.id
         setVehiculoId(value)
-        const listToSearch = currentVehicles || vehiculos
-        const v = listToSearch.find(x => x.id === value) || null
-        setSelectedVehicle(v)
+        // @ts-ignore
+        setSelectedVehicle(selected)
 
         const supabase = createClient()
+        // Keep legacy logic for lastKm validation just in case
         const { data } = await supabase
             .from('reportes')
             .select('km_entrada')
@@ -127,7 +135,7 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId }: SalidaFo
             .single()
 
         if (data) setLastKm(data.km_entrada)
-        else setLastKm(0)
+        else setLastKm(selected.kilometraje || 0) // Fallback to current mileage if no report found
     }
 
     const toggleCheck = (key: keyof typeof checks) => {
@@ -322,19 +330,12 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId }: SalidaFo
                     {/* Basic Info */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2 col-span-2">
-                            <Label>Vehículo Disponible</Label>
-                            <Select value={vehiculoId} onValueChange={handleVehicleChange}>
-                                <SelectTrigger className="h-12 rounded-xl bg-white border-zinc-200">
-                                    <SelectValue placeholder="Seleccione..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {vehiculos.map(v => (
-                                        <SelectItem key={v.id} value={v.id}>
-                                            {v.modelo} - {v.placa} ({v.codigo})
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <VehicleSelector
+                                vehicles={vehiculos}
+                                selectedVehicleId={vehiculoId}
+                                onSelect={handleVehicleChange}
+                                label="Vehículo Disponible"
+                            />
                             {lastKm !== null && (
                                 <p className="text-xs text-zinc-500 text-right">Anterior: {lastKm.toLocaleString()} km</p>
                             )}

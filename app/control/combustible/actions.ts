@@ -16,12 +16,23 @@ export interface FuelLogData {
 
 export async function getVehicles() {
     const supabase = await createClient()
-    const { data } = await supabase
+    const { data: vehicles } = await supabase
         .from("vehiculos")
         .select("id, placa, modelo, codigo")
         .order("codigo", { ascending: true })
 
-    return data || []
+    if (!vehicles) return []
+
+    // Fetch mileage for all vehicles
+    const { data: mileageData } = await supabase
+        .from("vista_ultimos_kilometrajes")
+        .select("vehiculo_id, ultimo_kilometraje")
+
+    // Merge
+    return vehicles.map(v => ({
+        ...v,
+        kilometraje: mileageData?.find(m => m.vehiculo_id === v.id)?.ultimo_kilometraje || 0
+    }))
 }
 
 export async function createFuelLog(data: FuelLogData) {

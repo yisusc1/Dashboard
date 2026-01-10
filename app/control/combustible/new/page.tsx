@@ -10,6 +10,7 @@ import { CalendarIcon, Upload, Loader2, Save, ArrowLeft, Fuel, Car } from "lucid
 
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
+import { VehicleSelector, Vehicle } from "@/components/vehicle-selector"
 import {
     Form,
     FormControl,
@@ -304,22 +305,17 @@ function NewFuelLogContent() {
                                         name="vehicle_id"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Vehículo</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value}>
-                                                    <FormControl>
-                                                        <SelectTrigger className="h-12 rounded-xl">
-                                                            <SelectValue placeholder="Seleccione vehículo" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        {vehicles.map((v) => (
-                                                            <SelectItem key={v.id} value={v.id}>
-                                                                {v.codigo} - {v.modelo} ({v.placa})
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormMessage />
+                                                <FormItem>
+                                                    <VehicleSelector
+                                                        vehicles={vehicles}
+                                                        selectedVehicleId={field.value}
+                                                        onSelect={(v) => {
+                                                            field.onChange(v?.id)
+                                                        }}
+                                                        label="Vehículo"
+                                                    />
+                                                    <FormMessage />
+                                                </FormItem>
                                             </FormItem>
                                         )}
                                     />

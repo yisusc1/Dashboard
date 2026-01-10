@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { MessageSquare, Send, Plus, Trash2, SlidersHorizontal, ArrowLeft, CheckCircle, ArrowRight } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { saveTechnicianReport, getTechnicianReport } from "@/app/tecnicos/actions"
+import { VehicleSelector } from "@/components/vehicle-selector"
 import { toast } from "sonner"
 
 type Props = {
@@ -477,15 +478,12 @@ export function TechnicianReportDialog({ profile, stock, todaysInstallations, to
                     <section className="space-y-2">
                         <Label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider pl-1">Vehículo Asignado</Label>
                         <div className="bg-white rounded-[20px] p-2 border border-slate-100 shadow-sm">
-                            <Select value={selectedVehicle} onValueChange={setSelectedVehicle}>
-                                <SelectTrigger className="border-0 h-11 bg-transparent font-medium text-base">
-                                    <SelectValue placeholder="Seleccionar..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {vehicles.map(v => <SelectItem key={v.id} value={v.id}>{v.modelo} ({v.placa})</SelectItem>)}
-                                    <SelectItem value="none">Ninguno</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <VehicleSelector
+                                vehicles={vehicles}
+                                selectedVehicleId={selectedVehicle === "none" ? undefined : selectedVehicle}
+                                onSelect={(v) => setSelectedVehicle(v ? v.id : "none")}
+                                label="Seleccionar Vehículo"
+                            />
                         </div>
                     </section>
 
