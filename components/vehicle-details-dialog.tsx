@@ -61,8 +61,10 @@ type VehicleDetailsDialogProps = {
     onUpdate?: () => void
 }
 
+import { DriverSelector, Driver } from "./driver-selector"
+
 export function VehicleDetailsDialog({ isOpen, onClose, vehicle, onUpdate }: VehicleDetailsDialogProps) {
-    const [drivers, setDrivers] = useState<any[]>([])
+    const [drivers, setDrivers] = useState<Driver[]>([])
     const [assigning, setAssigning] = useState(false)
     const [faults, setFaults] = useState<Fault[]>([])
     const [loadingFaults, setLoadingFaults] = useState(false)
@@ -124,11 +126,19 @@ export function VehicleDetailsDialog({ isOpen, onClose, vehicle, onUpdate }: Veh
         }
     }
 
-    async function handleAssignDriver(driverId: string) {
+    async function handleAssignDriver(d: Driver | null) {
         if (!vehicle) return;
 
+        // If null selected, unassign
+        if (!d) {
+            executeAssignment('none')
+            return
+        }
+
+        const driverId = d.id
+
         // Check availability
-        const selectedDriver = drivers.find(d => d.id === driverId)
+        const selectedDriver = drivers.find(dr => dr.id === driverId)
 
         // Logic for Transfer
         if (selectedDriver?.currentVehicle && selectedDriver.currentVehicle.id !== vehicle.id) {
@@ -245,28 +255,14 @@ export function VehicleDetailsDialog({ isOpen, onClose, vehicle, onUpdate }: Veh
                                 <div className="mb-6">
                                     <label className="text-xs font-bold text-zinc-500 uppercase mb-2 block px-1">Conductor Asignado</label>
                                     <div className="flex gap-2">
-                                        <Select
-                                            value={vehicle.assigned_driver_id || "none"}
-                                            onValueChange={handleAssignDriver}
-                                            disabled={assigning}
-                                        >
-                                            <SelectTrigger className="w-full h-12 rounded-xl border-zinc-200 focus:ring-black">
-                                                <SelectValue placeholder="Seleccionar conductor" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="none">-- Sin Asignar --</SelectItem>
-                                                {drivers.map((d) => (
-                                                    <SelectItem key={d.id} value={d.id} className="flex justify-between items-center w-full">
-                                                        <span>{d.first_name} {d.last_name}</span>
-                                                        {d.currentVehicle && d.currentVehicle.id !== vehicle.id && (
-                                                            <span className="ml-2 text-xs font-mono text-zinc-400 bg-zinc-100 px-1.5 py-0.5 rounded">
-                                                                {d.currentVehicle.modelo}
-                                                            </span>
-                                                        )}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                        <div className="w-full">
+                                            <DriverSelector
+                                                drivers={drivers}
+                                                selectedDriverId={vehicle.assigned_driver_id}
+                                                onSelect={handleAssignDriver}
+                                                loading={assigning}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
