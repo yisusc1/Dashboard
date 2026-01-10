@@ -6,7 +6,8 @@ import { Mic, MicOff, X, Activity } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
-import { cn } from "@/lib/utils"
+import { processVoiceCommand as processLocalCommand } from "@/lib/assistant-logic"
+import { processWithGemini } from "@/app/actions/assistant"
 
 // Extend Window interface for Web Speech API
 declare global {
@@ -104,11 +105,30 @@ export function VoiceAssistant() {
         // Simple audio feedback could go here
     }
 
-    const processCommand = (text: string) => {
+    const processCommand = async (text: string) => {
         setIsProcessing(true)
 
-        // Use the new "Smart" logic
-        const { response, action } = processVoiceCommand(text)
+        let response = ""
+        let action: any = { type: 'NONE' }
+
+        // 1. Try AI (Gemini)
+        try {
+            const aiResult = await processWithGemini(text)
+            if (aiResult) {
+                response = aiResult.response
+                action = aiResult.action
+            }
+        } catch (e) {
+            console.error("AI processing failed", e)
+        }
+
+        // 2. Fallback to Local Logic if AI failed/skipped
+        if (!response) {
+            console.log("Falling back to local logic")
+            const localResult = processLocalCommand(text)
+            response = localResult.response
+            action = localResult.action
+        }
 
         setFeedback(response)
         speak(response)
@@ -117,7 +137,7 @@ export function VoiceAssistant() {
         if (action.type === 'NAVIGATE') {
             if (action.path === 'BACK') {
                 router.back()
-            } else {
+            } else if (action.path) {
                 router.push(action.path)
             }
         }
