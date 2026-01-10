@@ -6,7 +6,6 @@ import { Mic, MicOff, X, Activity } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
-import { processVoiceCommand as processLocalCommand } from "@/lib/assistant-logic"
 import { processWithGemini } from "@/app/actions/assistant"
 
 // Extend Window interface for Web Speech API
