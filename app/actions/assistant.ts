@@ -2,7 +2,7 @@
 
 import { GoogleGenerativeAI } from "@google/generative-ai"
 
-const API_KEY = process.env.GEMINI_API_KEY || ""
+
 
 export type AIActionResponse = {
     success: boolean
@@ -17,6 +17,8 @@ export type AIActionResponse = {
 }
 
 export async function processWithGemini(transcript: string): Promise<AIActionResponse> {
+    const API_KEY = process.env.GEMINI_API_KEY || ""
+
     if (!API_KEY) {
         console.error("Gemini API Key is missing in environment variables")
         return { success: false, error: "MISSING_KEY" }
