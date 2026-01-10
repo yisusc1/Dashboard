@@ -14,6 +14,7 @@ export type AIActionResponse = {
         }
     }
     error?: string
+    errorMessage?: string
 }
 
 export async function processWithGemini(transcript: string): Promise<AIActionResponse> {
@@ -73,8 +74,8 @@ export async function processWithGemini(transcript: string): Promise<AIActionRes
             return { success: false, error: "PARSE_ERROR" }
         }
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Gemini API Error:", error)
-        return { success: false, error: "API_ERROR" }
+        return { success: false, error: "API_ERROR", errorMessage: error.message || String(error) }
     }
 }

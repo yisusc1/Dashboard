@@ -123,7 +123,8 @@ export function VoiceAssistant() {
                     response = "Error: Falta la API Key de Gemini en el servidor."
                     toast.error("Falta Variable de Entorno: GEMINI_API_KEY")
                 } else if (result.error === "API_ERROR") {
-                    response = "Error al conectar con la inteligencia artificial."
+                    response = `Error de IA: ${result.errorMessage || "Falló la conexión"}`
+                    console.error("Detalle Error IA:", result.errorMessage)
                 } else if (result.error === "PARSE_ERROR") {
                     response = "El asistente generó una respuesta inválida."
                 } else {
