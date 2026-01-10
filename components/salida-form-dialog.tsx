@@ -324,8 +324,20 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId }: SalidaFo
     const isInstalacion = departamento === 'Instalación'
 
     return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-xl rounded-[32px] border-none shadow-2xl max-h-[90vh] flex flex-col p-0 focus:outline-none bg-zinc-50 overflow-hidden">
+        <Dialog open={isOpen} onOpenChange={(open) => {
+            // Prevent closing if in success step unless explicitly closed by button
+            if (!open && step === 'success') return
+            onClose()
+        }}>
+            <DialogContent
+                onInteractOutside={(e) => {
+                    if (step === 'success') e.preventDefault()
+                }}
+                onEscapeKeyDown={(e) => {
+                    if (step === 'success') e.preventDefault()
+                }}
+                className="sm:max-w-xl rounded-[32px] border-none shadow-2xl max-h-[90vh] flex flex-col p-0 focus:outline-none bg-zinc-50 overflow-hidden"
+            >
 
                 {step === 'success' ? (
                     <div className="p-8 flex flex-col items-center justify-center text-center space-y-6 bg-white h-full min-h-[400px]">
@@ -339,14 +351,14 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId }: SalidaFo
 
                         <div className="w-full space-y-3 pt-4">
                             <Button
-                                onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(whatsappText)}`, '_blank')}
+                                onClick={() => window.location.href = `https://wa.me/?text=${encodeURIComponent(whatsappText)}`}
                                 className="w-full h-14 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-2xl font-bold text-lg shadow-lg shadow-green-500/20 active:scale-95 transition-all"
                             >
                                 <Send size={24} className="mr-2" />
                                 Reportar en WhatsApp
                             </Button>
                             <Button onClick={onClose} variant="ghost" className="w-full text-slate-400">
-                                Cerrar
+                                Cerrar y Volver
                             </Button>
                         </div>
                     </div>
