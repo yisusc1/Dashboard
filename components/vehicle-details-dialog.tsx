@@ -253,7 +253,7 @@ export function VehicleDetailsDialog({ isOpen, onClose, vehicle, onUpdate }: Veh
 
                                 {/* Driver Assignment Section - NEW */}
                                 <div className="mb-6">
-                                    <label className="text-xs font-bold text-zinc-500 uppercase mb-2 block px-1">Conductor Asignado</label>
+                                    {/* <label className="text-xs font-bold text-zinc-500 uppercase mb-2 block px-1">Conductor Asignado</label> REMOVED, handled by component */}
                                     <div className="flex gap-2">
                                         <div className="w-full">
                                             <DriverSelector
