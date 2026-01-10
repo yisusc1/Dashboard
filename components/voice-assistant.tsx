@@ -1,0 +1,247 @@
+"use client"
+
+import { useState, useEffect, useRef } from "react"
+import { useRouter, usePathname } from "next/navigation"
+import { Mic, MicOff, X, Activity } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
+import { cn } from "@/lib/utils"
+
+// Extend Window interface for Web Speech API
+declare global {
+    interface Window {
+        SpeechRecognition: any
+        webkitSpeechRecognition: any
+        speechSynthesis: any
+        SpeechSynthesisUtterance: any
+    }
+}
+
+export function VoiceAssistant() {
+    const router = useRouter()
+    const pathname = usePathname()
+    const [isListening, setIsListening] = useState(false)
+    const [isProcessing, setIsProcessing] = useState(false)
+    const [transcript, setTranscript] = useState("")
+    const [feedback, setFeedback] = useState("")
+
+    const recognitionRef = useRef<any>(null)
+
+    // Initialize Speech Recognition
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+            if (SpeechRecognition) {
+                const recognition = new SpeechRecognition()
+                recognition.continuous = false
+                recognition.lang = "es-ES"
+                recognition.interimResults = false
+
+                recognition.onstart = () => {
+                    setIsListening(true)
+                    setFeedback("Escuchando...")
+                    playPing()
+                }
+
+                recognition.onend = () => {
+                    setIsListening(false)
+                }
+
+                recognition.onresult = (event: any) => {
+                    const text = event.results[0][0].transcript
+                    setTranscript(text)
+                    processCommand(text)
+                }
+
+                recognition.onerror = (event: any) => {
+                    console.error("Speech recognition error", event.error)
+                    setIsListening(false)
+                    setFeedback("Error al escuchar")
+                    if (event.error === 'not-allowed') {
+                        toast.error("Permiso de micrófono denegado")
+                    }
+                }
+
+                recognitionRef.current = recognition
+            } else {
+                console.warn("Speech Recognition not supported")
+            }
+        }
+    }, [])
+
+    const startListening = () => {
+        if (recognitionRef.current) {
+            try {
+                recognitionRef.current.start()
+            } catch (e) {
+                // Already started
+            }
+        } else {
+            toast.error("Tu navegador no soporta comandos de voz")
+        }
+    }
+
+    const stopListening = () => {
+        if (recognitionRef.current) {
+            recognitionRef.current.stop()
+        }
+    }
+
+    const speak = (text: string) => {
+        if (typeof window !== "undefined" && window.speechSynthesis) {
+            // Cancel previous
+            window.speechSynthesis.cancel()
+            const utterance = new window.SpeechSynthesisUtterance(text)
+            utterance.lang = "es-ES"
+            utterance.rate = 1.0
+            utterance.pitch = 1.0
+            window.speechSynthesis.speak(utterance)
+        }
+    }
+
+    const playPing = () => {
+        // Simple audio feedback could go here
+    }
+
+    const processCommand = (text: string) => {
+        setIsProcessing(true)
+        const lowerText = text.toLowerCase().trim()
+        console.log("Comando recibido:", lowerText)
+
+        let actionTaken = false
+        let responseText = ""
+
+        // --- NAVIGATION COMMANDS ---
+
+        // Taller / Maintenance
+        if (lowerText.includes("taller") || lowerText.includes("mantenimiento")) {
+            router.push("/taller")
+            responseText = "Abriendo módulo de taller"
+            actionTaken = true
+        }
+
+        // Vehículos / Flota
+        else if (lowerText.includes("vehículos") || lowerText.includes("flota") || lowerText.includes("carros")) {
+            router.push("/admin/vehiculos")
+            responseText = "Accediendo a la flota de vehículos"
+            actionTaken = true
+        }
+
+        // Combustible
+        else if (lowerText.includes("combustible") || lowerText.includes("gasolina")) {
+            router.push("/control/combustible")
+            responseText = "Abriendo control de combustible"
+            actionTaken = true
+        }
+
+        // Inventario / Almacén
+        else if (lowerText.includes("inventario") || lowerText.includes("almacén") || lowerText.includes("materiales")) {
+            router.push("/almacen")
+            responseText = "Yendo al almacén"
+            actionTaken = true
+        }
+
+        // Inicio / Home
+        else if (lowerText.includes("inicio") || lowerText.includes("home") || lowerText.includes("casa")) {
+            router.push("/")
+            responseText = "Volviendo al inicio"
+            actionTaken = true
+        }
+
+        // Volver / Atrás
+        else if (lowerText.includes("volver") || lowerText.includes("atrás") || lowerText.includes("regresar")) {
+            router.back()
+            responseText = "Volviendo"
+            actionTaken = true
+        }
+
+        // --- ACTION COMMANDS ---
+
+        // Scan
+        else if (lowerText.includes("escanear") || lowerText.includes("qr") || lowerText.includes("scanner")) {
+            router.push("/control/combustible/scan")
+            responseText = "Iniciando escáner"
+            actionTaken = true
+        }
+
+        // Fallback
+        else {
+            responseText = "No entendí el comando: " + text
+        }
+
+        setFeedback(responseText)
+        speak(responseText)
+
+        setTimeout(() => {
+            setIsProcessing(false)
+            setTranscript("")
+        }, 2000)
+    }
+
+    if (!recognitionRef.current) return null // Hide if not supported
+
+    return (
+        <>
+            {/* Floating Trigger Button */}
+            {!isListening && (
+                <Button
+                    onClick={startListening}
+                    className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-2xl bg-black text-white hover:bg-zinc-800 hover:scale-110 transition-all duration-300 z-50 flex items-center justify-center group"
+                >
+                    <Mic className="h-6 w-6 group-hover:animate-pulse" />
+                    <span className="sr-only">Asistente de Voz</span>
+                </Button>
+            )}
+
+            {/* Active Interface Overlay */}
+            {isListening && (
+                <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    {/* Click outside to close */}
+                    <div className="absolute inset-0" onClick={stopListening} />
+
+                    <div className="relative w-full max-w-md bg-white rounded-[2rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-10 zoom-in-95 duration-300 p-6 flex flex-col items-center gap-6">
+
+                        {/* Close Button */}
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-4 right-4 rounded-full text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100"
+                            onClick={stopListening}
+                        >
+                            <X size={20} />
+                        </Button>
+
+                        {/* Visualizer */}
+                        <div className="relative h-24 w-24 flex items-center justify-center mt-4">
+                            <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-ping" />
+                            <div className="absolute inset-2 bg-blue-500/30 rounded-full animate-pulse delay-75" />
+                            <div className="relative h-16 w-16 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/50">
+                                <Mic className="text-white h-8 w-8" />
+                            </div>
+                        </div>
+
+                        {/* Status Text */}
+                        <div className="text-center space-y-2 max-w-[80%]">
+                            <h3 className="text-xl font-bold text-zinc-900">
+                                {isProcessing ? "Procesando..." : "Te escucho..."}
+                            </h3>
+                            <p className="text-lg font-medium text-blue-600 min-h-[1.75rem]">
+                                {transcript || "Di un comando..."}
+                            </p>
+                            <p className="text-sm text-zinc-400">
+                                Prueba: "Ir a Taller", "Escanear QR", "Volver"
+                            </p>
+                        </div>
+
+                        {/* Feedback Toast style in-card */}
+                        {feedback && isProcessing && (
+                            <div className="bg-zinc-100 px-4 py-2 rounded-xl text-zinc-600 text-sm font-medium animate-in fade-in slide-in-from-bottom-2">
+                                {feedback}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+        </>
+    )
+}
