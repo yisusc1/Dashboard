@@ -148,10 +148,19 @@ export function VoiceAssistant() {
             }
         }
 
-        setTimeout(() => {
+        // AUTO-CLOSE LOGIC:
+        // Only close if it appears to be a successful interaction
+        const isError = response.startsWith("Error") || response.startsWith("No pude") || response.startsWith("Falta");
+
+        if (!isError) {
+            setTimeout(() => {
+                setIsProcessing(false)
+                setTranscript("")
+            }, 2000)
+        } else {
+            // Stop processing spinner but keep window open for reading
             setIsProcessing(false)
-            setTranscript("")
-        }, 2000)
+        }
     }
 
     if (!recognitionRef.current) return null // Hide if not supported
