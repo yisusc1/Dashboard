@@ -43,11 +43,16 @@ export function MaintenanceRegistrationDialog({
     const [loadingVehicles, setLoadingVehicles] = useState(false)
     const [searchTerm, setSearchTerm] = useState("")
 
+    // Tab State
+    const [activeTab, setActiveTab] = useState<'maintenance' | 'fault'>('maintenance')
+
     // Form State
     const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null)
     const [serviceType, setServiceType] = useState<string>("")
     const [mileage, setMileage] = useState<string>("")
     const [notes, setNotes] = useState("")
+    const [faultPriority, setFaultPriority] = useState("Media") // For Fault Report
+    const [faultType, setFaultType] = useState("Mecánica") // For Fault Report
     const [isSubmitting, setIsSubmitting] = useState(false)
 
     useEffect(() => {
@@ -94,9 +99,11 @@ export function MaintenanceRegistrationDialog({
             setServiceType("")
         }
 
-        // setMileage("") // Don't reset mileage if pre-selected logic handled it? better to wait for loadVehicles
         setNotes("")
+        setFaultPriority("Media")
+        setFaultType("Mecánica")
         setSearchTerm("")
+        setActiveTab('maintenance')
     }
 
     const filteredVehicles = vehicles.filter(v =>
@@ -105,8 +112,15 @@ export function MaintenanceRegistrationDialog({
     )
 
     async function handleSubmit() {
-        if (!selectedVehicle || !serviceType || (!mileage && serviceType !== 'FAIL_REPORT')) {
+        if (!selectedVehicle) return
+
+        if (activeTab === 'maintenance' && (!serviceType || !mileage)) {
             toast.error("Complete todos los campos requeridos")
+            return
+        }
+
+        if (activeTab === 'fault' && !notes) {
+            toast.error("Describa la falla")
             return
         }
 
@@ -120,13 +134,15 @@ export function MaintenanceRegistrationDialog({
 
         setIsSubmitting(true)
 
+        setIsSubmitting(true)
+
         let result
-        if (serviceType === 'FAIL_REPORT') {
+        if (activeTab === 'fault') {
             result = await reportFault({
                 vehicle_id: selectedVehicle!.id,
-                description: notes || "Sin descripción", // Use notes as description
-                priority: 'Media', // Default priority
-                fault_type: 'Mecánica' // Default type
+                description: notes || "Sin descripción",
+                priority: faultPriority,
+                fault_type: faultType
             })
         } else {
             result = await registerMaintenance({
@@ -141,7 +157,7 @@ export function MaintenanceRegistrationDialog({
         setIsSubmitting(false)
 
         if (result.success) {
-            toast.success(serviceType === 'FAIL_REPORT' ? "Falla reportada correctamente" : "Mantenimiento registrado correctamente")
+            toast.success(activeTab === 'fault' ? "Falla reportada correctamente" : "Mantenimiento registrado correctamente")
             if (onSuccess) onSuccess()
             onClose()
         } else {
@@ -226,7 +242,7 @@ export function MaintenanceRegistrationDialog({
                                         <div className="text-xs text-zinc-500 font-mono">{selectedVehicle.placa}</div>
                                     </div>
                                 </div>
-                                {!lockVehicle && (
+                                {!lockVehicle && activeTab !== 'fault' && (
                                     <Button variant="ghost" size="sm" onClick={() => setSelectedVehicle(null)}>Cambiar</Button>
                                 )}
                             </div>
@@ -234,7 +250,26 @@ export function MaintenanceRegistrationDialog({
                     </div>
 
                     {/* 2. Service Type */}
+                    {/* 2. Toggle Mode (Only if vehicle selected) */}
                     {selectedVehicle && (
+                        <div className="bg-zinc-100 p-1 rounded-xl flex gap-1">
+                            <button
+                                onClick={() => setActiveTab('maintenance')}
+                                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${activeTab === 'maintenance' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'}`}
+                            >
+                                Mantenimiento
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('fault')}
+                                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${activeTab === 'fault' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'}`}
+                            >
+                                Registrar Falla
+                            </button>
+                        </div>
+                    )}
+
+                    {/* 3. Content based on Tab */}
+                    {selectedVehicle && activeTab === 'maintenance' && (
                         <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
                             <Label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Tipo de Servicio</Label>
                             <div className="grid grid-cols-2 gap-3">
@@ -242,8 +277,7 @@ export function MaintenanceRegistrationDialog({
                                     { id: 'OIL_CHANGE', label: 'Cambio de Aceite', icon: Droplets },
                                     { id: 'TIMING_BELT', label: 'Correa de Tiempo', icon: Timer },
                                     { id: 'CHAIN_KIT', label: 'Kit de Arrastre', icon: Bike },
-                                    { id: 'FAIL_REPORT', label: 'Reportar Falla', icon: AlertTriangle },
-                                    { id: 'WASH', label: 'Lavado', icon: Droplets }, // Using Droplets as placeholder or different icon if avail
+                                    { id: 'WASH', label: 'Lavado', icon: Droplets },
                                 ].map((service) => {
                                     // Filter logic (Motorcycles etc)
                                     if (selectedVehicle) {
@@ -258,7 +292,7 @@ export function MaintenanceRegistrationDialog({
                                     const isSelected = serviceType === service.id
                                     const isDisabled = lockServiceType && initialServiceType !== service.id
 
-                                    if (isDisabled && !isSelected) return null // Hide others if locked? Or just disable? User asked "debe elegir el que esta por vencerse" implying strictness. Hiding is cleaner.
+                                    if (isDisabled && !isSelected) return null
 
                                     return (
                                         <button
@@ -282,34 +316,74 @@ export function MaintenanceRegistrationDialog({
                         </div>
                     )}
 
-                    {/* 3. Details */}
-                    {selectedVehicle && serviceType && (
+                    {selectedVehicle && activeTab === 'fault' && (
                         <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                            <div className="space-y-2">
-                                <Label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Kilometraje Actual</Label>
-                                <div className="relative">
-                                    <Input
-                                        type="number"
-                                        value={mileage}
-                                        onChange={(e) => setMileage(e.target.value)}
-                                        className="pl-10 font-mono font-bold"
-                                        disabled={serviceType === 'FAIL_REPORT'}
-                                    />
-                                    <div className="absolute left-3 top-2.5 text-zinc-400">
-                                        <Gauge size={16} />
-                                    </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Tipo de Falla</Label>
+                                    <Select value={faultType} onValueChange={setFaultType}>
+                                        <SelectTrigger className="h-11 rounded-xl bg-zinc-50 border-zinc-200">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Mecánica">Mecánica</SelectItem>
+                                            <SelectItem value="Eléctrica">Eléctrica</SelectItem>
+                                            <SelectItem value="Cauchos">Cauchos</SelectItem>
+                                            <SelectItem value="Carrocería">Carrocería</SelectItem>
+                                            <SelectItem value="Otro">Otro</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
-                                <p className="text-[10px] text-zinc-400">
-                                    Registrado: {(selectedVehicle.kilometraje || 0).toLocaleString()} km
-                                </p>
+                                <div className="space-y-2">
+                                    <Label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Prioridad</Label>
+                                    <Select value={faultPriority} onValueChange={setFaultPriority}>
+                                        <SelectTrigger className="h-11 rounded-xl bg-zinc-50 border-zinc-200">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Baja">Baja</SelectItem>
+                                            <SelectItem value="Media">Media</SelectItem>
+                                            <SelectItem value="Alta">Alta</SelectItem>
+                                            <SelectItem value="Crítica">Crítica</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
+                        </div>
+                    )}
+
+
+                    {/* 4. Common Details */}
+                    {selectedVehicle && (
+                        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            {activeTab === 'maintenance' && (
+                                <div className="space-y-2">
+                                    <Label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Kilometraje Actual</Label>
+                                    <div className="relative">
+                                        <Input
+                                            type="number"
+                                            value={mileage}
+                                            onChange={(e) => setMileage(e.target.value)}
+                                            className="pl-10 font-mono font-bold"
+                                        />
+                                        <div className="absolute left-3 top-2.5 text-zinc-400">
+                                            <Gauge size={16} />
+                                        </div>
+                                    </div>
+                                    <p className="text-[10px] text-zinc-400">
+                                        Registrado: {(selectedVehicle.kilometraje || 0).toLocaleString()} km
+                                    </p>
+                                </div>
+                            )}
 
                             <div className="space-y-2">
-                                <Label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Notas (Opcional)</Label>
+                                <Label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
+                                    {activeTab === 'fault' ? 'Descripción del Problema' : 'Notas (Opcional)'}
+                                </Label>
                                 <Textarea
                                     value={notes}
                                     onChange={(e) => setNotes(e.target.value)}
-                                    placeholder={serviceType === 'FAIL_REPORT' ? "Describa la falla..." : "Detalles adicionales del servicio..."}
+                                    placeholder={activeTab === 'fault' ? "Describa detalladamente la falla..." : "Detalles adicionales del servicio..."}
                                     className="resize-none h-24"
                                 />
                             </div>
@@ -321,11 +395,11 @@ export function MaintenanceRegistrationDialog({
                     <Button variant="outline" onClick={onClose} disabled={isSubmitting}>Cancelar</Button>
                     <Button
                         onClick={handleSubmit}
-                        disabled={isSubmitting || !selectedVehicle || !serviceType || !mileage}
+                        disabled={isSubmitting || !selectedVehicle || (activeTab === 'maintenance' && (!serviceType || !mileage)) || (activeTab === 'fault' && !notes)}
                         className="bg-black text-white hover:bg-zinc-800"
                     >
                         {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Registrar Servicio
+                        {activeTab === 'fault' ? 'Reportar Falla' : 'Registrar Servicio'}
                     </Button>
                 </div>
             </DialogContent>
