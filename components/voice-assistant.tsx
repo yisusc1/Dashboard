@@ -209,9 +209,26 @@ export function VoiceAssistant() {
                         {/* Status Text */}
                         <div className="text-center space-y-2 max-w-[90%] w-full">
                             {feedback ? (
-                                <div className="p-3 bg-red-50 border border-red-100 rounded-lg text-left max-h-60 overflow-y-auto">
-                                    <p className="text-sm font-bold text-red-800 mb-1">Mensaje del Sistema:</p>
-                                    <p className="text-sm text-red-700 font-mono break-words select-text whitespace-pre-wrap">
+                                <div className={cn(
+                                    "p-3 rounded-lg text-left max-h-60 overflow-y-auto border",
+                                    (feedback.startsWith("Error") || feedback.startsWith("No pude") || feedback.startsWith("Falta"))
+                                        ? "bg-red-50 border-red-100"
+                                        : "bg-blue-50 border-blue-100"
+                                )}>
+                                    <p className={cn(
+                                        "text-sm font-bold mb-1",
+                                        (feedback.startsWith("Error") || feedback.startsWith("No pude") || feedback.startsWith("Falta"))
+                                            ? "text-red-800"
+                                            : "text-blue-800"
+                                    )}>
+                                        {(feedback.startsWith("Error") || feedback.startsWith("No pude") || feedback.startsWith("Falta")) ? "⚠️ Algo salió mal:" : "🤖 Asistente:"}
+                                    </p>
+                                    <p className={cn(
+                                        "text-sm font-mono break-words select-text whitespace-pre-wrap",
+                                        (feedback.startsWith("Error") || feedback.startsWith("No pude") || feedback.startsWith("Falta"))
+                                            ? "text-red-700"
+                                            : "text-zinc-700"
+                                    )}>
                                         {feedback}
                                     </p>
                                 </div>
