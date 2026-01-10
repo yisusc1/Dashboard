@@ -6,6 +6,7 @@ import { Mic, MicOff, X, Activity } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { processVoiceCommand } from "@/lib/assistant-logic"
 
 // Extend Window interface for Web Speech API
 declare global {
@@ -105,72 +106,21 @@ export function VoiceAssistant() {
 
     const processCommand = (text: string) => {
         setIsProcessing(true)
-        const lowerText = text.toLowerCase().trim()
-        console.log("Comando recibido:", lowerText)
 
-        let actionTaken = false
-        let responseText = ""
+        // Use the new "Smart" logic
+        const { response, action } = processVoiceCommand(text)
 
-        // --- NAVIGATION COMMANDS ---
+        setFeedback(response)
+        speak(response)
 
-        // Taller / Maintenance
-        if (lowerText.includes("taller") || lowerText.includes("mantenimiento")) {
-            router.push("/taller")
-            responseText = "Abriendo módulo de taller"
-            actionTaken = true
+        // Execute Action
+        if (action.type === 'NAVIGATE') {
+            if (action.path === 'BACK') {
+                router.back()
+            } else {
+                router.push(action.path)
+            }
         }
-
-        // Vehículos / Flota
-        else if (lowerText.includes("vehículos") || lowerText.includes("flota") || lowerText.includes("carros")) {
-            router.push("/admin/vehiculos")
-            responseText = "Accediendo a la flota de vehículos"
-            actionTaken = true
-        }
-
-        // Combustible
-        else if (lowerText.includes("combustible") || lowerText.includes("gasolina")) {
-            router.push("/control/combustible")
-            responseText = "Abriendo control de combustible"
-            actionTaken = true
-        }
-
-        // Inventario / Almacén
-        else if (lowerText.includes("inventario") || lowerText.includes("almacén") || lowerText.includes("materiales")) {
-            router.push("/almacen")
-            responseText = "Yendo al almacén"
-            actionTaken = true
-        }
-
-        // Inicio / Home
-        else if (lowerText.includes("inicio") || lowerText.includes("home") || lowerText.includes("casa")) {
-            router.push("/")
-            responseText = "Volviendo al inicio"
-            actionTaken = true
-        }
-
-        // Volver / Atrás
-        else if (lowerText.includes("volver") || lowerText.includes("atrás") || lowerText.includes("regresar")) {
-            router.back()
-            responseText = "Volviendo"
-            actionTaken = true
-        }
-
-        // --- ACTION COMMANDS ---
-
-        // Scan
-        else if (lowerText.includes("escanear") || lowerText.includes("qr") || lowerText.includes("scanner")) {
-            router.push("/control/combustible/scan")
-            responseText = "Iniciando escáner"
-            actionTaken = true
-        }
-
-        // Fallback
-        else {
-            responseText = "No entendí el comando: " + text
-        }
-
-        setFeedback(responseText)
-        speak(responseText)
 
         setTimeout(() => {
             setIsProcessing(false)
