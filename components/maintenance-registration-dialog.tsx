@@ -8,8 +8,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { createClient } from "@/lib/supabase/client"
-import { Droplets, Gauge, Bike, Command, Loader2, Car, Timer } from "lucide-react"
-import { registerMaintenance } from "@/app/taller/actions"
+import { Droplets, Gauge, Bike, Command, Loader2, Car, Timer, AlertTriangle } from "lucide-react"
+import { registerMaintenance, reportFault } from "@/app/taller/actions"
 import { toast } from "sonner"
 
 type Vehicle = {
@@ -105,7 +105,7 @@ export function MaintenanceRegistrationDialog({
     )
 
     async function handleSubmit() {
-        if (!selectedVehicle || !serviceType || !mileage) {
+        if (!selectedVehicle || !serviceType || (!mileage && serviceType !== 'FAIL_REPORT')) {
             toast.error("Complete todos los campos requeridos")
             return
         }
@@ -119,18 +119,29 @@ export function MaintenanceRegistrationDialog({
         }
 
         setIsSubmitting(true)
-        const result = await registerMaintenance({
-            vehicle_id: selectedVehicle!.id,
-            service_type: serviceType,
-            mileage: parseFloat(mileage), // Keep mileage for wash even if unused for logic, good for history
-            notes,
-            performed_by: 'Mecánico' // Could be dynamic if we had auth context here easily
-        })
+
+        let result
+        if (serviceType === 'FAIL_REPORT') {
+            result = await reportFault({
+                vehicle_id: selectedVehicle!.id,
+                description: notes || "Sin descripción", // Use notes as description
+                priority: 'Media', // Default priority
+                fault_type: 'Mecánica' // Default type
+            })
+        } else {
+            result = await registerMaintenance({
+                vehicle_id: selectedVehicle!.id,
+                service_type: serviceType,
+                mileage: parseFloat(mileage),
+                notes,
+                performed_by: 'Mecánico'
+            })
+        }
 
         setIsSubmitting(false)
 
         if (result.success) {
-            toast.success("Mantenimiento registrado correctamente")
+            toast.success(serviceType === 'FAIL_REPORT' ? "Falla reportada correctamente" : "Mantenimiento registrado correctamente")
             if (onSuccess) onSuccess()
             onClose()
         } else {
@@ -231,6 +242,7 @@ export function MaintenanceRegistrationDialog({
                                     { id: 'OIL_CHANGE', label: 'Cambio de Aceite', icon: Droplets },
                                     { id: 'TIMING_BELT', label: 'Correa de Tiempo', icon: Timer },
                                     { id: 'CHAIN_KIT', label: 'Kit de Arrastre', icon: Bike },
+                                    { id: 'FAIL_REPORT', label: 'Reportar Falla', icon: AlertTriangle },
                                     { id: 'WASH', label: 'Lavado', icon: Droplets }, // Using Droplets as placeholder or different icon if avail
                                 ].map((service) => {
                                     // Filter logic (Motorcycles etc)
@@ -281,6 +293,7 @@ export function MaintenanceRegistrationDialog({
                                         value={mileage}
                                         onChange={(e) => setMileage(e.target.value)}
                                         className="pl-10 font-mono font-bold"
+                                        disabled={serviceType === 'FAIL_REPORT'}
                                     />
                                     <div className="absolute left-3 top-2.5 text-zinc-400">
                                         <Gauge size={16} />
@@ -296,7 +309,7 @@ export function MaintenanceRegistrationDialog({
                                 <Textarea
                                     value={notes}
                                     onChange={(e) => setNotes(e.target.value)}
-                                    placeholder="Detalles adicionales del servicio..."
+                                    placeholder={serviceType === 'FAIL_REPORT' ? "Describa la falla..." : "Detalles adicionales del servicio..."}
                                     className="resize-none h-24"
                                 />
                             </div>

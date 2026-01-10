@@ -60,3 +60,31 @@ export async function registerMaintenance(data: MaintenanceData) {
         return { success: false, error: error.message }
     }
 }
+
+export async function reportFault(data: {
+    vehicle_id: string
+    description: string
+    priority: string
+    fault_type: string
+}) {
+    const supabase = await createClient()
+
+    try {
+        const { error } = await supabase.from('fallas').insert({
+            vehiculo_id: data.vehicle_id,
+            descripcion: data.description,
+            prioridad: data.priority,
+            tipo_falla: data.fault_type,
+            estado: 'Pendiente',
+            created_at: new Date().toISOString()
+        })
+
+        if (error) throw error
+
+        revalidatePath('/taller')
+        return { success: true }
+    } catch (error: any) {
+        console.error('Report Fault Error:', error)
+        return { success: false, error: error.message }
+    }
+}
