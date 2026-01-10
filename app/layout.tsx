@@ -24,6 +24,8 @@ import { createClient } from "@/lib/supabase/server";
 
 // ... existing imports
 
+import { VoiceAssistant } from "@/components/voice-assistant";
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -52,6 +54,7 @@ export default async function RootLayout({
       >
         <UserProvider initialUser={user} initialProfile={profile}>
           {children}
+          <VoiceAssistant />
           <Toaster richColors position="top-center" />
         </UserProvider>
       </body>
