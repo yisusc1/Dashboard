@@ -108,9 +108,15 @@ export default function ScanPage() {
         return () => {
             mountedRef.current = false
             if (scannerRef.current) {
-                scannerRef.current.stop().catch(() => { }).finally(() => {
-                    scannerRef.current?.clear().catch(() => { })
-                })
+                try {
+                    scannerRef.current.stop().then(() => {
+                        scannerRef.current?.clear()
+                    }).catch(() => {
+                        scannerRef.current?.clear()
+                    })
+                } catch (e) {
+                    // ignore
+                }
             }
         }
     }, [router])
