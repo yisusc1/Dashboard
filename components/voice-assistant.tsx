@@ -112,16 +112,27 @@ export function VoiceAssistant() {
 
         // Use AI (Gemini) ONLY
         try {
-            const aiResult = await processWithGemini(text)
-            if (aiResult) {
-                response = aiResult.response
-                action = aiResult.action
+            const result = await processWithGemini(text)
+
+            if (result.success && result.data) {
+                response = result.data.response
+                action = result.data.action
             } else {
-                response = "No pude conectar con el asistente inteligente. Verifica la configuración."
+                // Handle specific errors
+                if (result.error === "MISSING_KEY") {
+                    response = "Error: Falta la API Key de Gemini en el servidor."
+                    toast.error("Falta Variable de Entorno: GEMINI_API_KEY")
+                } else if (result.error === "API_ERROR") {
+                    response = "Error al conectar con la inteligencia artificial."
+                } else if (result.error === "PARSE_ERROR") {
+                    response = "El asistente generó una respuesta inválida."
+                } else {
+                    response = "Ocurrió un error desconocido."
+                }
             }
         } catch (e) {
-            console.error("AI processing failed", e)
-            response = "Hubo un error al procesar tu solicitud."
+            console.error("Client processing failed", e)
+            response = "Error de conexión."
         }
 
         setFeedback(response)
