@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { CheckCircle, Send } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
@@ -27,6 +28,10 @@ type SalidaFormDialogProps = {
 
 export function SalidaFormDialog({ isOpen, onClose, initialVehicleId }: SalidaFormDialogProps) {
     const [loading, setLoading] = useState(false)
+    const [step, setStep] = useState<'form' | 'success'>('form')
+    const [whatsappText, setWhatsappText] = useState("")
+
+    // Form State
     const [vehiculos, setVehiculos] = useState<Vehiculo[]>([])
     const [vehiculoId, setVehiculoId] = useState("")
     const [selectedVehicle, setSelectedVehicle] = useState<Vehiculo | null>(null)
@@ -59,6 +64,7 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId }: SalidaFo
 
     useEffect(() => {
         if (isOpen) {
+            setStep('form') // Reset step on open
             loadVehicles().then((loadedVehicles) => {
                 if (initialVehicleId && loadedVehicles) {
                     const found = loadedVehicles.find(v => v.id === initialVehicleId)
@@ -232,11 +238,10 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId }: SalidaFo
                 escalera_salida: checks.escalera
             }, selectedVehicle)
 
-            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
-            // ----------------------------
-
+            setWhatsappText(text)
+            setStep('success')
             router.refresh()
-            onClose()
+            // ----------------------------
 
             // Reset
             setVehiculoId("")
@@ -321,201 +326,229 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId }: SalidaFo
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-xl rounded-[32px] border-none shadow-2xl max-h-[90vh] flex flex-col p-0 focus:outline-none bg-zinc-50 overflow-hidden">
-                <DialogHeader className="bg-white p-6 pb-4 border-b border-zinc-100">
-                    <DialogTitle className="text-2xl font-bold text-center">Registrar Salida</DialogTitle>
-                    <DialogDescription className="text-center">Complete el formulario de pre-operación</DialogDescription>
-                </DialogHeader>
 
-                <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
-                    {/* Basic Info */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2 col-span-2">
-                            <VehicleSelector
-                                vehicles={vehiculos}
-                                selectedVehicleId={vehiculoId}
-                                onSelect={handleVehicleChange}
-                                label="Vehículo Disponible"
-                            />
-                            {lastKm !== null && (
-                                <p className="text-xs text-zinc-500 text-right">Anterior: {lastKm.toLocaleString()} km</p>
-                            )}
+                {step === 'success' ? (
+                    <div className="p-8 flex flex-col items-center justify-center text-center space-y-6 bg-white h-full min-h-[400px]">
+                        <div className="h-20 w-20 bg-green-100 rounded-full flex items-center justify-center text-green-600 animate-in zoom-in spin-in-3">
+                            <CheckCircle size={40} />
                         </div>
-
                         <div className="space-y-2">
-                            <Label>Kilometraje Actual</Label>
-                            <Input
-                                type="number"
-                                value={kmSalida}
-                                onChange={e => setKmSalida(e.target.value)}
-                                className="h-12 rounded-xl bg-white"
-                                placeholder={lastKm ? `> ${lastKm}` : "0"}
-                            />
+                            <h2 className="text-2xl font-bold text-slate-900">¡Salida Registrada!</h2>
+                            <p className="text-slate-500 text-sm">El vehículo ha sido despachado correctamente.</p>
                         </div>
 
-                        <div className="space-y-2">
-                            <Label>Nivel de Gasolina</Label>
-                            <Select value={gasolina} onValueChange={setGasolina}>
-                                <SelectTrigger className="h-12 rounded-xl bg-white">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Full">Full</SelectItem>
-                                    <SelectItem value="3/4">3/4</SelectItem>
-                                    <SelectItem value="1/2">1/2</SelectItem>
-                                    <SelectItem value="1/4">1/4</SelectItem>
-                                    <SelectItem value="Reserva">Reserva</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="space-y-2 col-span-2">
-                            <Label>Conductor</Label>
-                            <Input
-                                value={conductor}
-                                onChange={e => setConductor(e.target.value)}
-                                className="h-12 rounded-xl bg-white"
-                                placeholder="Nombre completo"
-                            />
-                        </div>
-
-                        <div className="space-y-2 col-span-2">
-                            <Label>Departamento/Uso</Label>
-                            <Select value={departamento} onValueChange={setDepartamento}>
-                                <SelectTrigger className="h-12 rounded-xl bg-white">
-                                    <SelectValue placeholder="Seleccione el destino" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Instalación">Instalación</SelectItem>
-                                    <SelectItem value="Afectaciones">Afectaciones</SelectItem>
-                                    <SelectItem value="Distribución">Distribución</SelectItem>
-                                    <SelectItem value="Comercialización">Comercialización</SelectItem>
-                                    <SelectItem value="Transporte">Transporte</SelectItem>
-                                    <SelectItem value="Operaciones">Operaciones</SelectItem>
-                                    <SelectItem value="Administración">Administración</SelectItem>
-                                </SelectContent>
-                            </Select>
+                        <div className="w-full space-y-3 pt-4">
+                            <Button
+                                onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(whatsappText)}`, '_blank')}
+                                className="w-full h-14 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-2xl font-bold text-lg shadow-lg shadow-green-500/20 active:scale-95 transition-all"
+                            >
+                                <Send size={24} className="mr-2" />
+                                Reportar en WhatsApp
+                            </Button>
+                            <Button onClick={onClose} variant="ghost" className="w-full text-slate-400">
+                                Cerrar
+                            </Button>
                         </div>
                     </div>
+                ) : (
+                    <>
+                        <DialogHeader className="bg-white p-6 pb-4 border-b border-zinc-100">
+                            <DialogTitle className="text-2xl font-bold text-center">Registrar Salida</DialogTitle>
+                            <DialogDescription className="text-center">Complete el formulario de pre-operación</DialogDescription>
+                        </DialogHeader>
 
-                    {/* Checks section */}
-                    <div className="bg-white p-5 rounded-[24px] border border-zinc-100 shadow-sm space-y-6">
-
-                        {/* TÉCNICO */}
-                        <div>
-                            <h4 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                                Chequeo Técnico
-                            </h4>
-                            <div className="grid grid-cols-1 gap-3">
-                                <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                    <Label htmlFor="aceite" className="text-sm font-medium text-zinc-700 cursor-pointer">Nivel de Aceite</Label>
-                                    <Switch id="aceite" checked={checks.aceite} onCheckedChange={() => toggleCheck('aceite')} />
+                        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
+                            {/* Basic Info */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2 col-span-2">
+                                    <VehicleSelector
+                                        vehicles={vehiculos}
+                                        selectedVehicleId={vehiculoId}
+                                        onSelect={handleVehicleChange}
+                                        label="Vehículo Disponible"
+                                    />
+                                    {lastKm !== null && (
+                                        <p className="text-xs text-zinc-500 text-right">Anterior: {lastKm.toLocaleString()} km</p>
+                                    )}
                                 </div>
+
+                                <div className="space-y-2">
+                                    <Label>Kilometraje Actual</Label>
+                                    <Input
+                                        type="number"
+                                        value={kmSalida}
+                                        onChange={e => setKmSalida(e.target.value)}
+                                        className="h-12 rounded-xl bg-white"
+                                        placeholder={lastKm ? `> ${lastKm}` : "0"}
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label>Nivel de Gasolina</Label>
+                                    <Select value={gasolina} onValueChange={setGasolina}>
+                                        <SelectTrigger className="h-12 rounded-xl bg-white">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Full">Full</SelectItem>
+                                            <SelectItem value="3/4">3/4</SelectItem>
+                                            <SelectItem value="1/2">1/2</SelectItem>
+                                            <SelectItem value="1/4">1/4</SelectItem>
+                                            <SelectItem value="Reserva">Reserva</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2 col-span-2">
+                                    <Label>Conductor</Label>
+                                    <Input
+                                        value={conductor}
+                                        onChange={e => setConductor(e.target.value)}
+                                        className="h-12 rounded-xl bg-white"
+                                        placeholder="Nombre completo"
+                                    />
+                                </div>
+
+                                <div className="space-y-2 col-span-2">
+                                    <Label>Departamento/Uso</Label>
+                                    <Select value={departamento} onValueChange={setDepartamento}>
+                                        <SelectTrigger className="h-12 rounded-xl bg-white">
+                                            <SelectValue placeholder="Seleccione el destino" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Instalación">Instalación</SelectItem>
+                                            <SelectItem value="Afectaciones">Afectaciones</SelectItem>
+                                            <SelectItem value="Distribución">Distribución</SelectItem>
+                                            <SelectItem value="Comercialización">Comercialización</SelectItem>
+                                            <SelectItem value="Transporte">Transporte</SelectItem>
+                                            <SelectItem value="Operaciones">Operaciones</SelectItem>
+                                            <SelectItem value="Administración">Administración</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            {/* Checks section */}
+                            <div className="bg-white p-5 rounded-[24px] border border-zinc-100 shadow-sm space-y-6">
+
+                                {/* TÉCNICO */}
+                                <div>
+                                    <h4 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                        Chequeo Técnico
+                                    </h4>
+                                    <div className="grid grid-cols-1 gap-3">
+                                        <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                            <Label htmlFor="aceite" className="text-sm font-medium text-zinc-700 cursor-pointer">Nivel de Aceite</Label>
+                                            <Switch id="aceite" checked={checks.aceite} onCheckedChange={() => toggleCheck('aceite')} />
+                                        </div>
+                                        {!isMoto && (
+                                            <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                                <Label htmlFor="agua" className="text-sm font-medium text-zinc-700 cursor-pointer">Agua / Refrigerante</Label>
+                                                <Switch id="agua" checked={checks.agua} onCheckedChange={() => toggleCheck('agua')} />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* SEGURIDAD - CARROS */}
                                 {!isMoto && (
-                                    <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                        <Label htmlFor="agua" className="text-sm font-medium text-zinc-700 cursor-pointer">Agua / Refrigerante</Label>
-                                        <Switch id="agua" checked={checks.agua} onCheckedChange={() => toggleCheck('agua')} />
+                                    <div>
+                                        <h4 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-2 border-t border-zinc-100 pt-4">
+                                            Seguridad y Herramientas
+                                        </h4>
+                                        <div className="grid grid-cols-1 gap-3">
+                                            <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                                <Label htmlFor="gato" className="text-sm font-medium text-zinc-700 cursor-pointer">Gato Hidráulico</Label>
+                                                <Switch id="gato" checked={checks.gato} onCheckedChange={() => toggleCheck('gato')} />
+                                            </div>
+                                            <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                                <Label htmlFor="cruz" className="text-sm font-medium text-zinc-700 cursor-pointer">Llave Cruz</Label>
+                                                <Switch id="cruz" checked={checks.cruz} onCheckedChange={() => toggleCheck('cruz')} />
+                                            </div>
+                                            <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                                <Label htmlFor="triangulo" className="text-sm font-medium text-zinc-700 cursor-pointer">Triángulo</Label>
+                                                <Switch id="triangulo" checked={checks.triangulo} onCheckedChange={() => toggleCheck('triangulo')} />
+                                            </div>
+                                            <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                                <Label htmlFor="caucho" className="text-sm font-medium text-zinc-700 cursor-pointer">Caucho Repuesto</Label>
+                                                <Switch id="caucho" checked={checks.caucho} onCheckedChange={() => toggleCheck('caucho')} />
+                                            </div>
+                                            <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                                <Label htmlFor="carpeta" className="text-sm font-medium text-zinc-700 cursor-pointer">Carpeta / Permisos</Label>
+                                                <Switch id="carpeta" checked={checks.carpeta} onCheckedChange={() => toggleCheck('carpeta')} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* SEGURIDAD - MOTO */}
+                                {isMoto && (
+                                    <div>
+                                        <h4 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-2 border-t border-zinc-100 pt-4">
+                                            Seguridad Moto
+                                        </h4>
+                                        <div className="grid grid-cols-1 gap-3">
+                                            <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                                <Label htmlFor="casco" className="text-sm font-medium text-zinc-700 cursor-pointer">Casco</Label>
+                                                <Switch id="casco" checked={checks.casco} onCheckedChange={() => toggleCheck('casco')} />
+                                            </div>
+                                            <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                                <Label htmlFor="luces" className="text-sm font-medium text-zinc-700 cursor-pointer">Luces Nuevas</Label>
+                                                <Switch id="luces" checked={checks.luces} onCheckedChange={() => toggleCheck('luces')} />
+                                            </div>
+                                            <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                                <Label htmlFor="herramientas" className="text-sm font-medium text-zinc-700 cursor-pointer">Herramientas Básicas</Label>
+                                                <Switch id="herramientas" checked={checks.herramientas} onCheckedChange={() => toggleCheck('herramientas')} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* EQUIPOS - SOLO INSTALACION Y NO MOTO */}
+                                {isInstalacion && !isMoto && (
+                                    <div>
+                                        <h4 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-2 border-t border-zinc-100 pt-4">
+                                            Equipos Asignados
+                                        </h4>
+                                        <div className="grid grid-cols-1 gap-3">
+                                            <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                                <Label htmlFor="onu" className="text-sm font-medium text-zinc-700 cursor-pointer">ONU / Router</Label>
+                                                <Switch id="onu" checked={checks.onu} onCheckedChange={() => toggleCheck('onu')} />
+                                            </div>
+                                            <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                                <Label htmlFor="ups" className="text-sm font-medium text-zinc-700 cursor-pointer">Mini-UPS</Label>
+                                                <Switch id="ups" checked={checks.ups} onCheckedChange={() => toggleCheck('ups')} />
+                                            </div>
+                                            <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                                <Label htmlFor="escalera" className="text-sm font-medium text-zinc-700 cursor-pointer">Escalera</Label>
+                                                <Switch id="escalera" checked={checks.escalera} onCheckedChange={() => toggleCheck('escalera')} />
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
                             </div>
+
+                            <div className="space-y-2">
+                                <Label>Observaciones / Novedades</Label>
+                                <Textarea
+                                    value={observaciones}
+                                    onChange={e => setObservaciones(e.target.value)}
+                                    className="bg-white py-3 min-h-[80px]"
+                                    placeholder="Detalle cualquier novedad encontrada..."
+                                />
+                            </div>
                         </div>
 
-                        {/* SEGURIDAD - CARROS */}
-                        {!isMoto && (
-                            <div>
-                                <h4 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-2 border-t border-zinc-100 pt-4">
-                                    Seguridad y Herramientas
-                                </h4>
-                                <div className="grid grid-cols-1 gap-3">
-                                    <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                        <Label htmlFor="gato" className="text-sm font-medium text-zinc-700 cursor-pointer">Gato Hidráulico</Label>
-                                        <Switch id="gato" checked={checks.gato} onCheckedChange={() => toggleCheck('gato')} />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                        <Label htmlFor="cruz" className="text-sm font-medium text-zinc-700 cursor-pointer">Llave Cruz</Label>
-                                        <Switch id="cruz" checked={checks.cruz} onCheckedChange={() => toggleCheck('cruz')} />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                        <Label htmlFor="triangulo" className="text-sm font-medium text-zinc-700 cursor-pointer">Triángulo</Label>
-                                        <Switch id="triangulo" checked={checks.triangulo} onCheckedChange={() => toggleCheck('triangulo')} />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                        <Label htmlFor="caucho" className="text-sm font-medium text-zinc-700 cursor-pointer">Caucho Repuesto</Label>
-                                        <Switch id="caucho" checked={checks.caucho} onCheckedChange={() => toggleCheck('caucho')} />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                        <Label htmlFor="carpeta" className="text-sm font-medium text-zinc-700 cursor-pointer">Carpeta / Permisos</Label>
-                                        <Switch id="carpeta" checked={checks.carpeta} onCheckedChange={() => toggleCheck('carpeta')} />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* SEGURIDAD - MOTO */}
-                        {isMoto && (
-                            <div>
-                                <h4 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-2 border-t border-zinc-100 pt-4">
-                                    Seguridad Moto
-                                </h4>
-                                <div className="grid grid-cols-1 gap-3">
-                                    <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                        <Label htmlFor="casco" className="text-sm font-medium text-zinc-700 cursor-pointer">Casco</Label>
-                                        <Switch id="casco" checked={checks.casco} onCheckedChange={() => toggleCheck('casco')} />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                        <Label htmlFor="luces" className="text-sm font-medium text-zinc-700 cursor-pointer">Luces Nuevas</Label>
-                                        <Switch id="luces" checked={checks.luces} onCheckedChange={() => toggleCheck('luces')} />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                        <Label htmlFor="herramientas" className="text-sm font-medium text-zinc-700 cursor-pointer">Herramientas Básicas</Label>
-                                        <Switch id="herramientas" checked={checks.herramientas} onCheckedChange={() => toggleCheck('herramientas')} />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* EQUIPOS - SOLO INSTALACION Y NO MOTO */}
-                        {isInstalacion && !isMoto && (
-                            <div>
-                                <h4 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-2 border-t border-zinc-100 pt-4">
-                                    Equipos Asignados
-                                </h4>
-                                <div className="grid grid-cols-1 gap-3">
-                                    <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                        <Label htmlFor="onu" className="text-sm font-medium text-zinc-700 cursor-pointer">ONU / Router</Label>
-                                        <Switch id="onu" checked={checks.onu} onCheckedChange={() => toggleCheck('onu')} />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                        <Label htmlFor="ups" className="text-sm font-medium text-zinc-700 cursor-pointer">Mini-UPS</Label>
-                                        <Switch id="ups" checked={checks.ups} onCheckedChange={() => toggleCheck('ups')} />
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                        <Label htmlFor="escalera" className="text-sm font-medium text-zinc-700 cursor-pointer">Escalera</Label>
-                                        <Switch id="escalera" checked={checks.escalera} onCheckedChange={() => toggleCheck('escalera')} />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label>Observaciones</Label>
-                        <Textarea
-                            value={observaciones}
-                            onChange={e => setObservaciones(e.target.value)}
-                            className="bg-white py-3 min-h-[80px]"
-                            placeholder="Rayones, golpes, o detalles importantes..."
-                        />
-                    </div>
-                </div>
-
-                <DialogFooter className="bg-white p-4 border-t border-zinc-100 flex-col sm:flex-col gap-2">
-                    <Button onClick={handleSubmit} disabled={loading} className="w-full h-12 rounded-xl bg-black text-white hover:bg-zinc-800 text-lg shadow-lg shadow-black/10">
-                        {loading ? "Registrando..." : "Confirmar Salida"}
-                    </Button>
-                    <Button variant="ghost" onClick={onClose} className="w-full rounded-xl">
-                        Cancelar
-                    </Button>
-                </DialogFooter>
+                        <DialogFooter className="bg-white p-4 border-t border-zinc-100 flex-col sm:flex-col gap-2">
+                            <Button onClick={handleSubmit} disabled={loading} className="w-full h-12 rounded-xl bg-black text-white hover:bg-zinc-800 text-lg shadow-lg shadow-black/10">
+                                {loading ? "Registrando..." : "Confirmar Salida"}
+                            </Button>
+                            <Button variant="ghost" onClick={onClose} className="w-full rounded-xl">
+                                Cancelar
+                            </Button>
+                        </DialogFooter>
+                    </>
+                )}
             </DialogContent>
         </Dialog>
     )
