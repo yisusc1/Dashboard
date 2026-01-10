@@ -5,8 +5,9 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
+import { VehicleSelector, Vehicle } from "@/components/vehicle-selector"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
@@ -315,21 +316,37 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId }: Entrada
                     {/* Basic Info */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2 col-span-2">
-                            <Label>Vehículo en Ruta</Label>
-                            <Select value={reporteId} onValueChange={handleReportChange}>
-                                <SelectTrigger className="h-12 rounded-xl bg-white border-zinc-200">
-                                    <SelectValue placeholder="Seleccione vehículo..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {reportes.map(r => (
-                                        <SelectItem key={r.id} value={r.id}>
-                                            {r.vehiculos.modelo} - {r.vehiculos.placa} ({r.conductor})
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <VehicleSelector
+                                vehicles={reportes.map(r => ({
+                                    id: r.vehiculo_id,
+                                    placa: r.vehiculos.placa,
+                                    modelo: r.vehiculos.modelo,
+                                    codigo: r.vehiculos.codigo,
+                                    tipo: r.vehiculos.tipo,
+                                    // Custom property to show driver name in the selector if needed? 
+                                    // The selector standardizes display. 
+                                    // If we want to show driver, we might need to extend VehicleSelector or just accept mapped data.
+                                    // But standard is Model - Plate (Code). Driver isn't in standard selector yet.
+                                    // However, for "Entrada", knowing the driver is useful.
+                                    // Let's stick to standard for now as requested "standardize".
+                                }))}
+                                selectedVehicleId={selectedReport?.vehiculo_id}
+                                onSelect={(v) => {
+                                    if (v) {
+                                        // Find report for this vehicle
+                                        const r = reportes.find(rep => rep.vehiculo_id === v.id)
+                                        if (r) handleReportChange(r.id)
+                                    } else {
+                                        setReporteId("")
+                                        setSelectedReport(null)
+                                    }
+                                }}
+                                label="Vehículo en Ruta"
+                            />
                             {selectedReport && (
-                                <p className="text-xs text-zinc-500 text-right">Salida: {selectedReport.km_salida.toLocaleString()} km</p>
+                                <p className="text-xs text-zinc-500 text-right">
+                                    Conductor: {selectedReport.conductor} • Salida: {selectedReport.km_salida.toLocaleString()} km
+                                </p>
                             )}
                         </div>
 
