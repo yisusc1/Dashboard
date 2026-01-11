@@ -57,8 +57,69 @@ export async function toggleInstallationRestriction() {
 
     if (updateError) throw updateError
 
-    revalidatePath("/tecnicos")
     revalidatePath("/admin") // Refresh admin UI
 
+    return { success: true, value: newValue }
+}
+
+export async function toggleGeminiEnabled() {
+    const supabase = await createClient()
+
+    // 1. Get current value
+    const { data: current, error: fetchError } = await supabase
+        .from("system_settings")
+        .select("value")
+        .eq("key", "GEMINI_ENABLED")
+        .single()
+
+    if (fetchError && fetchError.code !== 'PGRST116') {
+        throw fetchError
+    }
+
+    // Default to TRUE if not found (first run)
+    const currentValue = current ? current.value : true
+    const newValue = !currentValue
+
+    // 2. Upsert
+    const { error: updateError } = await supabase
+        .from("system_settings")
+        .upsert({
+            key: "GEMINI_ENABLED",
+            value: newValue,
+            description: "Enable/Disable Gemini AI Assistant globally"
+        })
+
+    if (updateError) throw updateError
+
+    revalidatePath("/admin/configuracion")
+    return { success: true, value: newValue }
+}
+
+export async function toggleVoiceEnabled() {
+    const supabase = await createClient()
+
+    const { data: current, error: fetchError } = await supabase
+        .from("system_settings")
+        .select("value")
+        .eq("key", "VOICE_ENABLED")
+        .single()
+
+    if (fetchError && fetchError.code !== 'PGRST116') throw fetchError
+
+    // Default: TRUE
+    const newValue = !(current?.value ?? true)
+
+    const { error: updateError } = await supabase
+        .from("system_settings")
+        .upsert({
+            key: "VOICE_ENABLED",
+            value: newValue,
+            description: "Enable/Disable Voice Assistant UI globaly"
+        })
+
+    if (updateError) throw updateError
+
+    revalidatePath("/admin/configuracion")
+    revalidatePath("/", "layout") // Refresh Layout to unmount component
     return { success: true, value: newValue }
 }

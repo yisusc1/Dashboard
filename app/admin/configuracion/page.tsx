@@ -6,12 +6,14 @@ import { INITIAL_MODULES_CONFIG } from "@/lib/constants"
 import { Switch } from "@/components/ui/switch"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Save, AlertCircle } from "lucide-react"
+import { ArrowLeft, Save, AlertCircle, Bot, Zap, Mic, MicOff } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
+import { getSystemSettings, toggleGeminiEnabled, toggleVoiceEnabled } from "../settings-actions"
 
 export default function AdminConfigModulesPage() {
     const [settings, setSettings] = useState<Record<string, boolean>>({})
+    const [systemSettings, setSystemSettings] = useState<Record<string, any>>({})
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [tableExists, setTableExists] = useState(true)
@@ -47,6 +49,11 @@ export default function AdminConfigModulesPage() {
             }
 
             setSettings(currentSettings)
+
+            // Load System Settings (Backend Flags)
+            const sys = await getSystemSettings()
+            setSystemSettings(sys)
+
         } catch (e) {
             console.error(e)
         } finally {
@@ -127,6 +134,83 @@ create policy "Admin Update" on app_settings for all using (true); -- Ajustar en
                         </pre>
                     </div>
                 )}
+                {/* SYSTEM AI SETTINGS */}
+                <Card className="rounded-[32px] border-none shadow-sm mb-8 overflow-hidden">
+                    <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50/50">
+                        <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 bg-blue-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-blue-200">
+                                <Bot size={20} />
+                            </div>
+                            <div>
+                                <CardTitle className="text-blue-900">Inteligencia Artificial (Gemini)</CardTitle>
+                                <CardDescription className="text-blue-700/80">Control global del modelo de lenguaje.</CardDescription>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-6 pt-6">
+                        <div className="flex items-center justify-between p-4 rounded-2xl bg-white border border-blue-100 shadow-sm">
+                            <div className="flex items-start gap-3">
+                                <div className={`mt-1 h-2 w-2 rounded-full ${systemSettings["GEMINI_ENABLED"] !== false ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" : "bg-red-400"}`}></div>
+                                <div>
+                                    <div className="font-semibold text-zinc-900 flex items-center gap-2">
+                                        Activar Linky (AI Assistant)
+                                        {systemSettings["GEMINI_ENABLED"] !== false && <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">ACTIVO</span>}
+                                    </div>
+                                    <div className="text-xs text-zinc-500 max-w-sm mt-1">
+                                        Si se desactiva, el asistente responderá "Deshabilitado por el administrador" y no consumirá cuota de API.
+                                    </div>
+                                </div>
+                            </div>
+                            <Switch
+                                checked={systemSettings["GEMINI_ENABLED"] !== false}
+                                onCheckedChange={async () => {
+                                    // Optimistic update
+                                    setSystemSettings(prev => ({ ...prev, "GEMINI_ENABLED": !prev["GEMINI_ENABLED"] }))
+                                    try {
+                                        await toggleGeminiEnabled()
+                                        toast.success("Estado de IA actualizado")
+                                    } catch (e) {
+                                        toast.error("Error al actualizar")
+                                        loadSettings() // Revert
+                                    }
+                                }}
+                                className="data-[state=checked]:bg-blue-600"
+                            />
+                        </div>
+
+                        {/* VOICE UI TOGGLE */}
+                        <div className="flex items-center justify-between p-4 rounded-2xl bg-white border border-indigo-100 shadow-sm">
+                            <div className="flex items-start gap-3">
+                                <div className={`mt-2 h-8 w-8 rounded-full flex items-center justify-center ${systemSettings["VOICE_ENABLED"] !== false ? "bg-indigo-100 text-indigo-600" : "bg-gray-100 text-gray-400"}`}>
+                                    {systemSettings["VOICE_ENABLED"] !== false ? <Mic size={16} /> : <MicOff size={16} />}
+                                </div>
+                                <div>
+                                    <div className="font-semibold text-zinc-900 flex items-center gap-2">
+                                        Interfaz de Voz (Micrófono)
+                                        {systemSettings["VOICE_ENABLED"] !== false && <span className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold">VISIBLE</span>}
+                                    </div>
+                                    <div className="text-xs text-zinc-500 max-w-sm mt-1">
+                                        Ocultar completamente el botón flotante y desactivar la escucha en toda la aplicación.
+                                    </div>
+                                </div>
+                            </div>
+                            <Switch
+                                checked={systemSettings["VOICE_ENABLED"] !== false}
+                                onCheckedChange={async () => {
+                                    setSystemSettings(prev => ({ ...prev, "VOICE_ENABLED": !prev["VOICE_ENABLED"] }))
+                                    try {
+                                        await toggleVoiceEnabled()
+                                        toast.success("Interfaz de voz actualizada. Recarga si es necesario.")
+                                    } catch (e) {
+                                        toast.error("Error al actualizar")
+                                        loadSettings()
+                                    }
+                                }}
+                                className="data-[state=checked]:bg-indigo-600"
+                            />
+                        </div>
+                    </CardContent>
+                </Card>
 
                 <Card className="rounded-[32px] border-none shadow-sm">
                     <CardHeader>

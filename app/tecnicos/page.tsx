@@ -11,6 +11,7 @@ import { LogoutButton } from "@/components/ui/logout-button"
 import { FinalizeDayButton } from "./components/finalize-day-button"
 import { TechnicianReportDialog } from "./components/technician-report-dialog"
 import { DesktopModeToggle } from "@/components/desktop-mode-toggle"
+import { VoiceHint } from "@/components/voice-hint"
 
 export default async function TechnicianDashboard() {
   const cookieStore = await cookies()
@@ -557,9 +558,11 @@ export default async function TechnicianDashboard() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between px-2">
                   <h3 className="font-bold text-gray-900 text-lg">Instalaciones en Curso</h3>
-                  <Link href="/tecnicos/reportes" className="text-sm font-semibold text-blue-500 hover:text-blue-600">
-                    Ver Todo
-                  </Link>
+                  <VoiceHint command="Ver lista" side="left">
+                    <Link href="/tecnicos/reportes" className="text-sm font-semibold text-blue-500 hover:text-blue-600">
+                      Ver Todo
+                    </Link>
+                  </VoiceHint>
                 </div>
 
                 <div className="space-y-3">
@@ -595,34 +598,38 @@ export default async function TechnicianDashboard() {
             {/* MAIN ACTIONS */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* INSTALLATION CARD */}
-              <Link href="/tecnicos/reportes?action=new" className="block group relative">
-                <div className="absolute inset-0 bg-blue-600 rounded-[28px] shadow-lg shadow-blue-500/30 transition-transform group-active:scale-[0.98]"></div>
-                <div className="relative bg-blue-600 h-28 rounded-[28px] flex items-center justify-between px-6 overflow-hidden">
-                  <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-white/10 to-transparent"></div>
-                  <div className="flex flex-col z-10">
-                    <span className="text-blue-100 text-xs font-bold uppercase tracking-wide mb-1">Nueva</span>
-                    <span className="text-white text-2xl font-bold">Instalación</span>
+              <VoiceHint command="Nueva instalación" side="bottom">
+                <Link href="/tecnicos/reportes?action=new" className="block group relative">
+                  <div className="absolute inset-0 bg-blue-600 rounded-[28px] shadow-lg shadow-blue-500/30 transition-transform group-active:scale-[0.98]"></div>
+                  <div className="relative bg-blue-600 h-28 rounded-[28px] flex items-center justify-between px-6 overflow-hidden">
+                    <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-white/10 to-transparent"></div>
+                    <div className="flex flex-col z-10">
+                      <span className="text-blue-100 text-xs font-bold uppercase tracking-wide mb-1">Nueva</span>
+                      <span className="text-white text-2xl font-bold">Instalación</span>
+                    </div>
+                    <div className="h-12 w-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white z-10 group-hover:bg-white group-hover:text-blue-600 transition-colors">
+                      <Plus size={24} />
+                    </div>
                   </div>
-                  <div className="h-12 w-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white z-10 group-hover:bg-white group-hover:text-blue-600 transition-colors">
-                    <Plus size={24} />
-                  </div>
-                </div>
-              </Link>
+                </Link>
+              </VoiceHint>
 
               {/* SUPPORT CARD */}
-              <Link href="/tecnicos/reportes?action=support" className="block group relative">
-                <div className="absolute inset-0 bg-orange-500 rounded-[28px] shadow-lg shadow-orange-500/30 transition-transform group-active:scale-[0.98]"></div>
-                <div className="relative bg-orange-500 h-28 rounded-[28px] flex items-center justify-between px-6 overflow-hidden">
-                  <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-white/10 to-transparent"></div>
-                  <div className="flex flex-col z-10">
-                    <span className="text-orange-100 text-xs font-bold uppercase tracking-wide mb-1">Reportar</span>
-                    <span className="text-white text-2xl font-bold">Soporte</span>
+              <VoiceHint command="Nuevo soporte" side="bottom">
+                <Link href="/tecnicos/reportes?action=support" className="block group relative">
+                  <div className="absolute inset-0 bg-orange-500 rounded-[28px] shadow-lg shadow-orange-500/30 transition-transform group-active:scale-[0.98]"></div>
+                  <div className="relative bg-orange-500 h-28 rounded-[28px] flex items-center justify-between px-6 overflow-hidden">
+                    <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-white/10 to-transparent"></div>
+                    <div className="flex flex-col z-10">
+                      <span className="text-orange-100 text-xs font-bold uppercase tracking-wide mb-1">Reportar</span>
+                      <span className="text-white text-2xl font-bold">Soporte</span>
+                    </div>
+                    <div className="h-12 w-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white z-10 group-hover:bg-white group-hover:text-orange-600 transition-colors">
+                      <Wrench size={24} />
+                    </div>
                   </div>
-                  <div className="h-12 w-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white z-10 group-hover:bg-white group-hover:text-orange-600 transition-colors">
-                    <Wrench size={24} />
-                  </div>
-                </div>
-              </Link>
+                </Link>
+              </VoiceHint>
             </div>
           </div> {/* END MAIN CONTENT */}
 
@@ -697,7 +704,9 @@ export default async function TechnicianDashboard() {
                   <div className="relative z-10">
                     <h3 className="text-white text-xl font-bold mb-2">Fin de Jornada</h3>
                     <p className="text-gray-400 mb-6 text-sm">Has completado tus instalaciones de hoy.</p>
-                    <FinalizeDayButton />
+                    <VoiceHint command="Finalizar día" side="bottom">
+                      <FinalizeDayButton />
+                    </VoiceHint>
                   </div>
                 </div>
               </div>

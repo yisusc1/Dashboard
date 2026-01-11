@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { X, Car, Bike, Truck, Calendar, Droplets, Gauge, MapPin, Hash, CreditCard, Fuel, AlertTriangle, Wrench } from "lucide-react"
+import { X, Car, Bike, Truck, Calendar, Droplets, Gauge, MapPin, Hash, CreditCard, Fuel, AlertTriangle, Wrench, User } from "lucide-react"
 import Image from "next/image"
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
@@ -59,11 +59,12 @@ type VehicleDetailsDialogProps = {
     onClose: () => void
     vehicle: Vehicle | null
     onUpdate?: () => void
+    readonly?: boolean
 }
 
 import { DriverSelector, Driver } from "./driver-selector"
 
-export function VehicleDetailsDialog({ isOpen, onClose, vehicle, onUpdate }: VehicleDetailsDialogProps) {
+export function VehicleDetailsDialog({ isOpen, onClose, vehicle, onUpdate, readonly = false }: VehicleDetailsDialogProps) {
     const [drivers, setDrivers] = useState<Driver[]>([])
     const [assigning, setAssigning] = useState(false)
     const [faults, setFaults] = useState<Fault[]>([])
@@ -189,8 +190,6 @@ export function VehicleDetailsDialog({ isOpen, onClose, vehicle, onUpdate }: Veh
         }
     }
 
-    if (!isOpen || !vehicle) return null
-
     const getIcon = (tipo: string) => {
         switch (tipo?.toLowerCase()) {
             case 'moto': return <Bike size={24} />;
@@ -207,6 +206,8 @@ export function VehicleDetailsDialog({ isOpen, onClose, vehicle, onUpdate }: Veh
             default: return 'bg-blue-100 text-blue-700 border-blue-200';
         }
     }
+
+    if (!isOpen || !vehicle) return null
 
     return (
         <>
@@ -253,29 +254,48 @@ export function VehicleDetailsDialog({ isOpen, onClose, vehicle, onUpdate }: Veh
 
                                 {/* Driver Assignment Section - NEW */}
                                 <div className="mb-6">
-                                    {/* <label className="text-xs font-bold text-zinc-500 uppercase mb-2 block px-1">Conductor Asignado</label> REMOVED, handled by component */}
-                                    <div className="flex gap-2">
-                                        <div className="w-full">
-                                            <DriverSelector
-                                                drivers={drivers}
-                                                selectedDriverId={vehicle.assigned_driver_id}
-                                                onSelect={handleAssignDriver}
-                                                loading={assigning}
-                                            />
+                                    {readonly ? (
+                                        <div className="bg-zinc-50 p-4 rounded-xl border border-zinc-100">
+                                            <div className="text-zinc-400 text-xs font-semibold uppercase mb-2">Conductor Asignado</div>
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-full bg-zinc-200 flex items-center justify-center text-zinc-500">
+                                                    <User size={20} />
+                                                </div>
+                                                <div>
+                                                    <div className="font-bold text-zinc-900">
+                                                        {drivers.find(d => d.id === vehicle.assigned_driver_id)?.first_name} {drivers.find(d => d.id === vehicle.assigned_driver_id)?.last_name || "Sin Asignar"}
+                                                    </div>
+                                                    <div className="text-xs text-zinc-500">
+                                                        {vehicle.assigned_driver_id ? "Conductor Oficial" : "Vehículo sin conductor"}
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
+                                    ) : (
+                                        <div className="flex gap-2">
+                                            <div className="w-full">
+                                                <DriverSelector
+                                                    drivers={drivers}
+                                                    selectedDriverId={vehicle.assigned_driver_id}
+                                                    onSelect={handleAssignDriver}
+                                                    loading={assigning}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Department display */}
-                                {vehicle.department && (
-                                    <div className="mb-6 bg-zinc-50 p-3 rounded-xl border border-zinc-100 flex items-center justify-between">
-                                        <span className="text-zinc-500 text-sm font-medium">Departamento</span>
-                                        <span className="font-bold text-zinc-900 bg-white px-3 py-1 rounded-lg border border-zinc-200 shadow-sm text-sm">
-                                            {vehicle.department}
-                                        </span>
-                                    </div>
-                                )}
-
+                                {
+                                    vehicle.department && (
+                                        <div className="mb-6 bg-zinc-50 p-3 rounded-xl border border-zinc-100 flex items-center justify-between">
+                                            <span className="text-zinc-500 text-sm font-medium">Departamento</span>
+                                            <span className="font-bold text-zinc-900 bg-white px-3 py-1 rounded-lg border border-zinc-200 shadow-sm text-sm">
+                                                {vehicle.department}
+                                            </span>
+                                        </div>
+                                    )
+                                }
 
                                 <div className="grid grid-cols-2 gap-3 mb-6">
                                     <div className="bg-white p-3 rounded-xl border border-zinc-100 shadow-sm">
@@ -484,11 +504,13 @@ export function VehicleDetailsDialog({ isOpen, onClose, vehicle, onUpdate }: Veh
                                     </div>
                                 </div>
 
-                                {vehicle.last_fuel_update && (
-                                    <p className="text-[10px] text-zinc-400 text-right mb-6 pr-1">
-                                        Combustible actualizado: {new Date(vehicle.last_fuel_update).toLocaleString()}
-                                    </p>
-                                )}
+                                {
+                                    vehicle.last_fuel_update && (
+                                        <p className="text-[10px] text-zinc-400 text-right mb-6 pr-1">
+                                            Combustible actualizado: {new Date(vehicle.last_fuel_update).toLocaleString()}
+                                        </p>
+                                    )
+                                }
 
                                 <div className="grid grid-cols-3 gap-4 text-sm border-t border-zinc-100 pt-4">
                                     <div>
@@ -504,11 +526,11 @@ export function VehicleDetailsDialog({ isOpen, onClose, vehicle, onUpdate }: Veh
                                         <span className="font-medium text-zinc-900">{vehicle.capacidad_tanque || '-'} L</span>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
+                            </div >
+                        </div >
 
                         {/* Bottom Section: Faults History */}
-                        <div className="w-full p-6 bg-white border-t border-zinc-100">
+                        < div className="w-full p-6 bg-white border-t border-zinc-100" >
                             <h3 className="text-lg font-bold text-zinc-900 flex items-center gap-2 mb-4">
                                 <Wrench className="text-zinc-400" size={20} />
                                 Historial de Fallas
@@ -550,8 +572,8 @@ export function VehicleDetailsDialog({ isOpen, onClose, vehicle, onUpdate }: Veh
                                     ))
                                 )}
                             </div>
-                        </div>
-                    </div>
+                        </div >
+                    </div >
                 </DialogContent >
             </Dialog >
 

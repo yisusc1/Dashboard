@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { Suspense, useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { VehicleFormDialog } from "@/components/vehicle-form-dialog"
 import { VehicleDetailsDialog } from "@/components/vehicle-details-dialog"
@@ -49,7 +50,10 @@ type Vehicle = {
     last_wash_date?: string
 }
 
-export default function AdminVehiculosPage() {
+function VehiculosContent() {
+    const searchParams = useSearchParams()
+    const initialSearch = searchParams.get("q") || ""
+
     const [vehicles, setVehicles] = useState<Vehicle[]>([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState("")
@@ -58,6 +62,45 @@ export default function AdminVehiculosPage() {
     const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null)
     const [deletingVehicle, setDeletingVehicle] = useState<Vehicle | null>(null)
     const [detailsVehicle, setDetailsVehicle] = useState<Vehicle | null>(null)
+
+    // Calculate filteredVehicles based on manual search
+    const filteredVehicles = vehicles.filter(v =>
+        v.placa.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        v.modelo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        v.codigo.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+
+    // HANDLE DEEP LINK (Voice Command)
+    useEffect(() => {
+        if (!loading && initialSearch && vehicles.length > 0) {
+            // Find specific vehicle requested via URL
+            const targetVehicle = vehicles.find(v =>
+                v.placa.toLowerCase().includes(initialSearch.toLowerCase()) ||
+                v.modelo.toLowerCase().includes(initialSearch.toLowerCase()) ||
+                v.codigo.toLowerCase().includes(initialSearch.toLowerCase())
+            )
+
+            if (targetVehicle) {
+                setDetailsVehicle(targetVehicle)
+                setDetailsOpen(true)
+
+                // VISUAL FIX: Also filter the grid so user sees what was found
+                setSearchTerm(initialSearch)
+
+                // Clean URL to prevent re-opening loops and allow closing
+                const newUrl = new URL(window.location.href)
+                newUrl.searchParams.delete("q")
+                window.history.replaceState({}, "", newUrl.toString())
+            } else if (initialSearch) {
+                // If loaded but not found, warn user
+                toast.warning(`No encontré vehículos coincidiendo con "${initialSearch}"`)
+                // Also clean URL so toast doesn't persist
+                const newUrl = new URL(window.location.href)
+                newUrl.searchParams.delete("q")
+                window.history.replaceState({}, "", newUrl.toString())
+            }
+        }
+    }, [loading, initialSearch, vehicles]) // Only runs when data is loaded or URL changes
 
     useEffect(() => {
         loadVehicles()
@@ -143,12 +186,6 @@ export default function AdminVehiculosPage() {
         }
     }
 
-    const filteredVehicles = vehicles.filter(v =>
-        v.placa.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        v.modelo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        v.codigo.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-
     const getIcon = (tipo: string) => {
         switch (tipo?.toLowerCase()) {
             case 'moto': return <Bike size={20} />;
@@ -157,11 +194,8 @@ export default function AdminVehiculosPage() {
         }
     }
 
-    // Helper for Fault Icons (duplicated from TallerPage but useful here)
+    // Helper for Fault Icons
     const getFaultIcon = (type: string) => {
-        // Need to import Zap, Wrench, AlertTriangle, CheckCircle if not already imported
-        // imports are: Plus, Search, Car, Bike, Truck, MoreVertical, Pencil, Trash2, Home as HomeIcon, MapPin
-        // I need to add Wrench, AlertTriangle, CheckCircle, Zap to imports
         switch (type) {
             case 'Mecánica': return <Wrench size={16} />
             case 'Eléctrica': return <Zap size={16} />
@@ -313,7 +347,7 @@ export default function AdminVehiculosPage() {
                                 </div>
 
                                 {/* Actions */}
-                                < div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity" >
+                                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity" >
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <button className="w-8 h-8 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-zinc-900 shadow-sm hover:bg-white">
@@ -339,7 +373,7 @@ export default function AdminVehiculosPage() {
                     </div>
                 )
                 }
-            </div >
+            </div>
 
             <VehicleFormDialog
                 isOpen={dialogOpen}
@@ -373,6 +407,18 @@ export default function AdminVehiculosPage() {
                 </AlertDialogContent>
             </AlertDialog>
 
-        </main >
+        </main>
+    )
+}
+
+export default function AdminVehiculosPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-zinc-50 flex items-center justify-center">
+                <div className="animate-spin w-8 h-8 border-4 border-zinc-200 border-t-black rounded-full"></div>
+            </div>
+        }>
+            <VehiculosContent />
+        </Suspense>
     )
 }

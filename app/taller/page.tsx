@@ -1,7 +1,10 @@
 "use client"
 
+import { VoiceHint } from "@/components/voice-hint"
+
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Search, Wrench, CheckCircle, Clock, AlertTriangle, ArrowRight, Home as HomeIcon, Zap } from "lucide-react"
 import { LogoutButton } from "@/components/ui/logout-button"
 import Image from "next/image"
@@ -36,6 +39,9 @@ export default function TallerPage() {
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState("")
 
+    const searchParams = useSearchParams()
+    const router = useRouter()
+
     // Dialog State
     const [maintenanceOpen, setMaintenanceOpen] = useState(false)
     const [selectedVehicleId, setSelectedVehicleId] = useState<string | undefined>(undefined)
@@ -53,6 +59,20 @@ export default function TallerPage() {
     useEffect(() => {
         loadFaults()
     }, [])
+
+    // Voice/URL Action Handler
+    useEffect(() => {
+        const action = searchParams.get("action")
+        const viewParam = searchParams.get("view")
+
+        if (action === "new") {
+            setMaintenanceOpen(true)
+        }
+
+        if (viewParam === "board") setView("board")
+        if (viewParam === "history") setView("history")
+
+    }, [searchParams])
 
     useEffect(() => {
         if (view === 'history') {
@@ -390,20 +410,24 @@ export default function TallerPage() {
                     {/* PC CONTROLS (Top Right) */}
                     <div className="hidden md:flex justify-between items-center bg-white p-2 rounded-2xl border border-zinc-200">
                         <div className="flex gap-1">
-                            <Button
-                                variant={view === 'board' ? 'secondary' : 'ghost'}
-                                onClick={() => setView('board')}
-                                className="text-xs h-9 rounded-lg px-4"
-                            >
-                                Tablero Completo
-                            </Button>
-                            <Button
-                                variant={view === 'history' ? 'secondary' : 'ghost'}
-                                onClick={() => setView('history')}
-                                className="text-xs h-9 rounded-lg px-4"
-                            >
-                                Historial
-                            </Button>
+                            <VoiceHint command="Tablero" side="bottom">
+                                <Button
+                                    variant={view === 'board' ? 'secondary' : 'ghost'}
+                                    onClick={() => setView('board')}
+                                    className="text-xs h-9 rounded-lg px-4"
+                                >
+                                    Tablero Completo
+                                </Button>
+                            </VoiceHint>
+                            <VoiceHint command="Historial" side="bottom">
+                                <Button
+                                    variant={view === 'history' ? 'secondary' : 'ghost'}
+                                    onClick={() => setView('history')}
+                                    className="text-xs h-9 rounded-lg px-4"
+                                >
+                                    Historial
+                                </Button>
+                            </VoiceHint>
                         </div>
                         <div className="flex gap-2">
                             <Button
@@ -427,6 +451,21 @@ export default function TallerPage() {
 
                     {/* MOBILE CONTROLS (Stacked) */}
                     <div className="md:hidden flex flex-col gap-3">
+                        <VoiceHint command="Registrar" side="bottom">
+                            <Button
+                                onClick={() => {
+                                    setSelectedVehicleId(undefined)
+                                    setSelectedServiceType(undefined)
+                                    setPendingResolveId(null)
+                                    setMaintenanceOpen(true)
+                                }}
+                                className="w-full h-12 bg-zinc-900 text-white font-bold rounded-xl shadow-lg shadow-zinc-200 active:scale-[0.98] transition-all"
+                            >
+                                <Wrench size={18} className="mr-2" />
+                                Registrar Falla / Mantenimiento
+                            </Button>
+                        </VoiceHint>
+
                         {/* 1. Toggle Filter (3-way) */}
                         <div className="bg-zinc-100 p-1 rounded-xl flex">
                             <button
@@ -450,18 +489,12 @@ export default function TallerPage() {
                         </div>
 
                         {/* 2. Distinct Register Button (Below Filter) */}
-                        <Button
-                            onClick={() => {
-                                setSelectedVehicleId(undefined)
-                                setSelectedServiceType(undefined)
-                                setPendingResolveId(null)
-                                setMaintenanceOpen(true)
-                            }}
-                            className="w-full h-12 bg-zinc-900 text-white font-bold rounded-xl shadow-lg shadow-zinc-200 active:scale-[0.98] transition-all"
-                        >
-                            <Wrench size={18} className="mr-2" />
-                            Registrar Falla / Mantenimiento
-                        </Button>
+                        {/* MOVED UP - Keep comment/structure if needed generally, but I moved the button up in my mental model, oh wait, I inserted it above in the previous chunk? 
+                               No, looking at previous chunk 'MOBILE CONTROLS' start. 
+                               The Original code has '1. Toggle Filter' THEN '2. Distinct Register Button'.
+                               I want to wrap the Register button.
+                            */}
+                        {/* ... Actually let's just wrap the button where it is ... */}
 
                         {/* 3. Navigation */}
                         <div className="flex justify-between items-center px-1">

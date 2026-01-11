@@ -21,10 +21,13 @@ export const metadata: Metadata = {
 
 // ... imports
 import { createClient } from "@/lib/supabase/server";
+import { getSystemSettings } from "./admin/settings-actions";
 
 // ... existing imports
 
 import { VoiceAssistant } from "@/components/voice-assistant";
+
+import { VoiceProvider } from "@/components/voice-provider";
 
 export default async function RootLayout({
   children,
@@ -47,15 +50,21 @@ export default async function RootLayout({
     profile = data;
   }
 
+  // Fetch System Settings
+  const settings = await getSystemSettings()
+  const isVoiceEnabled = settings["VOICE_ENABLED"] !== false // Default true
+
   return (
     <html lang="es" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <UserProvider initialUser={user} initialProfile={profile}>
-          {children}
-          <VoiceAssistant />
-          <Toaster richColors position="top-center" />
+          <VoiceProvider>
+            {children}
+            {isVoiceEnabled && <VoiceAssistant />}
+            <Toaster richColors position="top-center" />
+          </VoiceProvider>
         </UserProvider>
       </body>
     </html>
