@@ -275,6 +275,18 @@ CREATE TABLE public.maintenance_logs (
   CONSTRAINT maintenance_logs_pkey PRIMARY KEY (id),
   CONSTRAINT maintenance_logs_vehicle_id_fkey FOREIGN KEY (vehicle_id) REFERENCES public.vehiculos(id)
 );
+CREATE TABLE public.notifications (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  title text NOT NULL,
+  message text NOT NULL,
+  type text NOT NULL,
+  read boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  metadata jsonb DEFAULT '{}'::jsonb,
+  CONSTRAINT notifications_pkey PRIMARY KEY (id),
+  CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
 CREATE TABLE public.profiles (
   id uuid NOT NULL,
   email text,
@@ -332,8 +344,10 @@ CREATE TABLE public.reportes (
   casco_entrada boolean DEFAULT false,
   luces_entrada boolean DEFAULT false,
   herramientas_entrada boolean DEFAULT false,
+  user_id uuid,
   CONSTRAINT reportes_pkey PRIMARY KEY (id),
-  CONSTRAINT reportes_vehiculo_id_fkey FOREIGN KEY (vehiculo_id) REFERENCES public.vehiculos(id)
+  CONSTRAINT reportes_vehiculo_id_fkey FOREIGN KEY (vehiculo_id) REFERENCES public.vehiculos(id),
+  CONSTRAINT reportes_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
 );
 CREATE TABLE public.revisiones (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -459,34 +473,6 @@ CREATE TABLE public.vehiculos (
   last_wash_date timestamp with time zone,
   assigned_driver_id uuid,
   department text,
-  falla_activa boolean DEFAULT false,
   CONSTRAINT vehiculos_pkey PRIMARY KEY (id),
   CONSTRAINT vehiculos_assigned_driver_id_fkey FOREIGN KEY (assigned_driver_id) REFERENCES public.profiles(id)
 );
-
--- Actualizar la vista de kilometrajes para incluir Cargas de Combustible y Salidas
-CREATE OR REPLACE VIEW public.vista_ultimos_kilometrajes AS
-SELECT
-    vehiculo_id,
-    MAX(km) as ultimo_kilometraje
-FROM (
-    -- 1. Reportes de Entrada (Ya existía)
-    SELECT vehiculo_id, km_entrada as km
-    FROM public.reportes
-    WHERE km_entrada IS NOT NULL
-
-    UNION ALL
-
-    -- 2. Reportes de Salida (Nuevo: Para mayor precisión si se reporta salida sin entrada previa)
-    SELECT vehiculo_id, km_salida as km
-    FROM public.reportes
-    WHERE km_salida IS NOT NULL
-
-    UNION ALL
-
-    -- 3. Cargas de Combustible (Nuevo: Lo que pidió el usuario)
-    SELECT vehicle_id as vehiculo_id, mileage as km
-    FROM public.fuel_logs
-    WHERE mileage IS NOT NULL
-) as combined_km
-GROUP BY vehiculo_id;

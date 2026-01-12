@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Command, Search, User, Loader2, Phone, IdCard } from "lucide-react"
+import { Command, Search, User, Loader2, Phone, IdCard, UserX } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -130,6 +130,26 @@ export function DriverSelector({
                         </div>
 
                         <div className="max-h-[60vh] overflow-y-auto -mx-2 px-2 space-y-1 custom-scrollbar">
+                            {/* Unassign Option */}
+                            <div
+                                onClick={() => handleSelect(null)}
+                                className={`p-3 rounded-xl cursor-pointer flex items-center gap-3 transition-all mb-2 border hover:bg-red-50 hover:border-red-200 group
+                                    ${!selectedDriverId ? 'bg-zinc-100 border-zinc-200' : 'bg-transparent border-dashed border-zinc-300'}
+                                `}
+                            >
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors ${!selectedDriverId ? 'bg-zinc-200 text-zinc-900' : 'bg-zinc-100 text-zinc-400 group-hover:text-red-500 group-hover:bg-red-100'}`}>
+                                    <UserX size={14} />
+                                </div>
+                                <div className={`font-bold text-sm ${!selectedDriverId ? 'text-zinc-900' : 'text-zinc-500 group-hover:text-red-600'}`}>
+                                    Sin Conductor (Desasignar)
+                                </div>
+                                {!selectedDriverId && (
+                                    <div className="ml-auto text-[10px] font-bold text-zinc-900 bg-white border border-zinc-200 px-2 py-1 rounded-md shrink-0 shadow-sm">
+                                        Seleccionado
+                                    </div>
+                                )}
+                            </div>
+
                             {loading ? (
                                 <div className="py-8 text-center text-zinc-400 text-sm flex flex-col items-center gap-2">
                                     <Loader2 className="animate-spin" size={20} />

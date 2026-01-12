@@ -246,59 +246,56 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId }: Entrada
         const horaSalida = fechaSalidaObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         const horaEntrada = fechaEntradaObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
-        // vehiculos is an object in Reporte type based on our interface
-        const vehiculo = reporteOriginal.vehiculos
+        // vehiculos is an object in Reporte type based on our interface, but Supabase may return an array if not 1:1 strictly enforced in types
+        // @ts-ignore
+        const vData = reporteOriginal.vehiculos
+        const vehiculo = Array.isArray(vData) ? vData[0] : vData
+
         const vehiculoNombre = vehiculo ? vehiculo.modelo : 'Desconocido'
         const kmRecorrido = Number(entradaData.km_entrada) - Number(reporteOriginal.km_salida)
 
-        let msg = `*Reporte de Entrada*\n\n`
+        const isMoto = vehiculo?.codigo?.startsWith('M-') || vehiculo?.tipo === 'Moto' || vehiculo?.modelo?.toLowerCase().includes('moto') || false
 
-        msg += `Fecha (Entrada): ${fechaEntrada}\n`
-        msg += `Hora (Salida): ${horaSalida}\n`
-        msg += `Hora (Entrada): ${horaEntrada}\n\n`
+        let msg = `👋 *REPORTE DE ENTRADA*\n\n`
 
-        msg += `Conductor: ${reporteOriginal.conductor}\n`
-        msg += `Departamento: ${reporteOriginal.departamento}\n\n`
+        msg += `📅 *Fecha:* ${fechaEntrada}\n`
+        msg += `🛫 *Salida:* ${horaSalida}\n`
+        msg += `🛬 *Entrada:* ${horaEntrada}\n\n`
 
-        msg += `Vehículo: ${vehiculoNombre}\n`
-        if (vehiculo?.placa) msg += `Placa: ${vehiculo.placa}\n`
-        msg += `Kilometraje (Salida): ${reporteOriginal.km_salida}\n`
-        msg += `Kilometraje (Entrada): ${entradaData.km_entrada}\n`
-        msg += `Kilometraje Recorrido: ${kmRecorrido}\n`
-        msg += `Nivel de Gasolina: ${entradaData.gasolina_entrada}\n\n`
+        msg += `👤 *Conductor:* ${reporteOriginal.conductor}\n`
+        msg += `🏢 *Departamento:* ${reporteOriginal.departamento}\n\n`
 
-        msg += `*Chequeo Técnico:*\n`
-        msg += `Chequeo de Aceite: ${check(entradaData.aceite_entrada)}\n`
+        msg += `🚘 *Vehículo:* ${vehiculoNombre}\n`
+        if (vehiculo?.placa) msg += `🔢 *Placa:* ${vehiculo.placa}\n`
+        msg += `📟 *KM Entrada:* ${entradaData.km_entrada}\n`
+        msg += `📏 *Recorrido:* ${kmRecorrido} km\n`
+        msg += `⛽ *Gasolina:* ${entradaData.gasolina_entrada}\n\n`
 
-        const isMoto = vehiculo?.codigo?.startsWith('M-') || vehiculo.tipo === 'Moto' || vehiculo.modelo?.toLowerCase().includes('moto')
+        msg += `🛠 *Chequeo Técnico:*\n`
+        msg += `• Aceite: ${check(entradaData.aceite_entrada)}\n`
 
-        if (!isMoto) msg += `Chequeo de Agua/Refrigerante: ${check(entradaData.agua_entrada)}\n`
+        if (!isMoto) msg += `• Agua/Refrigerante: ${check(entradaData.agua_entrada)}\n`
 
-        msg += `\n`
-
-        if (!isMoto) {
-            msg += `*Herramientas:*\n`
-            msg += `Gato: ${check(entradaData.gato_entrada)}\n`
-            msg += `Llave Cruz: ${check(entradaData.cruz_entrada)}\n`
-            msg += `Triángulo: ${check(entradaData.triangulo_entrada)}\n`
-            msg += `Caucho: ${check(entradaData.caucho_entrada)}\n`
-            msg += `Carpeta de Permisos: ${check(entradaData.carpeta_entrada)}\n`
+        if (isMoto) {
+            msg += `• Casco: ${check(entradaData.casco_entrada)}\n`
+            msg += `• Luces: ${check(entradaData.luces_entrada)}\n`
+            msg += `• Herramientas: ${check(entradaData.herramientas_entrada)}\n`
         } else {
-            msg += `*Seguridad (Moto):*\n`
-            msg += `Casco: ${check(entradaData.casco_entrada)}\n`
-            msg += `Luces: ${check(entradaData.luces_entrada)}\n`
-            msg += `Herramientas: ${check(entradaData.herramientas_entrada)}\n`
+            msg += `• Gato: ${check(entradaData.gato_entrada)}\n`
+            msg += `• Llave Cruz: ${check(entradaData.cruz_entrada)}\n`
+            msg += `• Triángulo: ${check(entradaData.triangulo_entrada)}\n`
+            msg += `• Caucho: ${check(entradaData.caucho_entrada)}\n`
+            msg += `• Carpeta: ${check(entradaData.carpeta_entrada)}\n`
         }
-        msg += `\n`
 
         if (reporteOriginal.departamento === 'Instalación' && !isMoto) {
-            msg += `*Equipos Asignados:*\n`
-            msg += `ONU/Router: ${check(entradaData.onu_entrada)}\n`
-            msg += `Mini-UPS: ${check(entradaData.ups_entrada)}\n`
-            msg += `Escalera: ${check(entradaData.escalera_entrada)}\n\n`
+            msg += `\n📦 *Equipos:*\n`
+            msg += `• ONU/Router: ${check(entradaData.onu_entrada)}\n`
+            msg += `• Mini-UPS: ${check(entradaData.ups_entrada)}\n`
+            msg += `• Escalera: ${check(entradaData.escalera_entrada)}\n`
         }
 
-        msg += `Observaciones: ${entradaData.observaciones_entrada || 'Ninguna'}`
+        msg += `\n📝 *Observaciones:* ${entradaData.observaciones_entrada || 'Ninguna'}`
         return msg
     }
 
@@ -484,7 +481,7 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId }: Entrada
                                                 <Switch id="casco" checked={checks.casco} onCheckedChange={() => toggleCheck('casco')} />
                                             </div>
                                             <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                                <Label htmlFor="luces" className="text-sm font-medium text-zinc-700 cursor-pointer">Luces Nuevas</Label>
+                                                <Label htmlFor="luces" className="text-sm font-medium text-zinc-700 cursor-pointer">Luces</Label>
                                                 <Switch id="luces" checked={checks.luces} onCheckedChange={() => toggleCheck('luces')} />
                                             </div>
                                             <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
