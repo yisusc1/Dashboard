@@ -275,19 +275,19 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId }: SalidaFo
         const hora = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         const isMoto = vehiculoObj?.codigo?.startsWith('M-') || vehiculoObj?.tipo === 'Moto' || vehiculoObj?.modelo?.toLowerCase().includes('moto')
 
-        let msg = `👋 *REPORTE DE SALIDA*\n\n`
-        msg += `📅 *Fecha:* ${fecha}\n`
-        msg += `⏰ *Hora:* ${hora}\n\n`
+        let msg = `*REPORTE DE SALIDA*\n\n`
+        msg += `*Fecha:* ${fecha}\n`
+        msg += `*Hora:* ${hora}\n\n`
 
-        msg += `👤 *Conductor:* ${data.conductor}\n`
-        msg += `🏢 *Departamento:* ${data.departamento}\n\n`
+        msg += `*Conductor:* ${data.conductor}\n`
+        msg += `*Departamento:* ${data.departamento}\n\n`
 
-        msg += `🚘 *Vehículo:* ${vehiculoNombre}\n`
-        if (vehiculoObj?.placa) msg += `🔢 *Placa:* ${vehiculoObj.placa}\n`
-        msg += `📟 *Kilometraje:* ${data.km_salida}\n`
-        msg += `⛽ *Gasolina:* ${data.gasolina_salida}\n\n`
+        msg += `*Vehículo:* ${vehiculoNombre}\n`
+        if (vehiculoObj?.placa) msg += `*Placa:* ${vehiculoObj.placa}\n`
+        msg += `*Kilometraje:* ${data.km_salida}\n`
+        msg += `*Gasolina:* ${data.gasolina_salida}\n\n`
 
-        msg += `🛠 *Chequeo Técnico:*\n`
+        msg += `*Chequeo Técnico:*\n`
         msg += `• Aceite: ${check(data.aceite_salida)}\n`
         if (!isMoto) msg += `• Agua/Refrigerante: ${check(data.agua_salida)}\n`
 
@@ -304,13 +304,13 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId }: SalidaFo
         }
 
         if (data.departamento === 'Instalación' && !isMoto) {
-            msg += `\n📦 *Equipos:*\n`
+            msg += `\n*Equipos:*\n`
             msg += `• ONU/Router: ${check(data.onu_salida)}\n`
             msg += `• Mini-UPS: ${check(data.ups_salida)}\n`
             msg += `• Escalera: ${check(data.escalera_salida)}\n`
         }
 
-        msg += `\n📝 *Observaciones:* ${data.observaciones_salida || 'Ninguna'}`
+        msg += `\n*Observaciones:* ${data.observaciones_salida || 'Ninguna'}`
         return msg
     }
 

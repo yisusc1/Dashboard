@@ -256,22 +256,22 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId }: Entrada
 
         const isMoto = vehiculo?.codigo?.startsWith('M-') || vehiculo?.tipo === 'Moto' || vehiculo?.modelo?.toLowerCase().includes('moto') || false
 
-        let msg = `👋 *REPORTE DE ENTRADA*\n\n`
+        let msg = `*REPORTE DE ENTRADA*\n\n`
 
-        msg += `📅 *Fecha:* ${fechaEntrada}\n`
-        msg += `🛫 *Salida:* ${horaSalida}\n`
-        msg += `🛬 *Entrada:* ${horaEntrada}\n\n`
+        msg += `*Fecha:* ${fechaEntrada}\n`
+        msg += `*Salida:* ${horaSalida}\n`
+        msg += `*Entrada:* ${horaEntrada}\n\n`
 
-        msg += `👤 *Conductor:* ${reporteOriginal.conductor}\n`
-        msg += `🏢 *Departamento:* ${reporteOriginal.departamento}\n\n`
+        msg += `*Conductor:* ${reporteOriginal.conductor}\n`
+        msg += `*Departamento:* ${reporteOriginal.departamento}\n\n`
 
-        msg += `🚘 *Vehículo:* ${vehiculoNombre}\n`
-        if (vehiculo?.placa) msg += `🔢 *Placa:* ${vehiculo.placa}\n`
-        msg += `📟 *KM Entrada:* ${entradaData.km_entrada}\n`
-        msg += `📏 *Recorrido:* ${kmRecorrido} km\n`
-        msg += `⛽ *Gasolina:* ${entradaData.gasolina_entrada}\n\n`
+        msg += `*Vehículo:* ${vehiculoNombre}\n`
+        if (vehiculo?.placa) msg += `*Placa:* ${vehiculo.placa}\n`
+        msg += `*KM Entrada:* ${entradaData.km_entrada}\n`
+        msg += `*Recorrido:* ${kmRecorrido} km\n`
+        msg += `*Gasolina:* ${entradaData.gasolina_entrada}\n\n`
 
-        msg += `🛠 *Chequeo Técnico:*\n`
+        msg += `*Chequeo Técnico:*\n`
         msg += `• Aceite: ${check(entradaData.aceite_entrada)}\n`
 
         if (!isMoto) msg += `• Agua/Refrigerante: ${check(entradaData.agua_entrada)}\n`
@@ -289,13 +289,13 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId }: Entrada
         }
 
         if (reporteOriginal.departamento === 'Instalación' && !isMoto) {
-            msg += `\n📦 *Equipos:*\n`
+            msg += `\n*Equipos:*\n`
             msg += `• ONU/Router: ${check(entradaData.onu_entrada)}\n`
             msg += `• Mini-UPS: ${check(entradaData.ups_entrada)}\n`
             msg += `• Escalera: ${check(entradaData.escalera_entrada)}\n`
         }
 
-        msg += `\n📝 *Observaciones:* ${entradaData.observaciones_entrada || 'Ninguna'}`
+        msg += `\n*Observaciones:* ${entradaData.observaciones_entrada || 'Ninguna'}`
         return msg
     }
 
