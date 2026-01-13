@@ -27,30 +27,31 @@ export default async function GerenciaDashboard() {
     ])
 
     return (
-        <main className="min-h-screen bg-zinc-50 p-6 md:p-12 pb-24">
+        <main className="min-h-screen bg-zinc-50 p-4 md:p-12 pb-24">
             <RealtimeNotifications />
 
             <div className="max-w-7xl mx-auto space-y-8">
                 {/* HEADER */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                     <div>
-                        <h1 className="text-4xl font-bold text-zinc-900 tracking-tight">Tablero de Gerencia</h1>
-                        <p className="text-zinc-500 font-medium mt-2 text-lg">Resumen operativo y control de flota.</p>
+                        <h1 className="text-3xl md:text-4xl font-bold text-zinc-900 tracking-tight">Tablero de Gerencia</h1>
+                        <p className="text-zinc-500 font-medium mt-2 text-base md:text-lg">Resumen operativo y control de flota.</p>
                     </div>
                 </div>
 
                 <Tabs defaultValue="summary" className="w-full">
-                    <TabsList className="bg-white p-1 rounded-full border border-zinc-200 mb-8 inline-flex h-14 items-center">
-                        <TabsTrigger value="summary" className="rounded-full px-6 h-12 data-[state=active]:bg-black data-[state=active]:text-white text-zinc-500 font-medium transition-all">
+                    {/* SCROLLABLE TABS LIST FOR MOBILE */}
+                    <TabsList className="bg-zinc-100/80 backdrop-blur-md p-1.5 rounded-full border-0 mb-8 flex h-14 items-center gap-1 w-full overflow-x-auto no-scrollbar justify-start md:justify-center">
+                        <TabsTrigger value="summary" className="rounded-full px-6 h-11 whitespace-nowrap data-[state=active]:bg-white data-[state=active]:text-zinc-900 data-[state=active]:shadow-sm text-zinc-500 font-medium transition-all hover:text-zinc-700 flex-shrink-0">
                             <LayoutGrid size={18} className="mr-2" /> Resumen
                         </TabsTrigger>
-                        <TabsTrigger value="fleet" className="rounded-full px-6 h-12 data-[state=active]:bg-black data-[state=active]:text-white text-zinc-500 font-medium transition-all">
+                        <TabsTrigger value="fleet" className="rounded-full px-6 h-11 whitespace-nowrap data-[state=active]:bg-white data-[state=active]:text-zinc-900 data-[state=active]:shadow-sm text-zinc-500 font-medium transition-all hover:text-zinc-700 flex-shrink-0">
                             <Car size={18} className="mr-2" /> Flota en Vivo
                             {fleet.some(v => v.status === 'IN_ROUTE') && (
                                 <span className="ml-2 flex h-2 w-2 rounded-full bg-green-500 animate-pulse" />
                             )}
                         </TabsTrigger>
-                        <TabsTrigger value="analytics" className="rounded-full px-6 h-12 data-[state=active]:bg-black data-[state=active]:text-white text-zinc-500 font-medium transition-all">
+                        <TabsTrigger value="analytics" className="rounded-full px-6 h-11 whitespace-nowrap data-[state=active]:bg-white data-[state=active]:text-zinc-900 data-[state=active]:shadow-sm text-zinc-500 font-medium transition-all hover:text-zinc-700 flex-shrink-0">
                             <BarChart3 size={18} className="mr-2" /> Analítica
                         </TabsTrigger>
                     </TabsList>
@@ -59,73 +60,75 @@ export default async function GerenciaDashboard() {
                     <TabsContent value="summary" className="space-y-8 focus:outline-none mt-0">
                         {/* KPI CARDS (From previous step) */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div className="bg-white p-6 rounded-3xl shadow-sm border border-zinc-100 hover:shadow-md transition-shadow">
+                            <div className="bg-white/70 backdrop-blur-2xl p-6 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/50 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-500 group">
                                 <div className="flex justify-between items-start mb-4">
-                                    <div className="p-3 bg-zinc-50 rounded-2xl text-zinc-900"><Activity /></div>
-                                    <span className="text-xs font-bold bg-green-100 text-green-700 px-2 py-1 rounded-full">Hoy</span>
+                                    <div className="p-3 bg-white/50 rounded-2xl text-zinc-900 group-hover:bg-green-50 group-hover:text-green-600 transition-colors"><Activity /></div>
+                                    <span className="text-xs font-bold bg-green-100/50 text-green-700 px-2.5 py-1 rounded-full border border-green-100">Hoy</span>
                                 </div>
-                                <div className="text-3xl font-bold text-zinc-900">{stats.installationsToday}</div>
-                                <div className="text-sm text-zinc-500 font-medium mt-1">Instalaciones Realizadas</div>
+                                <div className="text-4xl font-bold text-zinc-900 tracking-tight">{stats.installationsToday}</div>
+                                <div className="text-sm text-zinc-500 font-medium mt-2">Instalaciones Realizadas</div>
                             </div>
 
-                            <div className="bg-white p-6 rounded-3xl shadow-sm border border-zinc-100 hover:shadow-md transition-shadow">
+                            <div className="bg-white/70 backdrop-blur-2xl p-6 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/50 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-500 group">
                                 <div className="flex justify-between items-start mb-4">
-                                    <div className="p-3 bg-blue-50 rounded-2xl text-blue-600"><Wrench /></div>
-                                    <span className="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded-full">Hoy</span>
+                                    <div className="p-3 bg-white/50 rounded-2xl text-zinc-900 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors"><Wrench /></div>
+                                    <span className="text-xs font-bold bg-blue-100/50 text-blue-700 px-2.5 py-1 rounded-full border border-blue-100">Hoy</span>
                                 </div>
-                                <div className="text-3xl font-bold text-zinc-900">{stats.supportsToday}</div>
-                                <div className="text-sm text-zinc-500 font-medium mt-1">Soportes Realizados</div>
+                                <div className="text-4xl font-bold text-zinc-900 tracking-tight">{stats.supportsToday}</div>
+                                <div className="text-sm text-zinc-500 font-medium mt-2">Soportes Realizados</div>
                             </div>
 
-                            <div className="bg-white p-6 rounded-3xl shadow-sm border border-zinc-100 hover:shadow-md transition-shadow">
+                            <div className="bg-white/70 backdrop-blur-2xl p-6 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/50 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-500 group">
                                 <div className="flex justify-between items-start mb-4">
-                                    <div className="p-3 bg-red-50 rounded-2xl text-red-600"><AlertTriangle /></div>
-                                    {stats.activeFaults > 0 && <span className="text-xs font-bold bg-red-100 text-red-700 px-2 py-1 rounded-full animate-pulse">Atención</span>}
+                                    <div className="p-3 bg-white/50 rounded-2xl text-zinc-900 group-hover:bg-red-50 group-hover:text-red-600 transition-colors"><AlertTriangle /></div>
+                                    {stats.activeFaults > 0 && <span className="text-xs font-bold bg-red-100/50 text-red-700 px-2.5 py-1 rounded-full border border-red-100 animate-pulse">Atención</span>}
                                 </div>
-                                <div className="text-3xl font-bold text-zinc-900">{stats.activeFaults}</div>
-                                <div className="text-sm text-zinc-500 font-medium mt-1">Fallas de Vehículos Activas</div>
+                                <div className="text-4xl font-bold text-zinc-900 tracking-tight">{stats.activeFaults}</div>
+                                <div className="text-sm text-zinc-500 font-medium mt-2">Fallas de Vehículos Activas</div>
                             </div>
 
-                            <div className="bg-white p-6 rounded-3xl shadow-sm border border-zinc-100 hover:shadow-md transition-shadow">
+                            <div className="bg-white/70 backdrop-blur-2xl p-6 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/50 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-500 group">
                                 <div className="flex justify-between items-start mb-4">
-                                    <div className="p-3 bg-amber-50 rounded-2xl text-amber-600"><TrendingUp /></div>
+                                    <div className="p-3 bg-white/50 rounded-2xl text-zinc-900 group-hover:bg-amber-50 group-hover:text-amber-600 transition-colors"><TrendingUp /></div>
                                 </div>
-                                <div className="text-3xl font-bold text-zinc-900">{stats.vehiclesInMaintenance}</div>
-                                <div className="text-sm text-zinc-500 font-medium mt-1">Vehículos en Taller</div>
+                                <div className="text-4xl font-bold text-zinc-900 tracking-tight">{stats.vehiclesInMaintenance}</div>
+                                <div className="text-sm text-zinc-500 font-medium mt-2">Vehículos en Taller</div>
                             </div>
                         </div>
 
                         {/* === MINIMALIST FLEET SUMMARY === */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* ACTIVE / EN RUTA */}
-                            <div className="bg-white p-6 rounded-[32px] border border-green-100 shadow-sm relative overflow-hidden group">
+                            <div className="bg-white/70 backdrop-blur-2xl p-8 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/50 relative overflow-hidden group hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-500">
                                 <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-                                    <MapPin size={100} className="text-green-600" />
+                                    <MapPin size={120} className="text-green-600" />
                                 </div>
                                 <div className="relative z-10">
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <div className="p-3 bg-green-50 rounded-2xl text-green-600"><Truck /></div>
-                                        <h3 className="text-xl font-bold text-zinc-900">En Ruta</h3>
+                                    <div className="flex items-center gap-4 mb-6">
+                                        <div className="p-4 bg-green-50 rounded-2xl text-green-600 shadow-sm"><Truck size={24} /></div>
+                                        <div>
+                                            <h3 className="text-xl font-bold text-zinc-900">En Ruta</h3>
+                                            <p className="text-zinc-500 font-medium text-sm">Vehículos activos actualmente</p>
+                                        </div>
                                     </div>
-                                    <div className="text-4xl font-bold text-zinc-900 mb-2">
+                                    <div className="text-5xl font-bold text-zinc-900 mb-8 tracking-tighter">
                                         {fleet.filter(v => v.status === 'IN_ROUTE').length}
                                     </div>
-                                    <p className="text-zinc-500 font-medium text-sm mb-6">Vehículos activos actualmente</p>
 
-                                    <div className="space-y-2">
+                                    <div className="space-y-3">
                                         {fleet.filter(v => v.status === 'IN_ROUTE').length > 0 ? (
                                             fleet.filter(v => v.status === 'IN_ROUTE').map(v => (
-                                                <div key={v.id} className="flex items-center justify-between p-3 bg-green-50/50 rounded-2xl border border-green-100/50">
+                                                <div key={v.id} className="flex items-center justify-between p-3 bg-white/60 backdrop-blur-sm rounded-2xl border border-white/60 shadow-sm hover:scale-[1.02] transition-transform">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-green-700 shadow-sm">
-                                                            {v.tipo === 'Moto' ? <Bike size={16} /> : <Car size={16} />}
+                                                        <div className="w-10 h-10 rounded-full bg-green-50/50 flex items-center justify-center text-green-600 shadow-inner">
+                                                            {v.tipo === 'Moto' ? <Bike size={18} /> : <Car size={18} />}
                                                         </div>
                                                         <div className="flex flex-col">
-                                                            <span className="font-bold text-zinc-900 text-sm leading-none">{v.model}</span>
+                                                            <span className="font-bold text-zinc-900 text-sm leading-tight">{v.model}</span>
                                                             <span className="text-xs text-zinc-500 font-mono mt-0.5">{v.plate}</span>
                                                         </div>
                                                     </div>
-                                                    <span className="text-xs font-bold text-green-600 bg-white px-2 py-1 rounded-lg shadow-sm">
+                                                    <span className="text-xs font-bold text-green-700 bg-green-50/80 px-3 py-1.5 rounded-xl border border-green-100/50">
                                                         {v.driver?.split(' ')[0]}
                                                     </span>
                                                 </div>
@@ -138,28 +141,30 @@ export default async function GerenciaDashboard() {
                             </div>
 
                             {/* GARAGE / EN GALPON */}
-                            <div className="bg-white p-6 rounded-[32px] border border-zinc-100 shadow-sm relative overflow-hidden group">
+                            <div className="bg-white/70 backdrop-blur-2xl p-8 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/50 relative overflow-hidden group hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-500">
                                 <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-                                    <Car size={100} className="text-zinc-600" />
+                                    <Car size={120} className="text-zinc-600" />
                                 </div>
                                 <div className="relative z-10">
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <div className="p-3 bg-zinc-50 rounded-2xl text-zinc-600"><Car /></div>
-                                        <h3 className="text-xl font-bold text-zinc-900">En Galpón</h3>
+                                    <div className="flex items-center gap-4 mb-6">
+                                        <div className="p-4 bg-zinc-50 rounded-2xl text-zinc-600 shadow-sm"><Car size={24} /></div>
+                                        <div>
+                                            <h3 className="text-xl font-bold text-zinc-900">En Galpón</h3>
+                                            <p className="text-zinc-500 font-medium text-sm">Vehículos disponibles o en taller</p>
+                                        </div>
                                     </div>
-                                    <div className="text-4xl font-bold text-zinc-900 mb-2">
+                                    <div className="text-5xl font-bold text-zinc-900 mb-8 tracking-tighter">
                                         {fleet.filter(v => v.status !== 'IN_ROUTE').length}
                                     </div>
-                                    <p className="text-zinc-500 font-medium text-sm mb-6">Vehículos disponibles o en taller</p>
 
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <div className="p-3 bg-zinc-50 rounded-2xl border border-zinc-100 text-center flex flex-col justify-center">
-                                            <span className="block text-2xl font-bold text-zinc-900">{fleet.filter(v => v.status === 'AVAILABLE').length}</span>
-                                            <span className="text-xs font-bold text-zinc-400 uppercase">Disponibles</span>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="p-4 bg-zinc-50/50 rounded-[24px] border border-zinc-100/50 text-center flex flex-col justify-center hover:bg-zinc-50 transition-colors">
+                                            <span className="block text-3xl font-bold text-zinc-900">{fleet.filter(v => v.status === 'AVAILABLE').length}</span>
+                                            <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider mt-1">Disponibles</span>
                                         </div>
-                                        <div className="p-3 bg-amber-50 rounded-2xl border border-amber-100 text-center flex flex-col justify-center">
-                                            <span className="block text-2xl font-bold text-amber-900">{fleet.filter(v => v.status === 'MAINTENANCE').length}</span>
-                                            <span className="text-xs font-bold text-amber-600 uppercase">Taller</span>
+                                        <div className="p-4 bg-amber-50/50 rounded-[24px] border border-amber-100/50 text-center flex flex-col justify-center hover:bg-amber-50 transition-colors">
+                                            <span className="block text-3xl font-bold text-amber-900">{fleet.filter(v => v.status === 'MAINTENANCE').length}</span>
+                                            <span className="text-xs font-bold text-amber-600 uppercase tracking-wider mt-1">Taller</span>
                                         </div>
                                     </div>
 
@@ -204,11 +209,11 @@ export default async function GerenciaDashboard() {
                     {/* === ANALITICA TAB === */}
                     <TabsContent value="analytics" className="focus:outline-none mt-0">
                         {/* CHARTS MOVED HERE */}
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                            <div className="lg:col-span-2 min-h-[400px]">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 min-w-0">
+                            <div className="lg:col-span-2 min-h-[400px] min-w-0">
                                 <OperationsCharts data={stats.chartData} />
                             </div>
-                            <div className="min-h-[400px]">
+                            <div className="min-h-[400px] min-w-0">
                                 <VehicleStatusChart stats={stats.vehicleStats} />
                             </div>
                         </div>

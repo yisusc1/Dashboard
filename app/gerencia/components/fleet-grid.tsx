@@ -34,11 +34,11 @@ export function FleetGrid({ vehicles }: { vehicles: FleetStatus[] }) {
                 {vehicles.map((vehicle) => (
                     <Card
                         key={vehicle.id}
-                        className="overflow-hidden rounded-[24px] border-zinc-200 hover:shadow-lg transition-all duration-300 group cursor-pointer"
+                        className="overflow-hidden rounded-[32px] bg-white border border-zinc-100 shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-500 group cursor-pointer"
                         onClick={() => setSelectedVehicle(vehicle)}
                     >
                         {/* IMAGE AREA */}
-                        <div className="h-40 bg-zinc-100 relative group-hover:scale-105 transition-transform duration-500">
+                        <div className="h-40 bg-zinc-50 relative group-hover:scale-105 transition-transform duration-700">
                             {vehicle.imageUrl ? (
                                 <img src={vehicle.imageUrl} alt={vehicle.plate} className="w-full h-full object-cover" />
                             ) : (
