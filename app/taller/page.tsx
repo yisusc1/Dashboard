@@ -144,8 +144,10 @@ export default function TallerPage() {
                 ) || []
 
                 // Rules
-                const OIL_LIMIT = 5000
-                const OIL_WARN = 4500
+                // [Modified] Dynamic Oil Limit: 2000km for Motos, 5000km for others
+                const OIL_LIMIT = isMoto ? 2000 : 5000
+                const OIL_WARN = isMoto ? 1800 : 4500
+
                 const BELT_LIMIT = 50000
                 const BELT_WARN = 49000
                 const CHAIN_LIMIT = 20000

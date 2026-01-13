@@ -265,7 +265,7 @@ export async function getFleetStatus(): Promise<FleetStatus[]> {
             año: v.año,
             color: v.color,
             capacidad_tanque: v.capacidad_tanque,
-            kilometraje: mileageMap.get(v.id) || v.kilometraje || 0, // [UPDATED] Use View First
+            kilometraje: Math.max(mileageMap.get(v.id) || 0, v.kilometraje || 0), // [FIX] Use Max of View or Table to ensure latest update from Fuel Log is seen
             current_fuel_level: v.current_fuel_level,
             last_fuel_update: v.last_fuel_update,
             last_oil_change_km: v.last_oil_change_km,

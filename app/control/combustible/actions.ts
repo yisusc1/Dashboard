@@ -76,13 +76,16 @@ export async function createFuelLog(data: FuelLogData) {
         if (error) throw error
 
         revalidatePath("/control/combustible")
+        revalidatePath("/gerencia")
+        revalidatePath("/transporte")
 
         // [NEW] Auto-reset vehicle fuel to 100% (Full) on refuel
-        await supabase.from("vehiculos").update({
+        const { error: updateError } = await supabase.from("vehiculos").update({
             current_fuel_level: 100,
-            kilometraje: data.mileage,
             last_fuel_update: new Date().toISOString()
         }).eq("id", data.vehicle_id)
+
+        if (updateError) throw updateError
 
         return { success: true }
     } catch (error: any) {
