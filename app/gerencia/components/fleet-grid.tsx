@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Car, Truck, AlertTriangle, MapPin, User, CheckCircle2, Bike } from "lucide-react"
+import { Car, Truck, AlertTriangle, MapPin, User, CheckCircle2, Bike, Fuel, Gauge, Activity } from "lucide-react"
 import type { FleetStatus } from "../actions" // Import type
 import { useState } from "react"
 import { VehicleDetailsDialog } from "@/components/vehicle-details-dialog"
@@ -26,6 +26,12 @@ export function FleetGrid({ vehicles }: { vehicles: FleetStatus[] }) {
             case 'MAINTENANCE': return "En Taller"
             default: return "En Galpón"
         }
+    }
+
+    const getFuelColor = (level: number) => {
+        if (level < 25) return 'bg-red-50 text-red-700 border-red-100'
+        if (level < 50) return 'bg-amber-50 text-amber-700 border-amber-100'
+        return 'bg-blue-50 text-blue-700 border-blue-100'
     }
 
     return (
@@ -92,50 +98,54 @@ export function FleetGrid({ vehicles }: { vehicles: FleetStatus[] }) {
                                     </span>
                                 </div>
 
+                                {/* Fuel & Mileage Row - Compact Pills */}
+                                <div className="flex items-center gap-2 mt-3">
+                                    <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border shadow-sm ${getFuelColor(vehicle.current_fuel_level)}`}>
+                                        <Fuel size={12} strokeWidth={2.5} />
+                                        <span>{vehicle.current_fuel_level}%</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-50 text-zinc-600 text-xs font-bold border border-zinc-100 shadow-sm">
+                                        <Gauge size={12} strokeWidth={2.5} />
+                                        <span className="font-mono tracking-tight">{vehicle.kilometraje?.toLocaleString()} km</span>
+                                    </div>
+                                </div>
+
                                 {vehicle.status === 'IN_ROUTE' ? (
-                                    <div className="flex items-center gap-3 text-xs text-green-600 bg-green-50 p-2 rounded-lg border border-green-100">
+                                    <div className="flex items-center gap-3 text-xs text-green-600 bg-green-50 p-2 rounded-lg border border-green-100 mt-3">
                                         <MapPin size={14} className="animate-bounce" />
                                         <span>Salida: {new Date(vehicle.lastExit!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                     </div>
                                 ) : (
-                                    <div className="flex items-center gap-3 text-xs text-zinc-400 bg-zinc-50 p-2 rounded-lg">
+                                    <div className="flex items-center gap-3 text-xs text-zinc-400 bg-zinc-50 p-2 rounded-lg mt-3">
                                         <CheckCircle2 size={14} />
                                         <span>En Galpón</span>
                                     </div>
                                 )}
 
                                 {vehicle.faultsSummary && (vehicle.faultsSummary.critical > 0 || vehicle.faultsSummary.high > 0 || vehicle.faultsSummary.medium > 0 || vehicle.faultsSummary.low > 0) && (
-                                    <div className="flex flex-wrap gap-2 mt-2">
+                                    <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-zinc-100">
                                         {vehicle.faultsSummary.critical > 0 && (
-                                            <div className="flex items-center gap-1.5 pl-2 pr-2 py-1 bg-white text-red-700 rounded-lg border border-red-200 shadow-sm">
-                                                <span className="text-xs font-black">{vehicle.faultsSummary.critical}</span>
-                                                <div className="w-4 h-4 rounded-full bg-red-500 flex items-center justify-center text-white">
-                                                    <AlertTriangle size={10} strokeWidth={3} />
-                                                </div>
+                                            <div className="flex items-center gap-1 px-2 py-1 bg-red-50 text-red-600 rounded-full border border-red-100">
+                                                <AlertTriangle size={10} strokeWidth={2.5} />
+                                                <span className="text-[10px] font-bold">{vehicle.faultsSummary.critical} Críticas</span>
                                             </div>
                                         )}
                                         {vehicle.faultsSummary.high > 0 && (
-                                            <div className="flex items-center gap-1.5 pl-2 pr-2 py-1 bg-white text-orange-700 rounded-lg border border-orange-200 shadow-sm">
-                                                <span className="text-xs font-black">{vehicle.faultsSummary.high}</span>
-                                                <div className="w-4 h-4 rounded-full bg-orange-500 flex items-center justify-center text-white">
-                                                    <AlertTriangle size={10} strokeWidth={3} />
-                                                </div>
+                                            <div className="flex items-center gap-1 px-2 py-1 bg-orange-50 text-orange-600 rounded-full border border-orange-100">
+                                                <Activity size={10} strokeWidth={2.5} />
+                                                <span className="text-[10px] font-bold">{vehicle.faultsSummary.high} Altas</span>
                                             </div>
                                         )}
                                         {vehicle.faultsSummary.medium > 0 && (
-                                            <div className="flex items-center gap-1.5 pl-2 pr-2 py-1 bg-white text-yellow-700 rounded-lg border border-yellow-200 shadow-sm">
-                                                <span className="text-xs font-black">{vehicle.faultsSummary.medium}</span>
-                                                <div className="w-4 h-4 rounded-full bg-yellow-500 flex items-center justify-center text-white">
-                                                    <AlertTriangle size={10} strokeWidth={3} />
-                                                </div>
+                                            <div className="flex items-center gap-1 px-2 py-1 bg-yellow-50 text-yellow-600 rounded-full border border-yellow-100">
+                                                <Activity size={10} strokeWidth={2.5} />
+                                                <span className="text-[10px] font-bold">{vehicle.faultsSummary.medium} Medias</span>
                                             </div>
                                         )}
                                         {vehicle.faultsSummary.low > 0 && (
-                                            <div className="flex items-center gap-1.5 pl-2 pr-2 py-1 bg-white text-blue-700 rounded-lg border border-blue-200 shadow-sm">
-                                                <span className="text-xs font-black">{vehicle.faultsSummary.low}</span>
-                                                <div className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center text-white">
-                                                    <CheckCircle2 size={10} strokeWidth={3} />
-                                                </div>
+                                            <div className="flex items-center gap-1 px-2 py-1 bg-zinc-50 text-zinc-500 rounded-full border border-zinc-100">
+                                                <Activity size={10} strokeWidth={2.5} />
+                                                <span className="text-[10px] font-bold">{vehicle.faultsSummary.low} Bajas</span>
                                             </div>
                                         )}
                                     </div>

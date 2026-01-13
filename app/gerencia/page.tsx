@@ -192,18 +192,10 @@ export default async function GerenciaDashboard() {
 
                     {/* === FLOTA TAB === */}
                     <TabsContent value="fleet" className="focus:outline-none mt-0">
-                        <div className="bg-indigo-50 border border-indigo-100 p-6 rounded-3xl mb-8 flex items-start gap-4">
-                            <div className="p-3 bg-white rounded-full shadow-sm text-indigo-600">
-                                <Activity className="animate-pulse" />
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-bold text-indigo-900">Monitoreo en Tiempo Real</h3>
-                                <p className="text-indigo-700">
-                                    Los vehículos marcados como <strong>En Ruta</strong> tienen un reporte de salida activo sin cierre detectado.
-                                </p>
-                            </div>
+                        {/* Banner Removed */}
+                        <div className="mb-8">
+                            <FleetGrid vehicles={fleet} />
                         </div>
-                        <FleetGrid vehicles={fleet} />
                     </TabsContent>
 
                     {/* === ANALITICA TAB === */}
