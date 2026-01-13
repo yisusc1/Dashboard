@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { addDays, format, subDays, startOfDay, endOfDay } from "date-fns"
 import { es } from "date-fns/locale"
+import { unstable_noStore as noStore } from "next/cache"
 
 export type DashboardStats = {
     installationsToday: number
@@ -163,6 +164,7 @@ export type FleetStatus = {
 }
 
 export async function getFleetStatus(): Promise<FleetStatus[]> {
+    noStore()
     const supabase = await createClient()
 
     // 1. Fetch Vehicles

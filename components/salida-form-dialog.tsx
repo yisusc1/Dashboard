@@ -24,9 +24,10 @@ type SalidaFormDialogProps = {
     isOpen: boolean
     onClose: () => void
     initialVehicleId?: string
+    onSuccess?: () => void
 }
 
-export function SalidaFormDialog({ isOpen, onClose, initialVehicleId }: SalidaFormDialogProps) {
+export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess }: SalidaFormDialogProps) {
     const [loading, setLoading] = useState(false)
     const [step, setStep] = useState<'form' | 'success'>('form')
     const [whatsappText, setWhatsappText] = useState("")
@@ -241,6 +242,7 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId }: SalidaFo
             setWhatsappText(text)
             setStep('success')
             router.refresh()
+            if (onSuccess) onSuccess() // [NEW] Trigger refresh in parent
             // ----------------------------
 
             // Reset

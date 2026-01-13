@@ -40,6 +40,7 @@ export default function TransportePage() {
     // Pool Mode States
     const [vehicles, setVehicles] = useState<Vehicle[]>([])
     const [selectedVehicleId, setSelectedVehicleId] = useState<string>("")
+    const [activeTripReport, setActiveTripReport] = useState<any>(null) // [NEW] Track active trip for user
 
     // Dialog States
     const [salidaOpen, setSalidaOpen] = useState(false)
@@ -71,8 +72,8 @@ export default function TransportePage() {
         }
     }, [searchParams])
 
-    async function loadData() {
-        setLoading(true)
+    async function loadData(silent = false) {
+        if (!silent) setLoading(true)
         try {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) {
@@ -105,11 +106,38 @@ export default function TransportePage() {
                 if (allVehicles) setVehicles(allVehicles)
             }
 
+            // 4. [NEW] Check for Active Trip (Improved Logic)
+            let activeTrip = null
+
+            if (myVehicle) {
+                // Scenario A: Assigned Vehicle (Driver Mode)
+                const { data } = await supabase
+                    .from('reportes')
+                    .select('*')
+                    .eq('vehiculo_id', myVehicle.id)
+                    .is('km_entrada', null)
+                    .limit(1)
+                    .maybeSingle()
+                activeTrip = data
+            } else {
+                // Scenario B: Pool Mode
+                const { data } = await supabase
+                    .from('reportes')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .is('km_entrada', null)
+                    .limit(1)
+                    .maybeSingle()
+                activeTrip = data
+            }
+
+            setActiveTripReport(activeTrip)
+
         } catch (error: any) {
             console.error("Error loading data:", error)
             toast.error("Error al cargar datos del panel")
         } finally {
-            setLoading(false)
+            if (!silent) setLoading(false)
         }
     }
 
@@ -231,7 +259,9 @@ export default function TransportePage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* CARD 1: SALIDA */}
                     <button
+                        disabled={!!activeTripReport} // [NEW] Disable if in trip
                         onClick={() => {
+                            if (activeTripReport) return // Prevent click if disabled check fails
                             if (assignedVehicle) {
                                 setInitialVehicleId(assignedVehicle.id)
                                 setSalidaOpen(true)
@@ -240,56 +270,65 @@ export default function TransportePage() {
                                 setSalidaOpen(true)
                             }
                         }}
-                        className="group relative overflow-hidden bg-white rounded-[32px] p-8 border border-zinc-200 shadow-sm hover:shadow-xl hover:border-zinc-300 transition-all duration-300 text-left h-full"
+                        className={`group relative overflow-hidden bg-white rounded-[32px] p-8 border border-zinc-200 shadow-sm transition-all duration-300 text-left h-full ${activeTripReport ? 'opacity-60 cursor-not-allowed bg-zinc-50' : 'hover:shadow-xl hover:border-zinc-300'}`}
                     >
                         <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
                             <Truck size={100} />
                         </div>
                         <div className="relative z-10 flex flex-col h-full justify-between space-y-6">
-                            <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${activeTripReport ? 'bg-zinc-100 text-zinc-400' : 'bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white'}`}>
                                 <Truck size={24} />
                             </div>
                             <div>
-                                <h2 className="text-xl font-bold text-zinc-900 mb-2">Registrar Salida</h2>
+                                <h2 className="text-xl font-bold text-zinc-900 mb-2">
+                                    {activeTripReport ? "En Ruta (Activo)" : "Registrar Salida"}
+                                </h2>
                                 <p className="text-zinc-500 text-sm font-medium">
-                                    {assignedVehicle ? "Iniciar ruta con tu unidad asignada." : "Seleccionar vehículo del departamento para iniciar ruta."}
+                                    {activeTripReport ? "Tienes un viaje en curso. Registra la entrada para iniciar otro." : (assignedVehicle ? "Iniciar ruta con tu unidad asignada." : "Seleccionar vehículo del departamento para iniciar ruta.")}
                                 </p>
                             </div>
-                            <div className="flex items-center text-indigo-600 font-bold text-sm group-hover:translate-x-1 transition-transform">
-                                Iniciar <ArrowRight size={16} className="ml-2" />
-                            </div>
+                            {!activeTripReport && (
+                                <div className="flex items-center text-indigo-600 font-bold text-sm group-hover:translate-x-1 transition-transform">
+                                    Iniciar <ArrowRight size={16} className="ml-2" />
+                                </div>
+                            )}
                         </div>
                     </button>
 
                     {/* CARD 2: ENTRADA */}
                     <button
+                        disabled={!activeTripReport} // [NEW] Disable if NOT in trip
                         onClick={() => {
-                            if (assignedVehicle) {
-                                setInitialVehicleId(assignedVehicle.id)
-                                setEntradaOpen(true)
-                            } else {
-                                setInitialVehicleId("")
+                            if (!activeTripReport) return // Prevent click
+
+                            // [NEW] Logic: If active trip, PRE-SELECT that vehicle
+                            if (activeTripReport) {
+                                setInitialVehicleId(activeTripReport.vehiculo_id)
                                 setEntradaOpen(true)
                             }
                         }}
-                        className="group relative overflow-hidden bg-white rounded-[32px] p-8 border border-zinc-200 shadow-sm hover:shadow-xl hover:border-zinc-300 transition-all duration-300 text-left h-full"
+                        className={`group relative overflow-hidden bg-white rounded-[32px] p-8 border border-zinc-200 shadow-sm transition-all duration-300 text-left h-full ${!activeTripReport ? 'opacity-60 cursor-not-allowed bg-zinc-50' : 'hover:shadow-xl hover:border-zinc-300'}`}
                     >
                         <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
                             <LogOut size={100} className="scale-x-[-1]" />
                         </div>
                         <div className="relative z-10 flex flex-col h-full justify-between space-y-6">
-                            <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${!activeTripReport ? 'bg-zinc-100 text-zinc-400' : 'bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white'}`}>
                                 <LogOut size={24} className="scale-x-[-1]" />
                             </div>
                             <div>
-                                <h2 className="text-xl font-bold text-zinc-900 mb-2">Registrar Entrada</h2>
+                                <h2 className="text-xl font-bold text-zinc-900 mb-2">
+                                    {!activeTripReport ? "Sin Viaje Activo" : "Registrar Entrada"}
+                                </h2>
                                 <p className="text-zinc-500 text-sm font-medium">
-                                    {assignedVehicle ? "Finalizar ruta y reportar kilometraje." : "Cerrar ruta, registrar kilometraje y liberar vehículo."}
+                                    {!activeTripReport ? "No tienes un vehículo en ruta actualmente. Registra una salida primero." : (assignedVehicle ? "Finalizar ruta y reportar kilometraje." : "Cerrar ruta, registrar kilometraje y liberar vehículo.")}
                                 </p>
                             </div>
-                            <div className="flex items-center text-emerald-600 font-bold text-sm group-hover:translate-x-1 transition-transform">
-                                Registrar <ArrowRight size={16} className="ml-2" />
-                            </div>
+                            {activeTripReport && (
+                                <div className="flex items-center text-emerald-600 font-bold text-sm group-hover:translate-x-1 transition-transform">
+                                    Registrar <ArrowRight size={16} className="ml-2" />
+                                </div>
+                            )}
                         </div>
                     </button>
 
@@ -330,12 +369,18 @@ export default function TransportePage() {
                     isOpen={salidaOpen}
                     onClose={() => setSalidaOpen(false)}
                     initialVehicleId={initialVehicleId}
+                    onSuccess={() => {
+                        loadData(true) // [NEW] Silent reload to keep dialog open
+                    }}
                 />
 
                 <EntradaFormDialog
                     isOpen={entradaOpen}
                     onClose={() => setEntradaOpen(false)}
                     initialVehicleId={initialVehicleId}
+                    onSuccess={() => {
+                        loadData(true) // [NEW] Silent reload to keep dialog open
+                    }}
                 />
 
                 {/* POOL SELECTOR DIALOG */}

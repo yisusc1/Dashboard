@@ -8,7 +8,13 @@ import { redirect } from 'next/navigation';
 export async function crearSalida(formData: FormData) {
     const supabase = await createClient();
 
+    // [NEW] Get Current User to track owner
+    const { data: { user } } = await supabase.auth.getUser();
+
     const rawData = {
+        // [NEW] Save User ID
+        user_id: user?.id,
+
         vehiculo_id: formData.get('vehiculo_id'),
         conductor: formData.get('conductor'),
         departamento: formData.get('departamento'),
@@ -83,4 +89,8 @@ export async function registrarEntrada(formData: FormData) {
 
     revalidatePath('/transporte');
     return { success: true, data };
+}
+
+export async function revalidateGerencia() {
+    revalidatePath('/gerencia');
 }

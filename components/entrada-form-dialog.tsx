@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
+import { revalidateGerencia } from "@/app/transporte/actions"
 
 type Reporte = {
     id: string
@@ -33,9 +34,10 @@ type EntradaFormDialogProps = {
     isOpen: boolean
     onClose: () => void
     initialVehicleId?: string
+    onSuccess?: () => void
 }
 
-export function EntradaFormDialog({ isOpen, onClose, initialVehicleId }: EntradaFormDialogProps) {
+export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess }: EntradaFormDialogProps) {
     const [loading, setLoading] = useState(false)
     const [reportes, setReportes] = useState<Reporte[]>([])
     const [reporteId, setReporteId] = useState("")
@@ -72,7 +74,17 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId }: Entrada
                 if (initialVehicleId && data) {
                     const matchingReport = data.find((r: any) => r.vehiculo_id === initialVehicleId)
                     if (matchingReport) {
-                        handleReportChange(matchingReport.id)
+                        // [FIX] Set state directly from fetched data to avoid race condition with setReportes
+                        setReporteId(matchingReport.id)
+                        setSelectedReport(matchingReport)
+
+                        // Reset checks on change
+                        setChecks({
+                            aceite: false, agua: false, gato: false, cruz: false,
+                            triangulo: false, caucho: false, carpeta: false,
+                            onu: false, ups: false, escalera: false,
+                            casco: false, luces: false, herramientas: false
+                        })
                     }
                 }
             })
@@ -180,6 +192,9 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId }: Entrada
                 }).eq('id', selectedReport.vehiculo_id)
             }
 
+            // Force Dashboard Refresh
+            await revalidateGerencia()
+
             toast.success("Entrada registrada correctamente")
 
             // --- WhatsApp Integration ---
@@ -212,6 +227,7 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId }: Entrada
 
             router.refresh()
             // onClose()
+            if (onSuccess) onSuccess() // [NEW] Trigger refresh in parent
 
             // Reset form
             setReporteId("")
@@ -301,7 +317,6 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId }: Entrada
         }
 
         msg += `\nObservaciones: ${entradaData.observaciones_entrada || 'Ninguna'}`
-        return msg
         return msg
     }
 
