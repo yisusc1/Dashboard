@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { VehicleSelector, Vehicle } from "@/components/vehicle-selector"
+import { updateVehicleFuel } from "@/app/transporte/actions"
 
 // Use Vehicle type from component but extend if needed or just use it
 // The local type had 'department', let's extend
@@ -208,21 +209,8 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
 
             if (error) throw error
 
-            // [NEW] Update Vehicle Fuel Level on Checkout
-            const fuelMap: Record<string, number> = {
-                "Full": 100,
-                "3/4": 75,
-                "1/2": 50,
-                "1/4": 25,
-                "Reserva": 10
-            }
-            const fuelLevel = fuelMap[gasolina] || 0
-
-            await supabase.from('vehiculos').update({
-                current_fuel_level: fuelLevel,
-                kilometraje: km,
-                last_fuel_update: new Date().toISOString()
-            }).eq('id', vehiculoId)
+            // [NEW] Update Vehicle Fuel Level on Checkout via Server Action (handles parsing & permissions)
+            await updateVehicleFuel(vehiculoId, gasolina)
 
             toast.success("Salida registrada correctamente")
 

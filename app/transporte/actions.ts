@@ -5,6 +5,21 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
 // --- FASE 1: SALIDA ---
+// Helper to parse fuel text to percentage
+function parseFuelLevel(fuelString: string): number {
+    if (!fuelString) return 0;
+    const s = fuelString.toString().toLowerCase().trim();
+    if (s === 'full') return 100;
+    if (s === '3/4') return 75;
+    if (s === '1/2') return 50;
+    if (s === '1/4') return 25;
+    if (s === 'reserva') return 10;
+
+    // Fallback for direct "50%" or number strings
+    return parseInt(s.replace('%', '')) || 0;
+}
+
+// --- FASE 1: SALIDA ---
 export async function crearSalida(formData: FormData) {
     const supabase = await createClient();
 
@@ -47,6 +62,15 @@ export async function crearSalida(formData: FormData) {
         return { success: false, error: error.message };
     }
 
+    // [NEW] Update Vehicle Fuel Level with Text Parsing
+    const fuelString = rawData.gasolina_salida?.toString() || '';
+    const fuelLevel = parseFuelLevel(fuelString);
+
+    const { error: updateError } = await supabase.from('vehiculos').update({
+        current_fuel_level: fuelLevel,
+        last_fuel_update: new Date().toISOString()
+    }).eq('id', rawData.vehiculo_id);
+
     revalidatePath('/transporte');
     revalidatePath('/gerencia'); // [NEW] Revalidate Administration Panel
     return { success: true, data };
@@ -88,6 +112,18 @@ export async function registrarEntrada(formData: FormData) {
         return { success: false, error: error.message };
     }
 
+    // [NEW] Update Vehicle Fuel Level with Text Parsing
+    if (updateData.gasolina_entrada) {
+        const fuelLevel = parseFuelLevel(updateData.gasolina_entrada.toString());
+        // Fetch vehicle_id from the report data (we selected it above)
+        if (data && data.vehiculo_id) {
+            await supabase.from('vehiculos').update({
+                current_fuel_level: fuelLevel,
+                last_fuel_update: new Date().toISOString()
+            }).eq('id', data.vehiculo_id);
+        }
+    }
+
     revalidatePath('/transporte');
     revalidatePath('/gerencia'); // [NEW] Revalidate Administration Panel
     return { success: true, data };
@@ -95,4 +131,24 @@ export async function registrarEntrada(formData: FormData) {
 
 export async function revalidateGerencia() {
     revalidatePath('/gerencia');
+}
+
+// [NEW] Helper Action for Client Components
+export async function updateVehicleFuel(vehicleId: string, fuelText: string) {
+    const supabase = await createClient();
+    const fuelLevel = parseFuelLevel(fuelText);
+
+    const { error } = await supabase.from('vehiculos').update({
+        current_fuel_level: fuelLevel,
+        last_fuel_update: new Date().toISOString()
+    }).eq('id', vehicleId);
+
+    if (error) {
+        console.error("Error updating fuel:", error);
+        return { success: false, error: error.message };
+    }
+
+    revalidatePath('/transporte');
+    revalidatePath('/gerencia');
+    return { success: true };
 }
