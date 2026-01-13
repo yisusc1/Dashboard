@@ -141,6 +141,7 @@ export type FleetStatus = {
     status: 'AVAILABLE' | 'IN_ROUTE' | 'MAINTENANCE' | 'CRITICAL'
     imageUrl?: string
     lastExit?: string
+    activeReport?: any // [NEW] Full report details
     activeFaults: number
     faultsSummary: {
         critical: number
@@ -182,24 +183,31 @@ export async function getFleetStatus(): Promise<FleetStatus[]> {
     // We look for reports where fecha_entrada is null
     const { data: activeTrips } = await supabase
         .from("reportes")
-        .select("vehiculo_id, fecha_salida")
-        .is("fecha_entrada", null)
+        .select("*") // [UPDATED] Fetch all fields for details
+        .is("km_entrada", null) // [FIXED] Changed from fecha_entrada to match Transport Page logic
 
-    const tripsMap = new Set(activeTrips?.map(t => t.vehiculo_id))
+    const tripsMap = new Map(activeTrips?.map(t => [t.vehiculo_id, t])) // [UPDATED] Map full object
     const tripsDateMap = new Map(activeTrips?.map(t => [t.vehiculo_id, t.fecha_salida]))
+
+    console.log("DEBUG: Active Trips found:", activeTrips) // [DEBUG]
 
     // 3. Fetch Active Faults Count
     const { data: faults } = await supabase
         .from("fallas")
-        .select("vehiculo_id, prioridad")
+        .select("vehiculo_id, prioridad, estado") // [UPDATED] Added estado
         .neq("estado", "Resuelto")
         .neq("estado", "Reparado") // Exclude Repaired
         .neq("estado", "Descartado")
 
-    const faultsSummaryMap = new Map<string, { critical: number, high: number, medium: number, low: number }>()
+    const faultsSummaryMap = new Map<string, { critical: number, high: number, medium: number, low: number, isMaintenance: boolean }>()
 
     faults?.forEach(f => {
-        const current = faultsSummaryMap.get(f.vehiculo_id) || { critical: 0, high: 0, medium: 0, low: 0 }
+        const current = faultsSummaryMap.get(f.vehiculo_id) || { critical: 0, high: 0, medium: 0, low: 0, isMaintenance: false }
+
+        // Check for Maintenance Status
+        if (f.estado === 'En Revisión') {
+            current.isMaintenance = true
+        }
 
         switch (f.prioridad?.toLowerCase()) {
             case 'crítica':
@@ -218,19 +226,25 @@ export async function getFleetStatus(): Promise<FleetStatus[]> {
         faultsSummaryMap.set(f.vehiculo_id, current)
     })
 
+    // 4. Fetch Latest Mileage [NEW]
+    const { data: mileageData } = await supabase
+        .from("vista_ultimos_kilometrajes")
+        .select("vehiculo_id, ultimo_kilometraje")
+
+    const mileageMap = new Map(mileageData?.map(m => [m.vehiculo_id, m.ultimo_kilometraje]))
+
     return vehicles.map(v => {
-        const inRoute = tripsMap.has(v.id)
-        const summary = faultsSummaryMap.get(v.id) || { critical: 0, high: 0, medium: 0, low: 0 }
+        const activeTrip = tripsMap.get(v.id) // [NEW]
+        const inRoute = !!activeTrip
+
+        const summary = faultsSummaryMap.get(v.id) || { critical: 0, high: 0, medium: 0, low: 0, isMaintenance: false }
         const activeFaults = summary.critical + summary.high + summary.medium + summary.low
 
         let status: FleetStatus['status'] = 'AVAILABLE'
-        // Priority: Critical > In Route > Available? 
-        // Logic: A car can be critical AND in route (dangerous). 
-        // User wants to know "In Route".
-        // Let's say: If in route, show "IN_ROUTE" but badge "FAULT".
 
         // Revised Logic:
         if (inRoute) status = 'IN_ROUTE'
+        else if (summary.isMaintenance) status = 'MAINTENANCE' // [FIXED] Prioritize Maintenance over Critical if not in route
         else if (activeFaults > 0 || v.falla_activa) status = 'CRITICAL'
 
         return {
@@ -243,6 +257,7 @@ export async function getFleetStatus(): Promise<FleetStatus[]> {
             status,
             imageUrl: v.foto_url,
             lastExit: tripsDateMap.get(v.id),
+            activeReport: activeTrip, // [NEW]
             activeFaults,
             faultsSummary: summary,
             // Details
@@ -250,7 +265,7 @@ export async function getFleetStatus(): Promise<FleetStatus[]> {
             año: v.año,
             color: v.color,
             capacidad_tanque: v.capacidad_tanque,
-            kilometraje: v.kilometraje, // Assumes logic for max km (view) or raw column. The view view_last_km would be better but direct col is ok for now.
+            kilometraje: mileageMap.get(v.id) || v.kilometraje || 0, // [UPDATED] Use View First
             current_fuel_level: v.current_fuel_level,
             last_fuel_update: v.last_fuel_update,
             last_oil_change_km: v.last_oil_change_km,

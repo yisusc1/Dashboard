@@ -48,6 +48,7 @@ export async function crearSalida(formData: FormData) {
     }
 
     revalidatePath('/transporte');
+    revalidatePath('/gerencia'); // [NEW] Revalidate Administration Panel
     return { success: true, data };
 }
 
@@ -88,6 +89,7 @@ export async function registrarEntrada(formData: FormData) {
     }
 
     revalidatePath('/transporte');
+    revalidatePath('/gerencia'); // [NEW] Revalidate Administration Panel
     return { success: true, data };
 }
 

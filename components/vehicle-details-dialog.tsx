@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { X, Car, Bike, Truck, Calendar, Droplets, Gauge, MapPin, Hash, CreditCard, Fuel, AlertTriangle, Wrench, User } from "lucide-react"
+import { X, Car, Bike, Truck, Calendar, Droplets, Gauge, MapPin, Hash, CreditCard, Fuel, AlertTriangle, Wrench, User, CheckCircle2 } from "lucide-react"
 import Image from "next/image"
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
@@ -43,6 +43,7 @@ type Vehicle = {
         prioridad: string
         tipo_falla: string
     }
+    activeReport?: any // [NEW]
 }
 
 type Fault = {
@@ -324,6 +325,78 @@ export function VehicleDetailsDialog({ isOpen, onClose, vehicle, onUpdate, reado
                                         <span>{vehicle.current_fuel_level || 0}%</span>
                                     </div>
                                 </div>
+
+
+                                {/* ACTIVE REPORT SECTION [NEW] */}
+                                {vehicle.activeReport && (
+                                    <div className="mb-6 bg-blue-50/50 p-5 rounded-2xl border border-blue-100">
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
+                                                <MapPin size={18} />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold text-blue-900 text-sm">Reporte de Salida Activo</h3>
+                                                <p className="text-xs text-blue-600">
+                                                    Salida: {new Date(vehicle.activeReport.fecha_salida).toLocaleString()}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Key Metrics */}
+                                        <div className="grid grid-cols-2 gap-3 mb-4">
+                                            <div className="bg-white p-3 rounded-xl border border-blue-100 shadow-sm">
+                                                <span className="text-[10px] uppercase font-bold text-zinc-400 block mb-1">Conductor</span>
+                                                <span className="font-semibold text-zinc-800 text-sm block truncate">{vehicle.activeReport.conductor}</span>
+                                            </div>
+                                            <div className="bg-white p-3 rounded-xl border border-blue-100 shadow-sm">
+                                                <span className="text-[10px] uppercase font-bold text-zinc-400 block mb-1">Km Salida</span>
+                                                <span className="font-semibold text-zinc-800 text-sm block">{vehicle.activeReport.km_salida} km</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Checklist */}
+                                        <div className="bg-white rounded-xl border border-blue-100 shadow-sm overflow-hidden">
+                                            <div className="bg-blue-50/30 px-4 py-2 border-b border-blue-100">
+                                                <span className="text-xs font-bold text-blue-800">Verificación de Salida</span>
+                                            </div>
+                                            <div className="p-4 grid grid-cols-2 gap-y-3 gap-x-4">
+                                                {/* COMMON */}
+                                                <CheckItem label="Aceite" checked={vehicle.activeReport.aceite_salida} />
+
+                                                {/* CAR SPECIFIC (Agua, Safety) */}
+                                                {!vehicle.tipo?.toLowerCase().includes('moto') && !vehicle.modelo?.toLowerCase().includes('moto') && (
+                                                    <>
+                                                        <CheckItem label="Agua / Refr." checked={vehicle.activeReport.agua_salida} />
+                                                        <CheckItem label="Caucho" checked={vehicle.activeReport.caucho_salida} />
+                                                        <CheckItem label="Gato" checked={vehicle.activeReport.gato_salida} />
+                                                        <CheckItem label="Triángulo" checked={vehicle.activeReport.triangulo_salida} />
+                                                        <CheckItem label="Cruz" checked={vehicle.activeReport.cruz_salida} />
+                                                        <CheckItem label="Carpeta" checked={vehicle.activeReport.carpeta_salida} />
+                                                    </>
+                                                )}
+
+                                                {/* MOTO SPECIFIC */}
+                                                {(vehicle.tipo?.toLowerCase().includes('moto') || vehicle.modelo?.toLowerCase().includes('moto')) && (
+                                                    <>
+                                                        <CheckItem label="Casco" checked={vehicle.activeReport.casco_salida} />
+                                                        <CheckItem label="Luces" checked={vehicle.activeReport.luces_salida} />
+                                                        <CheckItem label="Herramientas" checked={vehicle.activeReport.herramientas_salida} />
+                                                    </>
+                                                )}
+
+                                                {/* TECH STUFF - Only for Soporte/Instalación AND NOT MOTO */}
+                                                {(vehicle.department === 'Soporte' || vehicle.department === 'Instalación') && !vehicle.tipo?.toLowerCase().includes('moto') && !vehicle.modelo?.toLowerCase().includes('moto') && (
+                                                    <>
+                                                        <CheckItem label="ONU" checked={vehicle.activeReport.onu_salida === 1} />
+                                                        <CheckItem label="UPS" checked={vehicle.activeReport.ups_salida === 1} />
+                                                        <CheckItem label="Escalera" checked={vehicle.activeReport.escalera_salida} />
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Maintenance Section */}
                                 <div className="mt-6 mb-6">
                                     <h3 className="text-sm font-bold text-zinc-900 mb-3 flex items-center gap-2">
@@ -611,5 +684,19 @@ export function VehicleDetailsDialog({ isOpen, onClose, vehicle, onUpdate, reado
                 </AlertDialogContent>
             </AlertDialog>
         </>
+    )
+}
+
+function CheckItem({ label, checked }: { label: string, checked: boolean }) {
+    return (
+        <div className="flex items-center gap-2">
+            <div className={`
+                w-5 h-5 rounded-full flex items-center justify-center text-[10px] border
+                ${checked ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-50 text-red-400 border-red-100'}
+            `}>
+                {checked ? <CheckCircle2 size={12} strokeWidth={3} /> : <X size={12} strokeWidth={3} />}
+            </div>
+            <span className={`text-xs font-medium ${checked ? 'text-zinc-700' : 'text-zinc-400'}`}>{label}</span>
+        </div>
     )
 }

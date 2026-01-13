@@ -188,6 +188,7 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
             if (selectedReport?.vehiculo_id) {
                 await supabase.from('vehiculos').update({
                     current_fuel_level: fuelLevel,
+                    kilometraje: km,
                     last_fuel_update: new Date().toISOString()
                 }).eq('id', selectedReport.vehiculo_id)
             }

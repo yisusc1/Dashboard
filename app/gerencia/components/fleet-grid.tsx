@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Car, Truck, AlertTriangle, MapPin, User, CheckCircle2 } from "lucide-react"
+import { Car, Truck, AlertTriangle, MapPin, User, CheckCircle2, Bike } from "lucide-react"
 import type { FleetStatus } from "../actions" // Import type
 import { useState } from "react"
 import { VehicleDetailsDialog } from "@/components/vehicle-details-dialog"
@@ -76,11 +76,11 @@ export function FleetGrid({ vehicles }: { vehicles: FleetStatus[] }) {
                         <CardContent className="p-5">
                             <div className="flex justify-between items-start mb-2">
                                 <div>
-                                    <h3 className="font-bold text-lg text-zinc-900">{vehicle.code}</h3>
-                                    <p className="text-zinc-500 text-sm font-mono">{vehicle.plate}</p>
+                                    <h3 className="font-bold text-lg text-zinc-900">{vehicle.model}</h3>
+                                    <p className="text-zinc-500 text-sm font-mono">{vehicle.plate} • {vehicle.code}</p>
                                 </div>
                                 <div className="bg-zinc-100/50 p-2 rounded-full backdrop-blur-sm">
-                                    <Car size={20} className="text-zinc-500" />
+                                    {vehicle.tipo === 'Moto' ? <Bike size={20} className="text-zinc-500" /> : <Car size={20} className="text-zinc-500" />}
                                 </div>
                             </div>
 

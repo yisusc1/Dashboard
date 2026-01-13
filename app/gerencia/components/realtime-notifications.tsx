@@ -4,8 +4,11 @@ import { useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
 import { AlertTriangle, Wrench } from "lucide-react"
+import { useRouter } from "next/navigation" // [NEW]
 
 export function RealtimeNotifications() {
+    const router = useRouter() // [NEW]
+
     useEffect(() => {
         const supabase = createClient()
 
@@ -43,14 +46,31 @@ export function RealtimeNotifications() {
                         const u = new SpeechSynthesisUtterance("Alerta gerente. Nueva falla de vehículo reportada.")
                         window.speechSynthesis.speak(u)
                     }
+
+                    // Refresh data
+                    router.refresh()
+                }
+            )
+            .subscribe()
+
+        // [NEW] Listener for TRIPS (Reports)
+        const tripsChannel = supabase
+            .channel('realtime-trips')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'reportes' }, // Listen to everything on reportes
+                (payload) => {
+                    console.log("Trip update detected, refreshing dashboard...", payload)
+                    router.refresh()
                 }
             )
             .subscribe()
 
         return () => {
             supabase.removeChannel(faultsChannel)
+            supabase.removeChannel(tripsChannel)
         }
-    }, [])
+    }, [router])
 
     return null // Invisible component
 }

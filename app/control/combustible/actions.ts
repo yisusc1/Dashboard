@@ -80,6 +80,7 @@ export async function createFuelLog(data: FuelLogData) {
         // [NEW] Auto-reset vehicle fuel to 100% (Full) on refuel
         await supabase.from("vehiculos").update({
             current_fuel_level: 100,
+            kilometraje: data.mileage,
             last_fuel_update: new Date().toISOString()
         }).eq("id", data.vehicle_id)
 

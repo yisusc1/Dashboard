@@ -78,18 +78,28 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
     async function loadVehicles() {
         const supabase = createClient()
 
-        // 1. Get User Department
+        // 1. Get User Profile
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return []
 
-        const { data: profile } = await supabase.from('profiles').select('department, roles').eq('id', user.id).single()
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('department, roles, first_name, last_name') // [UPDATED] Fetch names
+            .eq('id', user.id)
+            .single()
+
         const userDept = profile?.department
-        // const isAdmin = profile?.roles?.includes('admin') || profile?.roles?.includes('transporte')
+
+        // [NEW] Auto-fill Conductor Name
+        if (profile?.first_name || profile?.last_name) {
+            const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
+            setConductor(fullName)
+        }
 
         // 2. Get Vehicles
         const { data: allVehicles } = await supabase.from('vehiculos').select('*').order('codigo')
         const { data: busyReports } = await supabase.from('reportes').select('vehiculo_id').is('km_entrada', null)
-        const { data: kData } = await supabase.from('vista_ultimos_kilometrajes').select('*') // [NEW] Fetch mileage
+        const { data: kData } = await supabase.from('vista_ultimos_kilometrajes').select('*')
 
         const busyIds = new Set(busyReports?.map(r => r.vehiculo_id))
 
@@ -210,6 +220,7 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
 
             await supabase.from('vehiculos').update({
                 current_fuel_level: fuelLevel,
+                kilometraje: km,
                 last_fuel_update: new Date().toISOString()
             }).eq('id', vehiculoId)
 
@@ -414,12 +425,12 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
                                 </div>
 
                                 <div className="space-y-2 col-span-2">
-                                    <Label>Conductor</Label>
+                                    <Label>Conductor (Auto-asignado)</Label>
                                     <Input
                                         value={conductor}
-                                        onChange={e => setConductor(e.target.value)}
-                                        className="h-12 rounded-xl bg-white"
-                                        placeholder="Nombre completo"
+                                        readOnly
+                                        className="h-12 rounded-xl bg-zinc-100 text-zinc-500 border-zinc-200 cursor-not-allowed focus-visible:ring-0"
+                                        placeholder="Cargando identidad..."
                                     />
                                 </div>
 
