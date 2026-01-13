@@ -275,42 +275,47 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId }: SalidaFo
         const hora = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         const isMoto = vehiculoObj?.codigo?.startsWith('M-') || vehiculoObj?.tipo === 'Moto' || vehiculoObj?.modelo?.toLowerCase().includes('moto')
 
-        let msg = `*REPORTE DE SALIDA*\n\n`
-        msg += `*Fecha:* ${fecha}\n`
-        msg += `*Hora:* ${hora}\n\n`
+        let msg = `*Reporte de Salida*\n\n`
+        msg += `Fecha: ${fecha}\n`
+        msg += `Hora: ${hora}\n\n`
 
-        msg += `*Conductor:* ${data.conductor}\n`
-        msg += `*Departamento:* ${data.departamento}\n\n`
+        msg += `Conductor: ${data.conductor}\n`
+        msg += `Departamento: ${data.departamento}\n\n`
 
-        msg += `*Vehículo:* ${vehiculoNombre}\n`
-        if (vehiculoObj?.placa) msg += `*Placa:* ${vehiculoObj.placa}\n`
-        msg += `*Kilometraje:* ${data.km_salida}\n`
-        msg += `*Gasolina:* ${data.gasolina_salida}\n\n`
+        msg += `Vehículo: ${vehiculoNombre}\n`
+        if (vehiculoObj?.placa) msg += `Placa: ${vehiculoObj.placa}\n`
+        msg += `Kilometraje (Salida): ${data.km_salida}\n`
+        msg += `Nivel de Gasolina: ${data.gasolina_salida}\n\n`
 
         msg += `*Chequeo Técnico:*\n`
-        msg += `• Aceite: ${check(data.aceite_salida)}\n`
-        if (!isMoto) msg += `• Agua/Refrigerante: ${check(data.agua_salida)}\n`
+        msg += `Chequeo de Aceite: ${check(data.aceite_salida)}\n`
+        if (!isMoto) msg += `Chequeo de Agua/Refrigerante: ${check(data.agua_salida)}\n`
+
+        msg += `\n`
 
         if (isMoto) {
-            msg += `• Casco: ${check(data.casco_salida)}\n`
-            msg += `• Luces: ${check(data.luces_salida)}\n`
-            msg += `• Herramientas: ${check(data.herramientas_salida)}\n`
+            msg += `*Seguridad (Moto):*\n`
+            msg += `Casco: ${check(data.casco_salida)}\n`
+            msg += `Luces: ${check(data.luces_salida)}\n`
+            msg += `Herramientas: ${check(data.herramientas_salida)}\n`
         } else {
-            msg += `• Gato: ${check(data.gato_salida)}\n`
-            msg += `• Llave Cruz: ${check(data.cruz_salida)}\n`
-            msg += `• Triángulo: ${check(data.triangulo_salida)}\n`
-            msg += `• Caucho: ${check(data.caucho_salida)}\n`
-            msg += `• Carpeta: ${check(data.carpeta_salida)}\n`
+            msg += `*Seguridad:*\n`
+            msg += `Gato: ${check(data.gato_salida)}\n`
+            msg += `Llave Cruz: ${check(data.cruz_salida)}\n`
+            msg += `Triángulo: ${check(data.triangulo_salida)}\n`
+            msg += `Caucho: ${check(data.caucho_salida)}\n`
+            msg += `Carpeta de Permisos: ${check(data.carpeta_salida)}\n`
         }
+        msg += `\n`
 
         if (data.departamento === 'Instalación' && !isMoto) {
-            msg += `\n*Equipos:*\n`
-            msg += `• ONU/Router: ${check(data.onu_salida)}\n`
-            msg += `• Mini-UPS: ${check(data.ups_salida)}\n`
-            msg += `• Escalera: ${check(data.escalera_salida)}\n`
+            msg += `*Equipos Asignados:*\n`
+            msg += `ONU/Router: ${check(data.onu_salida)}\n`
+            msg += `Mini-UPS: ${check(data.ups_salida)}\n`
+            msg += `Escalera: ${check(data.escalera_salida)}\n\n`
         }
 
-        msg += `\n*Observaciones:* ${data.observaciones_salida || 'Ninguna'}`
+        msg += `Observaciones: ${data.observaciones_salida || 'Ninguna'}`
         return msg
     }
 

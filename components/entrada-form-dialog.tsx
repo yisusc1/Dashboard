@@ -256,46 +256,52 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId }: Entrada
 
         const isMoto = vehiculo?.codigo?.startsWith('M-') || vehiculo?.tipo === 'Moto' || vehiculo?.modelo?.toLowerCase().includes('moto') || false
 
-        let msg = `*REPORTE DE ENTRADA*\n\n`
+        let msg = `*Reporte de Entrada*\n\n`
 
-        msg += `*Fecha:* ${fechaEntrada}\n`
-        msg += `*Salida:* ${horaSalida}\n`
-        msg += `*Entrada:* ${horaEntrada}\n\n`
+        msg += `Fecha (Entrada): ${fechaEntrada}\n`
+        msg += `Hora (Salida): ${horaSalida}\n`
+        msg += `Hora (Entrada): ${horaEntrada}\n\n`
 
-        msg += `*Conductor:* ${reporteOriginal.conductor}\n`
-        msg += `*Departamento:* ${reporteOriginal.departamento}\n\n`
+        msg += `Conductor: ${reporteOriginal.conductor}\n`
+        msg += `Departamento: ${reporteOriginal.departamento}\n\n`
 
-        msg += `*Vehículo:* ${vehiculoNombre}\n`
-        if (vehiculo?.placa) msg += `*Placa:* ${vehiculo.placa}\n`
-        msg += `*KM Entrada:* ${entradaData.km_entrada}\n`
-        msg += `*Recorrido:* ${kmRecorrido} km\n`
-        msg += `*Gasolina:* ${entradaData.gasolina_entrada}\n\n`
+        msg += `Vehículo: ${vehiculoNombre}\n`
+        if (vehiculo?.placa) msg += `Placa: ${vehiculo.placa}\n`
+        msg += `Kilometraje (Salida): ${reporteOriginal.km_salida}\n`
+        msg += `Kilometraje (Entrada): ${entradaData.km_entrada}\n`
+        msg += `Kilometraje Recorrido: ${kmRecorrido}\n`
+        msg += `Nivel de Gasolina: ${entradaData.gasolina_entrada}\n\n`
 
         msg += `*Chequeo Técnico:*\n`
-        msg += `• Aceite: ${check(entradaData.aceite_entrada)}\n`
+        msg += `Chequeo de Aceite: ${check(entradaData.aceite_entrada)}\n`
 
-        if (!isMoto) msg += `• Agua/Refrigerante: ${check(entradaData.agua_entrada)}\n`
+        if (!isMoto) msg += `Chequeo de Agua/Refrigerante: ${check(entradaData.agua_entrada)}\n`
 
-        if (isMoto) {
-            msg += `• Casco: ${check(entradaData.casco_entrada)}\n`
-            msg += `• Luces: ${check(entradaData.luces_entrada)}\n`
-            msg += `• Herramientas: ${check(entradaData.herramientas_entrada)}\n`
+        msg += `\n`
+
+        if (!isMoto) {
+            msg += `*Herramientas:*\n`
+            msg += `Gato: ${check(entradaData.gato_entrada)}\n`
+            msg += `Llave Cruz: ${check(entradaData.cruz_entrada)}\n`
+            msg += `Triángulo: ${check(entradaData.triangulo_entrada)}\n`
+            msg += `Caucho: ${check(entradaData.caucho_entrada)}\n`
+            msg += `Carpeta de Permisos: ${check(entradaData.carpeta_entrada)}\n`
         } else {
-            msg += `• Gato: ${check(entradaData.gato_entrada)}\n`
-            msg += `• Llave Cruz: ${check(entradaData.cruz_entrada)}\n`
-            msg += `• Triángulo: ${check(entradaData.triangulo_entrada)}\n`
-            msg += `• Caucho: ${check(entradaData.caucho_entrada)}\n`
-            msg += `• Carpeta: ${check(entradaData.carpeta_entrada)}\n`
+            msg += `*Seguridad (Moto):*\n`
+            msg += `Casco: ${check(entradaData.casco_entrada)}\n`
+            msg += `Luces: ${check(entradaData.luces_entrada)}\n`
+            msg += `Herramientas: ${check(entradaData.herramientas_entrada)}\n`
         }
 
         if (reporteOriginal.departamento === 'Instalación' && !isMoto) {
-            msg += `\n*Equipos:*\n`
-            msg += `• ONU/Router: ${check(entradaData.onu_entrada)}\n`
-            msg += `• Mini-UPS: ${check(entradaData.ups_entrada)}\n`
-            msg += `• Escalera: ${check(entradaData.escalera_entrada)}\n`
+            msg += `\n*Equipos Asignados:*\n`
+            msg += `ONU/Router: ${check(entradaData.onu_entrada)}\n`
+            msg += `Mini-UPS: ${check(entradaData.ups_entrada)}\n`
+            msg += `Escalera: ${check(entradaData.escalera_entrada)}\n`
         }
 
-        msg += `\n*Observaciones:* ${entradaData.observaciones_entrada || 'Ninguna'}`
+        msg += `\nObservaciones: ${entradaData.observaciones_entrada || 'Ninguna'}`
+        return msg
         return msg
     }
 
