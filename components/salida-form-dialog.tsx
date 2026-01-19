@@ -90,6 +90,7 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
             .single()
 
         const userDept = profile?.department
+        const isMecanico = (profile?.roles || []).includes('mecanico')
 
         // [NEW] Auto-fill Conductor Name
         if (profile?.first_name || profile?.last_name) {
@@ -106,6 +107,9 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
 
         const available = allVehicles?.filter(v => {
             if (busyIds.has(v.id)) return false
+
+            // [FIX] Mechanics see ALL vehicles regardless of department
+            if (isMecanico) return true
 
             // Filter by department if set
             if (v.department && userDept) {
