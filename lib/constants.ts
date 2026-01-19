@@ -57,7 +57,8 @@ export const JOB_TITLES_BY_DEPARTMENT: Record<string, string[]> = {
     ],
     "Transporte": [
         "Encomendador",
-        "Chofer"
+        "Chofer",
+        "Mecánico"
     ],
     "Administración": [
         "Encargado",
@@ -97,8 +98,8 @@ export const INITIAL_MODULES_CONFIG = [
     { key: "module_afectaciones", label: "Afectaciones", path: "/afectaciones", default: true },
     { key: "module_comercializacion", label: "Comercialización", path: "/comercializacion", default: true },
     { key: "module_transporte", label: "Transporte / Chofer", path: "/transporte", default: true },
-    { key: "module_taller", label: "Taller Mecánico", path: "/taller", default: false }, // Request: "varios sin construir" -> likely Taller/Almacen
-    { key: "module_almacen", label: "Almacén", path: "/almacen", default: false },
+    { key: "module_taller", label: "Taller Mecánico", path: "/taller", default: true }, // Request: "varios sin construir" -> likely Taller/Almacen
+    { key: "module_almacen", label: "Almacén", path: "/almacen", default: true },
     { key: "module_control", label: "Auditoría / Control", path: "/control", default: true },
     { key: "module_combustible", label: "Combustible", path: "/control/combustible", default: true },
     { key: "module_rrhh", label: "Recursos Humanos", path: "/rrhh", default: true },
