@@ -53,7 +53,7 @@ const ROLE_GROUPS = [
     },
     {
         title: "Módulos Operativos",
-        roles: ["transporte", "taller", "almacen"]
+        roles: ["transporte", "taller", "almacen", "mecanico"]
     },
     {
         title: "Acceso a Departamentos",
@@ -186,7 +186,7 @@ export default function AdminUsersPage() {
 
     const getRoleBadgeColor = (role: string) => {
         if (role === "admin") return "bg-purple-100 text-purple-700 hover:bg-purple-200"
-        if (["tecnico", "chofer", "supervisor"].includes(role)) return "bg-green-100 text-green-700"
+        if (["tecnico", "chofer", "supervisor", "mecanico"].includes(role)) return "bg-green-100 text-green-700"
         if (["auditoria", "combustible"].includes(role)) return "bg-red-100 text-red-700"
         return "bg-zinc-100 text-zinc-700"
     }
@@ -526,6 +526,7 @@ export default function AdminUsersPage() {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="tecnico">Técnico</SelectItem>
+                                    <SelectItem value="mecanico">Mecánico</SelectItem>
                                     <SelectItem value="admin">Administrador</SelectItem>
                                     <SelectItem value="supervisor">Supervisor</SelectItem>
                                     <SelectItem value="chofer">Chofer</SelectItem>

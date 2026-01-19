@@ -106,7 +106,7 @@ export async function middleware(request: NextRequest) {
     }
 
     // 2. Transporte
-    if (path.startsWith("/transporte") && !hasRole("transporte")) {
+    if (path.startsWith("/transporte") && !hasRole("transporte") && !hasRole("mecanico")) {
         return NextResponse.redirect(new URL("/unauthorized", request.url))
     }
 
