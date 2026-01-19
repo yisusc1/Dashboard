@@ -90,12 +90,19 @@ export default function TransportePage() {
             setProfile(profileData)
 
             // 2. Check for Assigned Vehicle (Driver Mode)
-            const { data: myVehicle } = await supabase
-                .from('vehiculos')
-                .select('*')
-                .eq('assigned_driver_id', user.id)
-                .limit(1)
-                .maybeSingle()
+            // IF user is 'mecanico', we SKIP Driver Mode to allow them to see ALL vehicles
+            const isMecanico = (profileData.roles || []).includes('mecanico')
+            let myVehicle = null
+
+            if (!isMecanico) {
+                const { data } = await supabase
+                    .from('vehiculos')
+                    .select('*')
+                    .eq('assigned_driver_id', user.id)
+                    .limit(1)
+                    .maybeSingle()
+                myVehicle = data
+            }
 
             if (myVehicle) {
                 setAssignedVehicle(myVehicle)
