@@ -720,9 +720,12 @@ function FaultCard({ fault, onMoveToReview, onResolve, onDiscard, isReviewing }:
                 </div>
 
                 <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start mb-1 h-8">
-                        <h3 className="font-bold text-zinc-900 truncate text-lg">{fault.modelo}</h3>
-                        <div className={`p-2 rounded-full border ${priorityColor}`}>
+                    <div className="flex justify-between items-start mb-2">
+                        <div className="flex flex-col pr-2">
+                            <h3 className="font-bold text-zinc-900 text-lg leading-tight">{fault.modelo}</h3>
+                            <span className="text-sm text-zinc-500 font-mono mt-0.5">{fault.placa}</span>
+                        </div>
+                        <div className={`p-2 rounded-full border ${priorityColor} shrink-0`}>
                             <Icon size={18} />
                         </div>
                     </div>
