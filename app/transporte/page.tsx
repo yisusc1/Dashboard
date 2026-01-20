@@ -23,6 +23,7 @@ type Vehicle = {
     falla_activa?: any
     current_fuel_level?: number
     kilometraje?: number
+    foto_url?: string // [UPDATED] Use correct column name
 }
 
 type Profile = {
@@ -109,7 +110,7 @@ export default function TransportePage() {
             } else {
                 // 3. If no assigned vehicle, load Pool (Pool Mode)
                 console.log("No assigned vehicle found, loading pool.")
-                const { data: allVehicles } = await supabase.from('vehiculos').select('id, modelo, placa, codigo')
+                const { data: allVehicles } = await supabase.from('vehiculos').select('id, modelo, placa, codigo, foto_url')
                 if (allVehicles) setVehicles(allVehicles)
             }
 
@@ -205,9 +206,20 @@ export default function TransportePage() {
                                 <div>
                                     <h3 className="text-zinc-400 text-xs font-bold uppercase tracking-widest mb-2">Vehículo Asignado</h3>
                                     <div className="flex items-center gap-4">
-                                        <div className="h-16 w-16 bg-zinc-100 rounded-2xl flex items-center justify-center text-zinc-900">
-                                            <Car size={32} />
-                                        </div>
+                                        {/* [NEW] Image Logic */}
+                                        {(assignedVehicle.foto_url || assignedVehicle.modelo.toUpperCase().includes('MITSUBISHI L300')) ? (
+                                            <div className="h-16 w-16 bg-zinc-100 rounded-2xl flex items-center justify-center overflow-hidden border border-zinc-200">
+                                                <img
+                                                    src={assignedVehicle.foto_url || "/vehicles/mitsubishi_l300.png"}
+                                                    alt={assignedVehicle.modelo}
+                                                    className="h-full w-full object-cover"
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div className="h-16 w-16 bg-zinc-100 rounded-2xl flex items-center justify-center text-zinc-900">
+                                                <Car size={32} />
+                                            </div>
+                                        )}
                                         <div>
                                             <h2 className="text-2xl font-bold text-zinc-900 leading-tight">{assignedVehicle.modelo}</h2>
                                             <div className="flex items-center gap-3 mt-1">

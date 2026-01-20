@@ -179,9 +179,12 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
         setLoading(true)
         try {
             const supabase = createClient()
+            const { data: { user } } = await supabase.auth.getUser()
+
             const { error } = await supabase
                 .from('reportes')
                 .insert({
+                    user_id: user?.id, // [FIX] Bind report to user for Pool Mode
                     vehiculo_id: vehiculoId,
                     km_salida: km,
                     conductor,
