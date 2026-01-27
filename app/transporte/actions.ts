@@ -152,3 +152,36 @@ export async function updateVehicleFuel(vehicleId: string, fuelText: string) {
     revalidatePath('/gerencia');
     return { success: true };
 }
+
+// [NEW] Assign Vehicle to Driver (Securely via RPC)
+export async function assignVehicleToDriver(vehicleId: string) {
+    const supabase = await createClient();
+
+    // Call the RPC function logic
+    const { error } = await supabase.rpc('assign_vehicle_to_me', {
+        target_vehicle_id: vehicleId
+    });
+
+    if (error) {
+        console.error("Error signing vehicle (RPC):", error);
+        return { success: false, error: error.message };
+    }
+
+    // [DEBUG] Verify the change stuck
+    const { data: verifyData } = await supabase
+        .from('vehiculos')
+        .select('assigned_driver_id')
+        .eq('id', vehicleId)
+        .single();
+
+    // Check if the user ID matches (Supabase user ID from auth.getUser())
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (verifyData?.assigned_driver_id !== user?.id) {
+        console.error("Verification Failed: DB did not update.", verifyData);
+        return { success: false, error: "La base de datos no confirmó el cambio. (RLS Error?)" };
+    }
+
+    revalidatePath('/transporte');
+    return { success: true };
+}

@@ -130,8 +130,8 @@ function VehiculosContent() {
                 .neq('estado', 'Reparado')
                 .neq('estado', 'Descartado')
 
-            if (mileageError) console.error('Error fetching mileages:', mileageError)
-            if (faultsError) console.error('Error fetching defaults:', faultsError)
+            if (mileageError) console.error('Error fetching mileages:', JSON.stringify(mileageError, null, 2))
+            if (faultsError) console.error('Error fetching defaults:', JSON.stringify(faultsError, null, 2))
 
             // 4. Merge Data
             const mergedVehicles = vehiclesData?.map(vehicle => {

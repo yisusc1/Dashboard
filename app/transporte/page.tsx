@@ -14,6 +14,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner"
 import QRCode from "react-qr-code"
 import Link from "next/link"
+import { VehicleSelector } from "@/components/vehicle-selector" // [FIX] Import added
+
+import { assignVehicleToDriver } from "./actions" // [FIX] Import server action
+
+// ... inside component ...
+
+// (Removed misplaced function)
+// ... imports fixed ...
 
 type Vehicle = {
     id: string
@@ -107,39 +115,57 @@ export default function TransportePage() {
 
             if (myVehicle) {
                 setAssignedVehicle(myVehicle)
-            } else {
-                // 3. If no assigned vehicle, load Pool (Pool Mode)
-                console.log("No assigned vehicle found, loading pool.")
-                const { data: allVehicles } = await supabase.from('vehiculos').select('id, modelo, placa, codigo, foto_url')
-                if (allVehicles) setVehicles(allVehicles)
             }
 
-            // 4. [NEW] Check for Active Trip (Improved Logic)
-            let activeTrip = null
+            // 3. Always load Pool for Selector availability
+            // [FIX] 'kilometraje' is not in 'vehiculos' table. We must fetch it from view or omit.
+            // Fetch Vehicles
+            const { data: allVehicles } = await supabase
+                .from('vehiculos')
+                .select('id, modelo, placa, codigo, foto_url')
+                .order('modelo', { ascending: true })
 
-            if (myVehicle) {
-                // Scenario A: Assigned Vehicle (Driver Mode)
-                const { data } = await supabase
-                    .from('reportes')
+            // 4. [FIX] Check for Active Trip (PRIORITY over Assigned)
+            // Logic: If user has an open trip, THAT is the context vehicle.
+            const { data: activeTripData } = await supabase
+                .from('reportes')
+                .select('*')
+                .eq('user_id', user.id)
+                .is('km_entrada', null)
+                .limit(1)
+                .maybeSingle()
+
+            let contextVehicle = null
+
+            // If active trip exists, fetch THAT vehicle and use it
+            if (activeTripData) {
+                const { data: tripVehicle } = await supabase
+                    .from('vehiculos')
                     .select('*')
-                    .eq('vehiculo_id', myVehicle.id)
-                    .is('km_entrada', null)
-                    .limit(1)
-                    .maybeSingle()
-                activeTrip = data
+                    .eq('id', activeTripData.vehiculo_id)
+                    .single()
+
+                if (tripVehicle) {
+                    contextVehicle = tripVehicle
+                    setActiveTripReport(activeTripData)
+                }
             } else {
-                // Scenario B: Pool Mode
-                const { data } = await supabase
-                    .from('reportes')
-                    .select('*')
-                    .eq('user_id', user.id)
-                    .is('km_entrada', null)
-                    .limit(1)
-                    .maybeSingle()
-                activeTrip = data
+                // If no active trip, fallback to Assigned Vehicle
+                if (myVehicle) {
+                    contextVehicle = myVehicle
+                }
+                setActiveTripReport(null)
             }
 
-            setActiveTripReport(activeTrip)
+            // Set the vehicle context
+            if (contextVehicle) {
+                setAssignedVehicle(contextVehicle)
+            } else {
+                // Optimization: Only load pool if NO context vehicle to show
+                // Actually, we moved pool load to 'loadVehicleList' on demand (for selector),
+                // BUT we might want to pre-load for speed or just leave it lazy.
+                // Let's leave it lazy OR empty.
+            }
 
         } catch (error: any) {
             console.error("Error loading data:", error)
@@ -160,10 +186,109 @@ export default function TransportePage() {
         setVehicleSelectOpen(true)
     }
 
-    const confirmVehicleSelectionPool = () => {
-        if (!selectedVehicleId) return
-        setVehicleSelectOpen(false)
-        setFaultOpen(true)
+    // [NEW] Refresh vehicles when selector opens to ensure fresh list
+    useEffect(() => {
+        if (vehicleSelectOpen) {
+            // [FIX] ONLY load vehicle list, DO NOT reload profile/assigned vehicle
+            // This prevents overwriting the manually selected vehicle
+            loadVehicleList()
+        }
+    }, [vehicleSelectOpen])
+
+    async function loadVehicleList() {
+        if (!profile) return
+
+        // [FIX] 'kilometraje' is not in 'vehiculos' table. We must fetch it from view or omit.
+        // Fetch Vehicles WITH DEPARTMENT FILTER
+        let query = supabase
+            .from('vehiculos')
+            .select('id, modelo, placa, codigo, foto_url, department') // [FIX] Added department to check
+            .order('modelo', { ascending: true })
+
+        // [RULE] If NOT admin/mecanico, filter by department
+        // Assuming profile has 'department' field.
+        const isSuperUser = (profile.roles || []).includes('admin') || (profile.roles || []).includes('mecanico')
+        // @ts-ignore - Check if department exists in profile type or implied
+        if (!isSuperUser && profile.department) {
+            // @ts-ignore
+            query = query.or(`department.eq.${profile.department},department.is.null`) // Show user's dept OR shared/null
+        }
+
+        const { data: allVehicles } = await query
+
+        // Fetch Mileage Data
+        const { data: kData } = await supabase
+            .from('vista_ultimos_kilometrajes')
+            .select('vehiculo_id, ultimo_kilometraje')
+
+        if (allVehicles) {
+            // Merge mileage
+            const vehiclesWithKm = allVehicles.map(v => ({
+                ...v,
+                kilometraje: kData?.find(k => k.vehiculo_id === v.id)?.ultimo_kilometraje || 0
+            }))
+            // @ts-ignore
+            setVehicles(vehiclesWithKm)
+        }
+    }
+
+    const confirmVehicleSelectionPool = async (targetId?: string) => {
+        const vId = targetId || selectedVehicleId
+        if (!vId || !profile) return
+        setLoading(true) // Show loading state
+
+        try {
+            // [CONSTRAINT] Block change if active trip exists
+            if (activeTripReport) {
+                toast.error("No puedes cambiar de unidad con un viaje activo. Registra la entrada primero.")
+                setVehicleSelectOpen(false)
+                setLoading(false)
+                return
+            }
+
+            // [FIX] Use Server Action to Assign (Bypass potential RLS or client issues)
+            const result = await assignVehicleToDriver(vId)
+
+            if (!result.success) {
+                throw new Error(result.error)
+            }
+
+            toast.success("Vehículo asignado correctamente")
+
+            // 3. Refresh Context
+            setVehicleSelectOpen(false)
+
+            // Find the vehicle object locally to update state immediately before reload
+            const v = vehicles.find(v => v.id === selectedVehicleId)
+            if (v) {
+                setAssignedVehicle(v)
+                checkTripForVehicle(v.id)
+            }
+
+            // Reload all data to ensure consistency
+            loadData(true)
+
+        } catch (error) {
+            console.error(error)
+            // @ts-ignore
+            toast.error("Error al asignar el vehículo: " + (error.message || "Descociendo"))
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    // [NEW] Helper to check trip status for a specific switched vehicle
+    async function checkTripForVehicle(vId: string) {
+        setActiveTripReport(null) // Reset first
+        const { data } = await supabase
+            .from('reportes')
+            .select('*')
+            .eq('vehiculo_id', vId)
+            .is('km_entrada', null)
+            .limit(1)
+            .maybeSingle()
+
+        if (data) setActiveTripReport(data)
     }
 
     // --- RENDER HELPERS ---
@@ -201,8 +326,26 @@ export default function TransportePage() {
                 {/* DRIVER SPECIFIC HEADER */}
                 {assignedVehicle && (
                     <div className="mb-8 animate-in fade-in slide-in-from-top-4 duration-500">
-                        <div className="bg-white rounded-[2rem] p-6 border border-zinc-100 shadow-sm relative overflow-hidden">
-                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                        <div className="bg-white rounded-[2rem] p-6 border border-zinc-100 shadow-sm relative"> {/* Removed overflow-hidden to allow absolute if needed, but top-6 is fine inside */}
+
+                            {/* [MOVED] Cambio de Unidad - Absolute Top Right of Card */}
+                            <Button
+                                variant="ghost"
+                                disabled={!!activeTripReport} // [FIX] Disable if in trip
+                                onClick={() => {
+                                    if (activeTripReport) {
+                                        toast.error("Debes finalizar tu viaje actual antes de cambiar de unidad.")
+                                        return
+                                    }
+                                    setVehicleSelectOpen(true)
+                                }}
+                                className={`absolute top-6 right-6 h-10 px-4 rounded-xl text-xs font-semibold flex items-center gap-2 ${activeTripReport ? 'text-zinc-300 cursor-not-allowed' : 'text-zinc-400 hover:text-zinc-900 hover:bg-zinc-50'}`}
+                            >
+                                <Car size={16} />
+                                Cambiar Unidad
+                            </Button>
+
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mt-2"> {/* Added margin top to avoid overlap if on mobile */}
                                 <div>
                                     <h3 className="text-zinc-400 text-xs font-bold uppercase tracking-widest mb-2">Vehículo Asignado</h3>
                                     <div className="flex items-center gap-4">
@@ -234,11 +377,13 @@ export default function TransportePage() {
                                         </div>
                                     </div>
                                 </div>
+                            </div>
 
-                                {/* QR BUTTON FOR DRIVER */}
+                            <div className="flex gap-2 relative mt-4">
+                                {/* QR BUTTON FOR DRIVER (Centered or full width on mobile) */}
                                 <Dialog open={qrOpen} onOpenChange={setQrOpen}>
                                     <DialogTrigger asChild>
-                                        <Button className="h-14 px-6 rounded-2xl bg-black text-white hover:bg-zinc-800 shadow-lg shadow-zinc-200/50 active:scale-95 transition-all text-sm font-semibold flex items-center gap-2">
+                                        <Button className="h-14 px-6 rounded-2xl bg-black text-white hover:bg-zinc-800 shadow-lg shadow-zinc-200/50 active:scale-95 transition-all text-sm font-semibold flex items-center gap-2 w-full sm:w-auto justify-center">
                                             <QrCode size={18} />
                                             <span>Código de Combustible</span>
                                         </Button>
@@ -405,34 +550,31 @@ export default function TransportePage() {
                 {/* POOL SELECTOR DIALOG */}
                 <Dialog open={vehicleSelectOpen} onOpenChange={setVehicleSelectOpen}>
                     <DialogContent className="sm:max-w-md rounded-2xl border-none shadow-2xl">
-                        <DialogHeader>
-                            <DialogTitle className="text-center text-xl font-bold">Seleccionar Vehículo</DialogTitle>
-                        </DialogHeader>
-                        <div className="py-4">
-                            <label className="text-sm font-semibold text-zinc-700 mb-2 block">Vehículo con Falla</label>
-                            <Select value={selectedVehicleId} onValueChange={setSelectedVehicleId}>
-                                <SelectTrigger className="h-12 rounded-xl">
-                                    <SelectValue placeholder="Seleccione un vehículo..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {vehicles.map(v => (
-                                        <SelectItem key={v.id} value={v.id}>
-                                            {v.modelo} - {v.placa} ({v.codigo})
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                        <DialogTitle className="sr-only">Seleccionar Vehículo</DialogTitle> {/* [FIX] Accessiblity */}
+                        <DialogDescription className="sr-only">
+                            Seleccione un vehículo de la lista disponible para operar.
+                        </DialogDescription>
+
+                        {/* [MOD] Using VehicleSelector for Rich UI */}
+                        <VehicleSelector
+                            vehicles={vehicles}
+                            selectedVehicleId={selectedVehicleId}
+                            onSelect={(v) => {
+                                if (v) {
+                                    setSelectedVehicleId(v.id)
+                                    // [FIX] Call Server Action immediately to persist assignment
+                                    confirmVehicleSelectionPool(v.id)
+                                } else {
+                                    // [FIX] Handle Deselection (User clicked 'Cambiar')
+                                    setSelectedVehicleId("")
+                                    // Do NOT clear assignedVehicle yet, user is just browsing. 
+                                }
+                            }}
+                            label="Seleccionar Unidad"
+                        />
+                        <div className="flex justify-end">
+                            <Button variant="ghost" onClick={() => setVehicleSelectOpen(false)} className="rounded-xl mt-2 text-zinc-400">Cancelar</Button>
                         </div>
-                        <DialogFooter>
-                            <Button variant="outline" onClick={() => setVehicleSelectOpen(false)} className="rounded-xl">Cancelar</Button>
-                            <Button
-                                onClick={confirmVehicleSelectionPool}
-                                disabled={!selectedVehicleId}
-                                className="rounded-xl bg-black text-white hover:bg-zinc-800"
-                            >
-                                Continuar
-                            </Button>
-                        </DialogFooter>
                     </DialogContent>
                 </Dialog>
 

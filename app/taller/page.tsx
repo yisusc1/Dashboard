@@ -18,6 +18,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import { VehicleHistoryDialog } from "@/components/vehicle-history-dialog" // [NEW] Import
 
 type Fault = {
     id: string
@@ -46,7 +47,13 @@ export default function TallerPage() {
     const [maintenanceOpen, setMaintenanceOpen] = useState(false)
     const [selectedVehicleId, setSelectedVehicleId] = useState<string | undefined>(undefined)
     const [selectedServiceType, setSelectedServiceType] = useState<string | undefined>(undefined)
+
     const [pendingResolveId, setPendingResolveId] = useState<string | null>(null)
+
+    // History Dialog
+    const [historyVehicleId, setHistoryVehicleId] = useState<string | undefined>(undefined)
+    const [historyVehiclePlate, setHistoryVehiclePlate] = useState<string | undefined>(undefined)
+    const [historyOpen, setHistoryOpen] = useState(false)
 
     // History State
     // [Mod] Expanded View State
@@ -556,6 +563,11 @@ export default function TallerPage() {
                                                 fault={fault}
                                                 onMoveToReview={() => handleReview(fault)}
                                                 onResolve={() => handleResolve(fault)}
+                                                onShowHistory={() => {
+                                                    setHistoryVehicleId(fault.vehiculo_id)
+                                                    setHistoryVehiclePlate(fault.placa)
+                                                    setHistoryOpen(true)
+                                                }}
                                             />
                                         ))}
                                     </div>
@@ -676,16 +688,25 @@ export default function TallerPage() {
                 lockVehicle={!!selectedVehicleId}
                 onSuccess={handleMaintenanceSuccess}
             />
+
+            {/* [NEW] Transport History Dialog */}
+            <VehicleHistoryDialog
+                isOpen={historyOpen}
+                onClose={() => setHistoryOpen(false)}
+                vehicleId={historyVehicleId}
+                vehiclePlate={historyVehiclePlate}
+            />
         </main>
     )
 }
 
-function FaultCard({ fault, onMoveToReview, onResolve, onDiscard, isReviewing }: {
+function FaultCard({ fault, onMoveToReview, onResolve, onDiscard, isReviewing, onShowHistory }: {
     fault: Fault,
     onMoveToReview?: () => void,
     onResolve: () => void,
     onDiscard?: () => void,
     isReviewing?: boolean
+    onShowHistory?: () => void
 }) {
     const priorityColor = {
         'Crítica': 'text-red-500 bg-red-50 border-red-100',
@@ -705,9 +726,10 @@ function FaultCard({ fault, onMoveToReview, onResolve, onDiscard, isReviewing }:
     }
 
     const Icon = getFaultIcon(fault.tipo_falla)
+    const isMaintenance = fault.tipo_falla === 'Mantenimiento'
 
     return (
-        <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm hover:shadow-md transition-all group">
+        <div className={`bg-white p-5 rounded-2xl border shadow-sm hover:shadow-md transition-all group ${isMaintenance ? 'border-indigo-100 border-l-4 border-l-indigo-500' : 'border-zinc-200 border-l-4 border-l-zinc-200'}`}>
             <div className="flex gap-4">
                 <div className="relative w-20 h-20 bg-zinc-100 rounded-xl overflow-hidden shrink-0">
                     {fault.foto_url ? (
@@ -756,6 +778,12 @@ function FaultCard({ fault, onMoveToReview, onResolve, onDiscard, isReviewing }:
                         <Button onClick={onMoveToReview} size="sm" variant="outline" className="h-8 rounded-lg text-xs">
                             Revisar
                             <ArrowRight size={14} className="ml-2" />
+                        </Button>
+                    )}
+
+                    {onShowHistory && !isMaintenance && ( // Only show history for repairs, redundant for auto-maint? No, helpful everywhere.
+                        <Button onClick={onShowHistory} size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-lg text-zinc-400 hover:text-zinc-600" title="Ver viajes recientes">
+                            <Clock size={16} />
                         </Button>
                     )}
 

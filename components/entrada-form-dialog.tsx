@@ -136,8 +136,11 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
         }
 
         const km = parseInt(kmEntrada)
-        if (selectedReport && km < selectedReport.km_salida) {
-            toast.error(`Error: El KM de entrada (${km}) es menor al de salida (${selectedReport.km_salida})`)
+
+
+        // [FIX] Strict Validation
+        if (selectedReport && km <= selectedReport.km_salida) {
+            toast.error(`Error: El KM de entrada (${km}) debe ser MAYOR al de salida (${selectedReport.km_salida})`)
             return
         }
 
@@ -410,7 +413,7 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
                                     )}
                                 </div>
 
-                                <div className="space-y-2">
+                                <div className="space-y-2 col-span-2">
                                     <Label>Kilometraje Llegada</Label>
                                     <Input
                                         type="number"
@@ -421,20 +424,23 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
                                     />
                                 </div>
 
-                                <div className="space-y-2">
+                                <div className="space-y-2 col-span-2">
                                     <Label>Nivel de Gasolina</Label>
-                                    <Select value={gasolina} onValueChange={setGasolina}>
-                                        <SelectTrigger className="h-12 rounded-xl bg-white">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="Full">Full</SelectItem>
-                                            <SelectItem value="3/4">3/4</SelectItem>
-                                            <SelectItem value="1/2">1/2</SelectItem>
-                                            <SelectItem value="1/4">1/4</SelectItem>
-                                            <SelectItem value="Reserva">Reserva</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                    <div className="flex gap-1 h-12 bg-zinc-100 p-1 rounded-xl">
+                                        {["Full", "3/4", "1/2", "1/4", "Reserva"].map((level) => (
+                                            <button
+                                                key={level}
+                                                type="button"
+                                                onClick={() => setGasolina(level)}
+                                                className={`flex-1 rounded-lg text-xs font-bold transition-all ${gasolina === level
+                                                    ? "bg-white text-black shadow-sm"
+                                                    : "text-zinc-400 hover:text-zinc-600"
+                                                    }`}
+                                            >
+                                                {level === "Reserva" ? "Res" : level}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
 

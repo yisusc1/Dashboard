@@ -18,7 +18,11 @@ export async function getVehicles() {
     const supabase = await createClient()
     const { data: vehicles } = await supabase
         .from("vehiculos")
-        .select("id, placa, modelo, codigo")
+        .select(`
+            id, placa, modelo, codigo, 
+            assigned_driver_id,
+            driver:profiles!assigned_driver_id(first_name, last_name)
+        `)
         .order("codigo", { ascending: true })
 
     if (!vehicles) return []

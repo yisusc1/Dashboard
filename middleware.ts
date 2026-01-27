@@ -126,7 +126,13 @@ export async function middleware(request: NextRequest) {
     }
 
     // 5. Control / Supervisor
+    // 5. Control / Supervisor
     if (path.startsWith("/control") && !hasRole("supervisor")) {
+        return NextResponse.redirect(new URL("/unauthorized", request.url))
+    }
+
+    // 6. Gerencia (Admins & Altos Mandos)
+    if (path.startsWith("/gerencia") && !hasRole("gerencia")) {
         return NextResponse.redirect(new URL("/unauthorized", request.url))
     }
 

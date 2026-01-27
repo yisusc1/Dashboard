@@ -3,8 +3,19 @@
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
+import { Car } from "lucide-react" // [FIX] Import Car
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { CheckCircle, Send } from "lucide-react"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog" // [NEW] Link components
+import { CheckCircle, Send, AlertTriangle } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
@@ -19,6 +30,7 @@ import { updateVehicleFuel } from "@/app/transporte/actions"
 // The local type had 'department', let's extend
 interface Vehiculo extends Vehicle {
     department?: string
+    assigned_driver_id?: string | null // [NEW] Track assignment
 }
 
 type SalidaFormDialogProps = {
@@ -36,6 +48,7 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
     // Form State
     const [vehiculos, setVehiculos] = useState<Vehiculo[]>([])
     const [vehiculoId, setVehiculoId] = useState("")
+    const [currentUserId, setCurrentUserId] = useState("") // [NEW] To check assignment
     const [selectedVehicle, setSelectedVehicle] = useState<Vehiculo | null>(null)
     const [kmSalida, setKmSalida] = useState("")
     const [conductor, setConductor] = useState("")
@@ -43,6 +56,10 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
     const [gasolina, setGasolina] = useState("Full")
     const [observaciones, setObservaciones] = useState("")
     const [lastKm, setLastKm] = useState<number | null>(null)
+
+    // Custom Alert State
+    const [conflictAlertOpen, setConflictAlertOpen] = useState(false)
+    const [pendingVehicle, setPendingVehicle] = useState<Vehiculo | null>(null)
 
     // Checks
     const [checks, setChecks] = useState({
@@ -67,10 +84,13 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
     useEffect(() => {
         if (isOpen) {
             setStep('form') // Reset step on open
-            loadVehicles().then((loadedVehicles) => {
-                if (initialVehicleId && loadedVehicles) {
-                    const found = loadedVehicles.find(v => v.id === initialVehicleId)
-                    if (found) handleVehicleChange(found)
+            loadVehicles().then(({ vehicles, userId }) => { // [FIX] receive userId
+                if (initialVehicleId && vehicles) {
+                    const found = vehicles.find(v => v.id === initialVehicleId)
+                    if (found) {
+                        // Pass userId explicitely to avoid race condition with state
+                        handleVehicleChange(found, userId)
+                    }
                 }
             })
         }
@@ -81,11 +101,13 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
 
         // 1. Get User Profile
         const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return []
+        if (!user) return { vehicles: [], userId: null }
+
+        setCurrentUserId(user.id) // Still set state for other uses
 
         const { data: profile } = await supabase
             .from('profiles')
-            .select('department, roles, first_name, last_name') // [UPDATED] Fetch names
+            .select('department, roles, first_name, last_name')
             .eq('id', user.id)
             .single()
 
@@ -129,10 +151,11 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
         // Auto-select department in form if user has one
         if (userDept) setDepartamento(userDept)
 
-        return available
+        return { vehicles: available, userId: user.id } // [FIX] Return composite
     }
 
-    async function handleVehicleChange(selected: Vehicle | null) {
+    // [MOD] Accept overrideUserId
+    async function handleVehicleChange(selected: Vehicle | null, overrideUserId?: string) {
         if (!selected) {
             setVehiculoId("")
             setSelectedVehicle(null)
@@ -140,6 +163,22 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
             return
         }
 
+        // Use override if provided (during init), otherwise state
+        const userIdToCheck = overrideUserId || currentUserId
+
+        // [MOD] Assignment Check with Custom Alert
+        if (selected.assigned_driver_id && userIdToCheck && selected.assigned_driver_id !== userIdToCheck) {
+            // Trigger customized alert instead of window.confirm
+            setPendingVehicle(selected as Vehiculo)
+            setConflictAlertOpen(true)
+            return // Stop here
+        }
+
+        commitVehicleChange(selected as Vehiculo)
+    }
+
+    // [NEW] Separate commit function
+    async function commitVehicleChange(selected: Vehiculo) {
         const value = selected.id
         setVehiculoId(value)
         // @ts-ignore
@@ -381,18 +420,37 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
                             {/* Basic Info */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2 col-span-2">
-                                    <VehicleSelector
-                                        vehicles={vehiculos}
-                                        selectedVehicleId={vehiculoId}
-                                        onSelect={handleVehicleChange}
-                                        label="Vehículo Disponible"
-                                    />
+                                    {/* [MOD] If initialVehicleId exists (we came from 'Cambiar Unidad'), hide selector and show static info */}
+                                    {initialVehicleId ? (
+                                        <div className="bg-zinc-50 p-4 rounded-xl border border-zinc-200">
+                                            <Label className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2 block">Vehículo Seleccionado</Label>
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shrink-0 border border-zinc-100">
+                                                    <Car size={18} className="text-zinc-600" />
+                                                </div>
+                                                <div>
+                                                    <div className="font-bold text-sm text-zinc-900">{selectedVehicle?.modelo || "Cargando..."}</div>
+                                                    <div className="text-xs text-zinc-500 font-mono flex items-center gap-2">
+                                                        {selectedVehicle?.placa}
+                                                        {selectedVehicle?.codigo && <span className="bg-white px-1.5 rounded border border-zinc-100">{selectedVehicle.codigo}</span>}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <VehicleSelector
+                                            vehicles={vehiculos}
+                                            selectedVehicleId={vehiculoId}
+                                            onSelect={handleVehicleChange}
+                                            label="Vehículo Disponible"
+                                        />
+                                    )}
                                     {lastKm !== null && (
                                         <p className="text-xs text-zinc-500 text-right">Anterior: {lastKm.toLocaleString()} km</p>
                                     )}
                                 </div>
 
-                                <div className="space-y-2">
+                                <div className="space-y-2 col-span-2">
                                     <Label>Kilometraje Actual</Label>
                                     <Input
                                         type="number"
@@ -403,20 +461,23 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
                                     />
                                 </div>
 
-                                <div className="space-y-2">
+                                <div className="space-y-2 col-span-2">
                                     <Label>Nivel de Gasolina</Label>
-                                    <Select value={gasolina} onValueChange={setGasolina}>
-                                        <SelectTrigger className="h-12 rounded-xl bg-white">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="Full">Full</SelectItem>
-                                            <SelectItem value="3/4">3/4</SelectItem>
-                                            <SelectItem value="1/2">1/2</SelectItem>
-                                            <SelectItem value="1/4">1/4</SelectItem>
-                                            <SelectItem value="Reserva">Reserva</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                    <div className="flex gap-1 h-12 bg-zinc-100 p-1 rounded-xl">
+                                        {["Full", "3/4", "1/2", "1/4", "Reserva"].map((level) => (
+                                            <button
+                                                key={level}
+                                                type="button"
+                                                onClick={() => setGasolina(level)}
+                                                className={`flex-1 rounded-lg text-xs font-bold transition-all ${gasolina === level
+                                                    ? "bg-white text-black shadow-sm"
+                                                    : "text-zinc-400 hover:text-zinc-600"
+                                                    }`}
+                                            >
+                                                {level === "Reserva" ? "Res" : level}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
 
                                 <div className="space-y-2 col-span-2">
@@ -570,6 +631,43 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
                     </>
                 )}
             </DialogContent>
+
+            {/* [NEW] Conflict Warning Dialog */}
+            <AlertDialog open={conflictAlertOpen} onOpenChange={setConflictAlertOpen}>
+                <AlertDialogContent className="rounded-3xl border-none shadow-2xl bg-zinc-900 text-white">
+                    <AlertDialogHeader>
+                        <div className="mx-auto bg-yellow-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-4">
+                            <AlertTriangle size={32} className="text-yellow-500" />
+                        </div>
+                        <AlertDialogTitle className="text-center text-xl font-bold">Advertencia de Asignación</AlertDialogTitle>
+                        <AlertDialogDescription className="text-center text-zinc-400 text-base">
+                            Este vehículo está asignado oficialmente a otro conductor.
+                            <br /><br />
+                            Usarlo podría generar conflictos en el control de kilometraje y responsabilidad.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="flex-col sm:flex-row gap-2 mt-4">
+                        <AlertDialogCancel
+                            onClick={() => {
+                                setPendingVehicle(null)
+                                setVehiculoId("") // Ensure clear
+                                setSelectedVehicle(null)
+                            }}
+                            className="rounded-xl h-12 border-zinc-700 bg-transparent text-white hover:bg-zinc-800 hover:text-white"
+                        >
+                            Cancelar
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => {
+                                if (pendingVehicle) commitVehicleChange(pendingVehicle)
+                            }}
+                            className="rounded-xl h-12 bg-yellow-500 text-black font-bold hover:bg-yellow-400"
+                        >
+                            Asumir Responsabilidad
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </Dialog>
     )
 }

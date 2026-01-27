@@ -10,13 +10,13 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
-import { UserCog, Mail, Calendar, Settings2, Building2, Briefcase, User as UserIcon, ArrowLeft, Pencil, Shield, LogIn } from "lucide-react"
+import { UserCog, Mail, Calendar, Settings2, Building2, Briefcase, User as UserIcon, ArrowLeft, Pencil, Shield, LogIn, LayoutDashboard, Truck, Wrench, Package, ClipboardCheck, Lock } from "lucide-react"
 import Link from "next/link"
 import { updateProfileDetails, impersonateUserAction, createUserAction } from "./user-actions"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
@@ -41,27 +41,67 @@ type Profile = {
     job_title?: string
 }
 
-// Grouped roles for UI
-const ROLE_GROUPS = [
+// DEFINING MODULE ACCESS GROUPS
+const MODULE_ACCESS = [
     {
-        title: "Sistema y Acceso",
-        roles: ["admin", "invitado"]
+        title: "Módulos de Sistema",
+        items: [
+            {
+                role: 'gerencia',
+                label: 'Centro de Control',
+                description: 'Dashboard ejecutivo, estadísticas y métricas en vivo.',
+                icon: LayoutDashboard,
+                color: 'text-indigo-600 bg-indigo-50 border-indigo-200'
+            },
+            {
+                role: 'transporte',
+                label: 'Gestión de Transporte',
+                description: 'Control de flota, asignación de choferes y salidas.',
+                icon: Truck,
+                color: 'text-blue-600 bg-blue-50 border-blue-200'
+            },
+            {
+                role: 'taller',
+                label: 'Taller Mecánico',
+                description: 'Registro de mantenimientos, reparaciones y fallas.',
+                icon: Wrench,
+                color: 'text-amber-600 bg-amber-50 border-amber-200'
+            },
+            {
+                role: 'almacen',
+                label: 'Almacén e Inventario',
+                description: 'Gestión de stock, auditorías, entradas y salidas.',
+                icon: Package,
+                color: 'text-emerald-600 bg-emerald-50 border-emerald-200'
+            }
+        ]
     },
     {
-        title: "Operaciones de Campo",
-        roles: ["tecnico", "chofer", "supervisor"]
+        title: "Supervisión y Seguridad",
+        items: [
+            {
+                role: 'supervisor',
+                label: 'Control y Auditoría',
+                description: 'Supervisión de operaciones, combustible y auditorías.',
+                icon: ClipboardCheck,
+                color: 'text-rose-600 bg-rose-50 border-rose-200'
+            },
+            {
+                role: 'admin',
+                label: 'Administrador Total',
+                description: 'Acceso irrestricto a configuración y usuarios.',
+                icon: Lock,
+                color: 'text-purple-600 bg-purple-50 border-purple-200'
+            }
+        ]
     },
     {
-        title: "Módulos Operativos",
-        roles: ["transporte", "taller", "almacen", "mecanico"]
-    },
-    {
-        title: "Acceso a Departamentos",
-        roles: ["soporte", "planificacion", "distribucion", "afectaciones", "comercializacion", "rrhh", "tecnologico"]
-    },
-    {
-        title: "Control y Auditoría",
-        roles: ["auditoria", "combustible"]
+        title: "Roles Operativos Básicos",
+        items: [
+            { role: 'tecnico', label: 'Técnico de Campo', description: 'Acceso a App Móvil de Técnicos.' },
+            { role: 'chofer', label: 'Conductor', description: 'Puede ser asignado a vehículos.' },
+            { role: 'mecanico', label: 'Mecánico', description: 'Visualización de reparaciones asignadas.' },
+        ]
     }
 ]
 
@@ -152,14 +192,16 @@ export default function AdminUsersPage() {
 
             if (error) throw error
 
-            // Update local state immediately for responsiveness
-            const updatedProfiles = profiles.map(p => (p.id === userId ? { ...p, roles: newRoles } : p))
-            setProfiles(updatedProfiles)
+            // Update local state and permissions user state immediately
+            const updatedProfile = { ...(permissionsUser || profiles.find(p => p.id === userId)!), roles: newRoles }
 
-            // Also update the permission user state so the UI reflects changes instantly
+            // Update Permissions Modal State if Open
             if (permissionsUser?.id === userId) {
-                setPermissionsUser({ ...permissionsUser, roles: newRoles })
+                setPermissionsUser(updatedProfile)
             }
+
+            // Update List
+            setProfiles(prev => prev.map(p => p.id === userId ? updatedProfile : p))
 
             toast.success("Permiso actualizado")
         } catch (error) {
@@ -186,6 +228,7 @@ export default function AdminUsersPage() {
 
     const getRoleBadgeColor = (role: string) => {
         if (role === "admin") return "bg-purple-100 text-purple-700 hover:bg-purple-200"
+        if (role === "gerencia") return "bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
         if (["tecnico", "chofer", "supervisor", "mecanico"].includes(role)) return "bg-green-100 text-green-700"
         if (["auditoria", "combustible"].includes(role)) return "bg-red-100 text-red-700"
         return "bg-zinc-100 text-zinc-700"
@@ -416,39 +459,61 @@ export default function AdminUsersPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* PERMISSIONS MANAGER DIALOG */}
+            {/* PERMISSIONS MANAGER DIALOG (REFACTORED) */}
             <Dialog open={!!permissionsUser} onOpenChange={(open) => !open && setPermissionsUser(null)}>
-                <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle>Gestionar Permisos de Acceso</DialogTitle>
+                        <DialogTitle>Gestionar Acceso a Módulos</DialogTitle>
                         <DialogDescription>
-                            Asigna roles manuales para conceder acceso a paneles específicos.
-                            El usuario: <span className="font-semibold text-zinc-900">{permissionsUser?.email}</span>
+                            Define qué partes del sistema puede ver <span className="font-semibold text-zinc-900">{permissionsUser?.email}</span>.
                         </DialogDescription>
                     </DialogHeader>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-4">
-                        {ROLE_GROUPS.map((group) => (
-                            <div key={group.title} className="space-y-3">
-                                <h4 className="font-medium text-sm text-zinc-500 uppercase tracking-wider border-b pb-1">
+                    <div className="space-y-6 py-4">
+                        {MODULE_ACCESS.map((group) => (
+                            <div key={group.title} className="space-y-4">
+                                <h4 className="font-medium text-xs text-zinc-400 uppercase tracking-widest pl-1">
                                     {group.title}
                                 </h4>
-                                <div className="space-y-2">
-                                    {group.roles.map((role) => {
-                                        const isChecked = (permissionsUser?.roles || []).includes(role)
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {group.items.map((item) => {
+                                        const isChecked = (permissionsUser?.roles || []).includes(item.role)
+                                        const Icon = item.icon || Shield
+
                                         return (
-                                            <div key={role} className="flex items-center space-x-2 p-2 hover:bg-zinc-50 rounded-lg transition-colors border border-transparent hover:border-zinc-100">
-                                                <Checkbox
-                                                    id={`perm-${role}`}
-                                                    checked={isChecked}
-                                                    onCheckedChange={() => permissionsUser && handleRoleToggle(permissionsUser.id, permissionsUser.roles || [], role)}
-                                                />
-                                                <Label
-                                                    htmlFor={`perm-${role}`}
-                                                    className="text-sm font-medium leading-none cursor-pointer flex-1 capitalize"
-                                                >
-                                                    {role}
-                                                </Label>
+                                            <div
+                                                key={item.role}
+                                                className={`
+                                                    flex items-start gap-4 p-4 rounded-xl border transition-all duration-200
+                                                    ${isChecked ? 'bg-zinc-50 border-zinc-300 shadow-sm' : 'bg-white border-zinc-100 hover:border-zinc-200'}
+                                                `}
+                                            >
+                                                <div className={`
+                                                    h-10 w-10 rounded-lg flex items-center justify-center shrink-0
+                                                    ${item.color ? item.color.replace('text-', 'bg-').replace('bg-', 'bg-opacity-10 text-') : 'bg-zinc-100 text-zinc-500'}
+                                                    ${item.color}
+                                                `}>
+                                                    <Icon size={20} />
+                                                </div>
+
+                                                <div className="flex-1 space-y-1">
+                                                    <div className="flex items-center justify-between">
+                                                        <Label
+                                                            htmlFor={`role-${item.role}`}
+                                                            className="font-semibold text-base text-zinc-900 cursor-pointer"
+                                                        >
+                                                            {item.label}
+                                                        </Label>
+                                                        <Switch
+                                                            id={`role-${item.role}`}
+                                                            checked={isChecked}
+                                                            onCheckedChange={() => permissionsUser && handleRoleToggle(permissionsUser.id, permissionsUser.roles || [], item.role)}
+                                                        />
+                                                    </div>
+                                                    <p className="text-sm text-zinc-500 leading-snug pr-8">
+                                                        {item.description}
+                                                    </p>
+                                                </div>
                                             </div>
                                         )
                                     })}
@@ -458,12 +523,13 @@ export default function AdminUsersPage() {
                     </div>
 
                     <DialogFooter>
-                        <Button onClick={() => setPermissionsUser(null)}>
-                            Listo, Cerrar
+                        <Button onClick={() => setPermissionsUser(null)} className="w-full sm:w-auto">
+                            Guardar y Cerrar
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
             {/* CREATE USER DIALOG */}
             <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
                 <DialogContent className="sm:max-w-md">
@@ -528,6 +594,7 @@ export default function AdminUsersPage() {
                                     <SelectItem value="tecnico">Técnico</SelectItem>
                                     <SelectItem value="mecanico">Mecánico</SelectItem>
                                     <SelectItem value="admin">Administrador</SelectItem>
+                                    <SelectItem value="gerencia">Gerencia</SelectItem>
                                     <SelectItem value="supervisor">Supervisor</SelectItem>
                                     <SelectItem value="chofer">Chofer</SelectItem>
                                     <SelectItem value="invitado">Invitado</SelectItem>

@@ -24,6 +24,16 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog" // [NEW] Link components
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -60,11 +70,25 @@ function NewFuelLogContent() {
     const [uploading, setUploading] = useState(false)
     const [loading, setLoading] = useState(false)
     const [vehiclesLoaded, setVehiclesLoaded] = useState(false)
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null) // [NEW]
 
     // [NEW] State for detailed scanned info
     const [scannedVehicle, setScannedVehicle] = useState<any>(null)
 
+    // Alert State
+    const [conflictAlertOpen, setConflictAlertOpen] = useState(false)
+    const [pendingVehicleId, setPendingVehicleId] = useState<string | null>(null)
+    const [pendingVehicleModel, setPendingVehicleModel] = useState("")
+    const [pendingDriverName, setPendingDriverName] = useState("")
+
     const supabase = createClient()
+
+    // [NEW] Get Current User
+    useEffect(() => {
+        supabase.auth.getUser().then(({ data }) => {
+            if (data.user) setCurrentUserId(data.user.id)
+        })
+    }, [])
 
     // 1. Load list of vehicles for manual selection fallback
     useEffect(() => {
@@ -307,10 +331,32 @@ function NewFuelLogContent() {
                                             <FormItem>
                                                 <FormItem>
                                                     <VehicleSelector
-                                                        vehicles={vehicles}
+                                                        vehicles={vehicles} // [RESTORED]
                                                         selectedVehicleId={field.value}
                                                         onSelect={(v) => {
-                                                            field.onChange(v?.id)
+                                                            if (!v) {
+                                                                field.onChange("")
+                                                                return
+                                                            }
+
+                                                            // [NEW] Assignment Check Logic
+                                                            // @ts-ignore
+                                                            const assignedTo = v.assigned_driver_id
+                                                            // @ts-ignore
+                                                            const driverInfo = v.driver
+
+                                                            if (assignedTo && currentUserId && assignedTo !== currentUserId) {
+                                                                const driverName = driverInfo ? `${driverInfo.first_name} ${driverInfo.last_name}` : "Otro Conductor"
+
+                                                                // Set pending state and open dialog
+                                                                setPendingVehicleId(v.id)
+                                                                setPendingVehicleModel(v.modelo)
+                                                                setPendingDriverName(driverName)
+                                                                setConflictAlertOpen(true)
+                                                                return // Stop 
+                                                            }
+
+                                                            field.onChange(v.id)
                                                         }}
                                                         label="Vehículo"
                                                     />
@@ -423,9 +469,53 @@ function NewFuelLogContent() {
                     </Form>
                 </CardContent>
             </Card>
+
+            {/* Warn Dialog */}
+            <AlertDialog open={conflictAlertOpen} onOpenChange={setConflictAlertOpen}>
+                <AlertDialogContent className="rounded-3xl border-none shadow-2xl bg-zinc-900 text-white">
+                    <AlertDialogHeader>
+                        <div className="mx-auto bg-yellow-500/20 w-16 h-16 rounded-full flex items-center justify-center mb-4">
+                            <Fuel size={32} className="text-yellow-500" />
+                        </div>
+                        <AlertDialogTitle className="text-center text-xl font-bold">Advertencia de Responsabilidad</AlertDialogTitle>
+                        <AlertDialogDescription className="text-center text-zinc-400 text-base">
+                            El vehículo <strong>{pendingVehicleModel}</strong> está asignado a <strong>{pendingDriverName}</strong>.
+                            <br /><br />
+                            ¿Confirmas que estás realizando esta carga de combustible?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="flex-col sm:flex-row gap-2 mt-4">
+                        <AlertDialogCancel
+                            onClick={() => {
+                                setPendingVehicleId(null)
+                                form.setValue("vehicle_id", "")
+                            }}
+                            className="rounded-xl h-12 border-zinc-700 bg-transparent text-white hover:bg-zinc-800 hover:text-white"
+                        >
+                            Cancelar
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => {
+                                if (pendingVehicleId) {
+                                    form.setValue("vehicle_id", pendingVehicleId)
+                                    // Add note
+                                    const currentNote = form.getValues("notes") || ""
+                                    if (!currentNote.includes("ADVERTENCIA")) {
+                                        form.setValue("notes", currentNote + ` [SISTEMA: Carga realizada en vehículo de ${pendingDriverName}]`)
+                                    }
+                                }
+                            }}
+                            className="rounded-xl h-12 bg-yellow-500 text-black font-bold hover:bg-yellow-400"
+                        >
+                            Confirmar Carga
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     )
 }
+
 
 export default function NewFuelLogPage() {
     return (

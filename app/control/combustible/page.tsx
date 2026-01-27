@@ -4,12 +4,15 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
-import { ArrowLeft, Fuel, Plus, FileSpreadsheet, Search, Filter, Calendar as CalendarIcon, ExternalLink, QrCode } from "lucide-react"
+import { ArrowLeft, Fuel, Plus, FileSpreadsheet, Search, Filter, Calendar as CalendarIcon, ExternalLink, QrCode, Truck, User as UserIcon, Gauge, X } from "lucide-react"
+import { DatePickerWithRange } from "@/components/ui/date-range-picker"
+import { DateRange } from "react-day-picker"
 
 import { Button } from "@/components/ui/button"
 import { DesktopModeToggle } from "@/components/desktop-mode-toggle"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { AlertDialog, AlertDialogContent } from "@/components/ui/alert-dialog"
 import {
     Table,
     TableBody,
@@ -37,8 +40,8 @@ export default function FuelControlPage() {
 
     // Filters
     const [selectedVehicle, setSelectedVehicle] = useState("all")
-    const [startDate, setStartDate] = useState("")
-    const [endDate, setEndDate] = useState("")
+    const [dateRange, setDateRange] = useState<DateRange | undefined>()
+    const [selectedLog, setSelectedLog] = useState<any | null>(null)
 
     useEffect(() => {
         setIsMounted(true)
@@ -59,8 +62,8 @@ export default function FuelControlPage() {
         setLoading(true)
         const data = await getFuelLogs({
             vehicleId: selectedVehicle,
-            startDate: startDate || undefined,
-            endDate: endDate || undefined
+            startDate: dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : undefined,
+            endDate: dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined
         })
         setLogs(data || [])
         setLoading(false)
@@ -137,60 +140,44 @@ export default function FuelControlPage() {
                     </div>
                 </div>
 
-                {/* Filters */}
-                <Card className="bg-white border-slate-200 shadow-sm rounded-[24px] overflow-hidden">
-                    <CardContent className="p-4 grid grid-cols-1 md:grid-cols-4 items-end gap-3 transition-all">
-                        <div className="md:col-span-1 space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 uppercase">Vehículo</label>
-                            <Select value={selectedVehicle} onValueChange={setSelectedVehicle}>
-                                <SelectTrigger className="bg-white">
-                                    <SelectValue placeholder="Todos" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Todos</SelectItem>
-                                    {vehicles.map(v => (
-                                        <SelectItem key={v.id} value={v.id}>{v.codigo} - {v.modelo}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                {/* Filters - Glassmorphism & Premium Design */}
+                <div className="bg-white/80 backdrop-blur-md border border-slate-200 shadow-sm rounded-[20px] p-2 flex flex-col md:flex-row items-center gap-2 sticky top-4 z-10 transition-all hover:shadow-md">
 
-                        {/* Date Range - Input Group approach */}
-                        <div className="grid grid-cols-1 md:grid-cols-1 md:col-span-2 gap-4 w-full min-w-0">
-                            <div className="space-y-2 w-full min-w-0">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Check-in</label>
-                                <div className="flex items-center w-full bg-white border border-slate-200 rounded-md shadow-sm h-11 px-3 focus-within:ring-2 focus-within:ring-black">
-                                    <CalendarIcon className="h-4 w-4 text-slate-400 shrink-0 mr-2" />
-                                    <Input
-                                        type="date"
-                                        className="border-0 p-0 h-full w-full text-base focus-visible:ring-0 shadow-none bg-transparent"
-                                        value={startDate}
-                                        onChange={e => setStartDate(e.target.value)}
-                                    />
+                    {/* Vehicle Select */}
+                    <div className="w-full md:w-64 shrink-0 relative">
+                        <Select value={selectedVehicle} onValueChange={setSelectedVehicle}>
+                            <SelectTrigger className="h-12 rounded-xl border-slate-200 bg-white hover:bg-slate-50 focus:ring-black">
+                                <div className="flex items-center gap-2 text-slate-600">
+                                    <Truck size={18} />
+                                    <SelectValue placeholder="Filtrar por Vehículo" />
                                 </div>
-                            </div>
-                            <div className="space-y-2 w-full min-w-0">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Check-out</label>
-                                <div className="flex items-center w-full bg-white border border-slate-200 rounded-md shadow-sm h-11 px-3 focus-within:ring-2 focus-within:ring-black">
-                                    <CalendarIcon className="h-4 w-4 text-slate-400 shrink-0 mr-2" />
-                                    <Input
-                                        type="date"
-                                        className="border-0 p-0 h-full w-full text-base focus-visible:ring-0 shadow-none bg-transparent"
-                                        value={endDate}
-                                        onChange={e => setEndDate(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                        </div>
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Toda la Flota</SelectItem>
+                                {vehicles.map(v => (
+                                    <SelectItem key={v.id} value={v.id}>{v.codigo} - {v.modelo}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
 
-                        <div className="md:col-span-1">
-                            <Button variant="secondary" onClick={handleFilter} className="w-full gap-2 bg-white border border-slate-200 hover:bg-slate-100 dark:bg-slate-800 dark:border-slate-700">
-                                <Filter size={16} />
-                                Filtrar
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
+                    {/* Check In/Out -> Date Range Picker */}
+                    <div className="w-full md:flex-1">
+                        <DatePickerWithRange
+                            date={dateRange}
+                            onDateChange={setDateRange}
+                        />
+                    </div>
+
+                    {/* Filter Action */}
+                    <Button
+                        onClick={handleFilter}
+                        className="w-full md:w-auto h-12 px-8 rounded-xl bg-slate-900 text-white hover:bg-slate-800 shadow-lg shadow-slate-900/10 font-medium transition-all active:scale-95"
+                    >
+                        <Filter size={18} className="mr-2" />
+                        Aplicar Filtros
+                    </Button>
+                </div>
 
                 {/* Desktop Table */}
                 <Card className="hidden md:block border-slate-200 shadow-sm overflow-hidden rounded-[24px] bg-white">
@@ -222,7 +209,11 @@ export default function FuelControlPage() {
                                 </TableRow>
                             ) : (
                                 logs.map((log) => (
-                                    <TableRow key={log.id} className="hover:bg-slate-50/50">
+                                    <TableRow
+                                        key={log.id}
+                                        className="hover:bg-slate-50/50 cursor-pointer transition-colors"
+                                        onClick={() => setSelectedLog(log)}
+                                    >
                                         <TableCell>
                                             <div className="flex flex-col">
                                                 <span className="font-medium text-slate-900" suppressHydrationWarning>
@@ -329,6 +320,105 @@ export default function FuelControlPage() {
                         ))
                     )}
                 </div>
+                {/* DETAIL DIALOG */}
+                <AlertDialog open={!!selectedLog} onOpenChange={(val) => !val && setSelectedLog(null)}>
+                    <AlertDialogContent className="max-w-4xl p-0 overflow-hidden bg-transparent border-none shadow-none backdrop-blur-none">
+                        <div className="bg-white/90 backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl overflow-hidden flex flex-col md:flex-row max-h-[85vh]">
+                            {/* Image Section */}
+                            <div className="w-full md:w-1/2 bg-black/5 relative min-h-[300px] md:min-h-full flex items-center justify-center p-4">
+                                {selectedLog?.ticket_url ? (
+                                    <img
+                                        src={selectedLog.ticket_url}
+                                        alt="Ticket"
+                                        className="max-w-full max-h-full object-contain rounded-xl shadow-lg hover:scale-105 transition-transform duration-500"
+                                    />
+                                ) : (
+                                    <div className="text-slate-400 flex flex-col items-center gap-2">
+                                        <FileSpreadsheet size={48} className="opacity-20" />
+                                        <span>Sin imagen adjunta</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Details Section */}
+                            <div className="w-full md:w-1/2 flex flex-col">
+                                <div className="p-6 md:p-8 space-y-6 overflow-y-auto">
+                                    <div className="flex items-start justify-between">
+                                        <div>
+                                            <h2 className="text-2xl font-bold text-slate-900 mb-1">Detalle de Carga</h2>
+                                            <p className="text-slate-500 text-sm">Ticket #{selectedLog?.ticket_number}</p>
+                                        </div>
+                                        <Button size="icon" variant="ghost" className="rounded-full -mr-2" onClick={() => setSelectedLog(null)}>
+                                            <X size={20} />
+                                        </Button>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Fecha</label>
+                                            <p className="font-medium text-slate-900">
+                                                {selectedLog && format(new Date(selectedLog.fuel_date), "dd MMMM yyyy", { locale: es })}
+                                            </p>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Hora</label>
+                                            <p className="font-medium text-slate-900">
+                                                {selectedLog && format(new Date(selectedLog.fuel_date), "HH:mm a")}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-10 w-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                                                <Truck size={20} />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-slate-900">{selectedLog?.vehicle?.modelo}</p>
+                                                <p className="text-xs text-slate-500">{selectedLog?.vehicle?.placa}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-10 w-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
+                                                <UserIcon size={20} />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-slate-900">{selectedLog?.driver_name}</p>
+                                                <p className="text-xs text-slate-500">Conductor Responsable</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100">
+                                            <div className="flex items-center gap-2 text-emerald-600 mb-1">
+                                                <Fuel size={16} />
+                                                <span className="text-xs font-bold uppercase">Litros</span>
+                                            </div>
+                                            <p className="text-2xl font-bold text-slate-900">{selectedLog?.liters}</p>
+                                        </div>
+                                        <div className="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100">
+                                            <div className="flex items-center gap-2 text-indigo-600 mb-1">
+                                                <Gauge size={16} />
+                                                <span className="text-xs font-bold uppercase">Kilometraje</span>
+                                            </div>
+                                            <p className="text-2xl font-bold text-slate-900">{selectedLog?.mileage}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-4 border-t border-slate-100">
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-slate-500">Registrado por:</span>
+                                            <span className="font-medium text-slate-900">
+                                                {selectedLog?.supervisor?.first_name} {selectedLog?.supervisor?.last_name}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </AlertDialogContent>
+                </AlertDialog>
             </div>
         </div>
     )
