@@ -1,13 +1,42 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { useRef, useEffect, useState } from "react"
+import { Camera } from "@capacitor/camera"
+import { Geolocation } from "@capacitor/geolocation"
+import { PushNotifications } from "@capacitor/push-notifications"
+import { VoiceRecorder } from "capacitor-voice-recorder"
+import { Filesystem } from "@capacitor/filesystem"
 import { updateProfile } from "./actions"
-import { useState } from "react"
-import { Chrome, User, Phone, CreditCard } from "lucide-react"
+import { User, Phone, CreditCard } from "lucide-react"
 import { toast } from "sonner"
 
 export default function CompleteProfilePage() {
     const [loading, setLoading] = useState(false)
+
+    // Request native permissions on mount
+    useEffect(() => {
+        const requestPermissions = async () => {
+            try {
+                // Geo
+                await Geolocation.requestPermissions()
+                // Camera & Gallery
+                await Camera.requestPermissions()
+                // Push
+                const result = await PushNotifications.requestPermissions()
+                if (result.receive === 'granted') {
+                    await PushNotifications.register()
+                }
+                // Microphone
+                await VoiceRecorder.requestAudioRecordingPermission()
+                // Files
+                await Filesystem.requestPermissions()
+            } catch (e) {
+                console.warn("Native permissions not available in browser or error:", e)
+            }
+        }
+        requestPermissions()
+    }, [])
 
     return (
         <main className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden bg-[#F2F2F7]">
@@ -25,10 +54,10 @@ export default function CompleteProfilePage() {
 
                     <div className="space-y-2">
                         <h1 className="text-2xl font-semibold tracking-tight text-gray-900">
-                            Completa tu Perfil
+                            Configuración Inicial
                         </h1>
                         <p className="text-gray-500 text-sm font-medium">
-                            Es necesario registrar tu información para continuar
+                            Registra tus datos y habilita permisos nativos para continuar
                         </p>
                     </div>
 
@@ -47,14 +76,41 @@ export default function CompleteProfilePage() {
                                     throw error
                                 }
                                 console.error(error)
-                                toast.error("Error inesperado. Revisa la consola.")
+                                toast.error("Error inesperado")
                                 setLoading(false)
                             }
                         }}
                         className="w-full space-y-4 pt-2 text-left"
                     >
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-xs font-semibold text-gray-400 theme-text-secondary uppercase tracking-wider ml-1">
+                                    Nombre
+                                </label>
+                                <input
+                                    name="first_name"
+                                    type="text"
+                                    required
+                                    placeholder="Juan"
+                                    className="w-full h-12 px-4 rounded-2xl bg-white/50 border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none text-gray-900"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-semibold text-gray-400 theme-text-secondary uppercase tracking-wider ml-1">
+                                    Apellido
+                                </label>
+                                <input
+                                    name="last_name"
+                                    type="text"
+                                    required
+                                    placeholder="Pérez"
+                                    className="w-full h-12 px-4 rounded-2xl bg-white/50 border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none text-gray-900"
+                                />
+                            </div>
+                        </div>
+
                         <div className="space-y-2">
-                            <label htmlFor="national_id" className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">
+                            <label htmlFor="national_id" className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1 text-gray-400">
                                 Cédula de Identidad
                             </label>
                             <div className="relative">
@@ -71,7 +127,7 @@ export default function CompleteProfilePage() {
                         </div>
 
                         <div className="space-y-2">
-                            <label htmlFor="phone" className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">
+                            <label htmlFor="phone" className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1 text-gray-400">
                                 Teléfono móvil
                             </label>
                             <div className="relative">
@@ -92,7 +148,7 @@ export default function CompleteProfilePage() {
                             className="w-full h-14 mt-4 rounded-full text-base font-medium bg-gray-900 text-white hover:bg-black transition-all duration-300 shadow-lg shadow-gray-900/10 hover:scale-[1.02] active:scale-[0.98]"
                             disabled={loading}
                         >
-                            {loading ? "Guardando..." : "Guardar y Continuar"}
+                            {loading ? "Habilitando funciones..." : "Activar y Continuar"}
                         </Button>
                     </form>
                 </div>

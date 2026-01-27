@@ -15,6 +15,8 @@ export default function LoginPage() {
     const router = useRouter()
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
+    const [firstName, setFirstName] = useState("")
+    const [lastName, setLastName] = useState("")
     const [isSignUp, setIsSignUp] = useState(false)
 
     const handleLogin = async () => {
@@ -50,8 +52,8 @@ export default function LoginPage() {
                 password,
                 options: {
                     data: {
-                        first_name: "Test",
-                        last_name: "User"
+                        first_name: firstName,
+                        last_name: lastName
                     }
                 }
             })
@@ -110,6 +112,30 @@ export default function LoginPage() {
 
                         {/* Manual Login Form */}
                         <form onSubmit={handleEmailLogin} className="space-y-3 mb-6">
+                            {isSignUp && (
+                                <div className="grid grid-cols-2 gap-3 mb-2">
+                                    <div className="space-y-1 text-left">
+                                        <Label className="text-xs text-gray-500 ml-1">Nombre</Label>
+                                        <Input
+                                            value={firstName}
+                                            onChange={e => setFirstName(e.target.value)}
+                                            className="rounded-xl border-gray-200 bg-gray-50/50"
+                                            placeholder="Juan"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-1 text-left">
+                                        <Label className="text-xs text-gray-500 ml-1">Apellido</Label>
+                                        <Input
+                                            value={lastName}
+                                            onChange={e => setLastName(e.target.value)}
+                                            className="rounded-xl border-gray-200 bg-gray-50/50"
+                                            placeholder="Pérez"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                            )}
                             <div className="space-y-1 text-left">
                                 <Label className="text-xs text-gray-500 ml-1">Email</Label>
                                 <Input

@@ -13,10 +13,12 @@ export async function updateProfile(formData: FormData) {
         redirect("/login")
     }
 
+    const first_name = formData.get("first_name") as string
+    const last_name = formData.get("last_name") as string
     const national_id = formData.get("national_id") as string
     const phone = formData.get("phone") as string
 
-    if (!national_id || !phone) {
+    if (!national_id || !phone || !first_name || !last_name) {
         return { error: "Todos los campos son obligatorios" }
     }
 
@@ -25,6 +27,8 @@ export async function updateProfile(formData: FormData) {
         .from("profiles")
         .upsert({
             id: user.id,
+            first_name,
+            last_name,
             national_id: national_id,
             phone: phone,
             email: user.email, // Ensure email is synchronized
