@@ -5,7 +5,9 @@ import { Suspense, useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { VehicleFormDialog } from "@/components/vehicle-form-dialog"
 import { VehicleDetailsDialog } from "@/components/vehicle-details-dialog"
-import { Plus, Search, Car, Bike, Truck, MoreVertical, Pencil, Trash2, Home as HomeIcon, MapPin, Zap, Wrench, AlertTriangle, CheckCircle, Fuel } from "lucide-react"
+import { MileageCorrectionDialog } from "@/components/mileage-correction-dialog"
+
+
 import { LogoutButton } from "@/components/ui/logout-button"
 import Image from "next/image"
 import { toast } from "sonner"
@@ -62,6 +64,7 @@ function VehiculosContent() {
     const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null)
     const [deletingVehicle, setDeletingVehicle] = useState<Vehicle | null>(null)
     const [detailsVehicle, setDetailsVehicle] = useState<Vehicle | null>(null)
+    const [correctionVehicle, setCorrectionVehicle] = useState<Vehicle | null>(null)
 
     // Calculate filteredVehicles based on manual search
     const filteredVehicles = vehicles.filter(v =>
@@ -364,6 +367,12 @@ function VehiculosContent() {
                                             <DropdownMenuItem onClick={() => setDeletingVehicle(vehicle)} className="text-red-600 focus:text-red-700 focus:bg-red-50">
                                                 <Trash2 className="mr-2 h-4 w-4" /> Eliminar
                                             </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setCorrectionVehicle(vehicle)}>
+                                                <div className="flex items-center w-full">
+                                                    <Wrench className="mr-2 h-4 w-4" />
+                                                    <span>Corregir Kilometraje</span>
+                                                </div>
+                                            </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </div>
@@ -386,6 +395,15 @@ function VehiculosContent() {
                 isOpen={detailsOpen}
                 onClose={() => setDetailsOpen(false)}
                 vehicle={detailsVehicle}
+                onUpdate={loadVehicles}
+            />
+
+            <MileageCorrectionDialog
+                isOpen={!!correctionVehicle}
+                onClose={() => setCorrectionVehicle(null)}
+                vehicleId={correctionVehicle?.id || ""}
+                vehicleName={`${correctionVehicle?.modelo} - ${correctionVehicle?.placa}`}
+                currentMileage={correctionVehicle?.kilometraje || 0}
                 onUpdate={loadVehicles}
             />
 
