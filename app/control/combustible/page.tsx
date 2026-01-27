@@ -323,14 +323,14 @@ export default function FuelControlPage() {
                 {/* DETAIL DIALOG */}
                 <AlertDialog open={!!selectedLog} onOpenChange={(val) => !val && setSelectedLog(null)}>
                     <AlertDialogContent className="max-w-4xl p-0 overflow-hidden bg-transparent border-none shadow-none backdrop-blur-none">
-                        <div className="bg-white/90 backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl overflow-hidden flex flex-col md:flex-row max-h-[85vh]">
-                            {/* Image Section */}
-                            <div className="w-full md:w-1/2 bg-black/5 relative min-h-[300px] md:min-h-full flex items-center justify-center p-4">
+                        <div className="bg-white/90 backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl overflow-hidden flex flex-col max-h-[90vh] w-full max-w-md mx-auto">
+                            {/* Image Section (Top) */}
+                            <div className="w-full bg-black/5 relative h-64 shrink-0 flex items-center justify-center overflow-hidden group p-4">
                                 {selectedLog?.ticket_url ? (
                                     <img
                                         src={selectedLog.ticket_url}
                                         alt="Ticket"
-                                        className="max-w-full max-h-full object-contain rounded-xl shadow-lg hover:scale-105 transition-transform duration-500"
+                                        className="w-full h-full object-contain rounded-lg shadow-sm group-hover:scale-105 transition-transform duration-500"
                                     />
                                 ) : (
                                     <div className="text-slate-400 flex flex-col items-center gap-2">
@@ -338,19 +338,25 @@ export default function FuelControlPage() {
                                         <span>Sin imagen adjunta</span>
                                     </div>
                                 )}
+                                <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="absolute top-2 right-2 rounded-full bg-black/10 hover:bg-black/20 text-white"
+                                    onClick={() => setSelectedLog(null)}
+                                >
+                                    <X size={20} />
+                                </Button>
                             </div>
 
-                            {/* Details Section */}
-                            <div className="w-full md:w-1/2 flex flex-col">
-                                <div className="p-6 md:p-8 space-y-6 overflow-y-auto">
+                            {/* Details Section (Bottom) */}
+                            <div className="w-full flex flex-col overflow-hidden">
+                                <div className="p-6 space-y-5 overflow-y-auto">
+
                                     <div className="flex items-start justify-between">
                                         <div>
-                                            <h2 className="text-2xl font-bold text-slate-900 mb-1">Detalle de Carga</h2>
+                                            <h2 className="text-xl font-bold text-slate-900">Detalle de Carga</h2>
                                             <p className="text-slate-500 text-sm">Ticket #{selectedLog?.ticket_number}</p>
                                         </div>
-                                        <Button size="icon" variant="ghost" className="rounded-full -mr-2" onClick={() => setSelectedLog(null)}>
-                                            <X size={20} />
-                                        </Button>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4">
