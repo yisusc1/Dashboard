@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client"
 import { VehicleFormDialog } from "@/components/vehicle-form-dialog"
 import { VehicleDetailsDialog } from "@/components/vehicle-details-dialog"
 import { MileageCorrectionDialog } from "@/components/mileage-correction-dialog"
+import { Plus, Search, Car, Bike, Truck, MoreVertical, Pencil, Trash2, Home as HomeIcon, MapPin, Zap, Wrench, AlertTriangle, CheckCircle, Fuel } from "lucide-react"
 
 
 import { LogoutButton } from "@/components/ui/logout-button"
