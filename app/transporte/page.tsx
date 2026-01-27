@@ -216,19 +216,29 @@ export default function TransportePage() {
 
         const { data: allVehicles } = await query
 
+        // [NEW] Fetch Occupied Vehicles (Active Trips)
+        const { data: occupiedData } = await supabase
+            .from('reportes')
+            .select('vehiculo_id')
+            .is('km_entrada', null)
+
+        const occupiedIds = new Set(occupiedData?.map(r => r.vehiculo_id) || [])
+
         // Fetch Mileage Data
         const { data: kData } = await supabase
             .from('vista_ultimos_kilometrajes')
             .select('vehiculo_id, ultimo_kilometraje')
 
         if (allVehicles) {
-            // Merge mileage
-            const vehiclesWithKm = allVehicles.map(v => ({
-                ...v,
-                kilometraje: kData?.find(k => k.vehiculo_id === v.id)?.ultimo_kilometraje || 0
-            }))
+            // Filter out occupied vehicles AND Merge mileage
+            const availableVehicles = allVehicles
+                .filter(v => !occupiedIds.has(v.id)) // [FILTER] Exclude busy vehicles
+                .map(v => ({
+                    ...v,
+                    kilometraje: kData?.find(k => k.vehiculo_id === v.id)?.ultimo_kilometraje || 0
+                }))
             // @ts-ignore
-            setVehicles(vehiclesWithKm)
+            setVehicles(availableVehicles)
         }
     }
 
