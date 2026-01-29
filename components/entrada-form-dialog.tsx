@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { CheckCircle, Send } from "lucide-react"
+import { CheckCircle, Send, AlertCircle, Plus, Trash2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { VehicleSelector, Vehicle } from "@/components/vehicle-selector"
@@ -13,7 +13,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
-import { revalidateGerencia } from "@/app/transporte/actions"
+import { revalidateGerencia, getActiveFaults, submitEntryReport } from "@/app/transporte/actions" // [UPDATED]
+import { reportFault } from "@/app/taller/actions"
 
 type Reporte = {
     id: string
@@ -44,7 +45,9 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
     const [kmEntrada, setKmEntrada] = useState("")
     const [selectedReport, setSelectedReport] = useState<Reporte | null>(null)
     const [gasolina, setGasolina] = useState("Full")
-    const [observaciones, setObservaciones] = useState("")
+    const [faultsToAdd, setFaultsToAdd] = useState<string[]>([]) // [NEW] Explicit faults
+    const [activeFaults, setActiveFaults] = useState<any[]>([]) // [NEW] Existing active faults from DB
+    const [newFaultText, setNewFaultText] = useState("")
     const [step, setStep] = useState<'form' | 'success'>('form')
     const [whatsappText, setWhatsappText] = useState("")
     const router = useRouter()
@@ -67,6 +70,7 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
         herramientas: false
     })
 
+    // [FIX] Effect 1: Load Reports on Open (Initial Load Only)
     useEffect(() => {
         if (isOpen) {
             setStep('form') // Reset step
@@ -74,11 +78,10 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
                 if (initialVehicleId && data) {
                     const matchingReport = data.find((r: any) => r.vehiculo_id === initialVehicleId)
                     if (matchingReport) {
-                        // [FIX] Set state directly from fetched data to avoid race condition with setReportes
                         setReporteId(matchingReport.id)
                         setSelectedReport(matchingReport)
 
-                        // Reset checks on change
+                        // Initial Check Reset
                         setChecks({
                             aceite: false, agua: false, gato: false, cruz: false,
                             triangulo: false, caucho: false, carpeta: false,
@@ -90,6 +93,19 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
             })
         }
     }, [isOpen, initialVehicleId])
+
+    // [FIX] Effect 2: Fetch Active Faults when Selected Report Changes
+    useEffect(() => {
+        if (selectedReport && selectedReport.vehiculo_id) {
+            getActiveFaults(selectedReport.vehiculo_id)
+                .then((faults: any[]) => {
+                    if (faults) setActiveFaults(faults)
+                })
+                .catch((err: any) => console.error("Error loading faults:", err))
+        } else {
+            setActiveFaults([])
+        }
+    }, [selectedReport])
 
     async function loadPendingReports() {
         const supabase = createClient()
@@ -112,7 +128,7 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
         return data
     }
 
-    function handleReportChange(value: string) {
+    const handleReportChange = async (value: string) => {
         setReporteId(value)
         const report = reportes.find(r => r.id === value) || null
         setSelectedReport(report)
@@ -123,6 +139,17 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
             onu: false, ups: false, escalera: false,
             casco: false, luces: false, herramientas: false
         })
+
+        // [NEW] Fetch Active Faults via Server Action
+        if (report && report.vehiculo_id) {
+            getActiveFaults(report.vehiculo_id)
+                .then(faults => {
+                    if (faults) setActiveFaults(faults)
+                })
+                .catch(err => console.error("Error loading faults:", err))
+        } else {
+            setActiveFaults([])
+        }
     }
 
     const toggleCheck = (key: keyof typeof checks) => {
@@ -146,58 +173,40 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
 
         setLoading(true)
         try {
-            const supabase = createClient()
-            const { error } = await supabase
-                .from('reportes')
-                .update({
-                    km_entrada: km,
-                    gasolina_entrada: gasolina,
-                    observaciones_entrada: observaciones,
+            // [NEW] Use Unified Server Action
+            const result = await submitEntryReport({
+                reporte_id: reporteId,
+                vehiculo_id: selectedReport?.vehiculo_id, // Passed implicitly via report association but good for reference if needed
 
-                    aceite_entrada: checks.aceite,
-                    agua_entrada: checks.agua,
+                km_entrada: km,
+                gasolina_entrada: gasolina,
 
-                    // Car specific
-                    gato_entrada: checks.gato,
-                    cruz_entrada: checks.cruz,
-                    triangulo_entrada: checks.triangulo,
-                    caucho_entrada: checks.caucho,
-                    carpeta_entrada: checks.carpeta,
+                aceite_entrada: checks.aceite,
+                agua_entrada: checks.agua,
 
-                    // Moto specific
-                    casco_entrada: checks.casco,
-                    luces_entrada: checks.luces,
-                    herramientas_entrada: checks.herramientas,
+                // Car specific
+                gato_entrada: checks.gato,
+                cruz_entrada: checks.cruz,
+                triangulo_entrada: checks.triangulo,
+                caucho_entrada: checks.caucho,
+                carpeta_entrada: checks.carpeta,
 
-                    onu_entrada: checks.onu ? 1 : 0,
-                    ups_entrada: checks.ups ? 1 : 0,
-                    escalera_entrada: checks.escalera,
-                })
-                .eq('id', reporteId)
+                // Moto specific
+                casco_entrada: checks.casco,
+                luces_entrada: checks.luces,
+                herramientas_entrada: checks.herramientas,
 
-            if (error) throw error
+                onu_entrada: checks.onu,
+                ups_entrada: checks.ups,
+                escalera_entrada: checks.escalera,
 
-            // [NEW] Update Vehicle Fuel Level
-            const fuelMap: Record<string, number> = {
-                "Full": 100,
-                "3/4": 75,
-                "1/2": 50,
-                "1/4": 25,
-                "Reserva": 10
+                // Explicit Faults
+                faults: faultsToAdd
+            })
+
+            if (!result.success) {
+                throw new Error(result.error)
             }
-            const fuelLevel = fuelMap[gasolina] || 0
-
-            // We update the vehicle directly
-            if (selectedReport?.vehiculo_id) {
-                await supabase.from('vehiculos').update({
-                    current_fuel_level: fuelLevel,
-                    kilometraje: km,
-                    last_fuel_update: new Date().toISOString()
-                }).eq('id', selectedReport.vehiculo_id)
-            }
-
-            // Force Dashboard Refresh
-            await revalidateGerencia()
 
             toast.success("Entrada registrada correctamente")
 
@@ -206,7 +215,6 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
                 const text = formatEntradaText({
                     km_entrada: km,
                     gasolina_entrada: gasolina,
-                    observaciones_entrada: observaciones,
                     aceite_entrada: checks.aceite,
                     agua_entrada: checks.agua,
                     gato_entrada: checks.gato,
@@ -227,18 +235,19 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
                 setWhatsappText(text)
                 setStep('success')
             }
-            // ----------------------------
 
+            // Trigger background refresh
             router.refresh()
-            // onClose()
-            if (onSuccess) onSuccess() // [NEW] Trigger refresh in parent
+            if (onSuccess) onSuccess()
 
-            // Reset form
+            // Reset form fields
             setReporteId("")
             setKmEntrada("")
-            setSelectedReport(null)
+            // setSelectedReport(null) // Keep selectedReport for success view formatting
             setGasolina("Full")
-            setObservaciones("")
+            setFaultsToAdd([])
+            setNewFaultText("")
+            setActiveFaults([])
             setChecks({
                 aceite: false, agua: false, gato: false, cruz: false,
                 triangulo: false, caucho: false, carpeta: false,
@@ -248,7 +257,7 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
 
         } catch (error) {
             console.error(error)
-            toast.error("Error al registrar entrada")
+            toast.error("Error al registrar entrada: " + (error as Error).message)
         } finally {
             setLoading(false)
         }
@@ -320,7 +329,16 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
             msg += `Escalera: ${check(entradaData.escalera_entrada)}\n`
         }
 
-        msg += `\nObservaciones: ${entradaData.observaciones_entrada || 'Ninguna'}`
+        if (activeFaults.length > 0) {
+            msg += `\n*Fallas Pendientes (Anteriores):*\n`
+            activeFaults.forEach(f => msg += `⚠️ ${f.descripcion.replace('[Reporte Salida] ', '').replace('[Reporte Entrada] ', '')}\n`)
+        }
+
+        if (faultsToAdd.length > 0) {
+            msg += `\n*Nuevas Fallas Reportadas:*\n`
+            faultsToAdd.forEach(f => msg += `❌ ${f}\n`)
+        }
+
         return msg
     }
 
@@ -402,6 +420,7 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
                                             } else {
                                                 setReporteId("")
                                                 setSelectedReport(null)
+                                                setActiveFaults([]) // Clear active faults if no vehicle selected
                                             }
                                         }}
                                         label="Vehículo en Ruta"
@@ -544,15 +563,92 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
                                 )}
                             </div>
 
-                            <div className="space-y-2">
-                                <Label>Observaciones / Novedades</Label>
+                            {/* [NEW] Explicit Fault Reporting Section - Minimalist */}
+                            <div className="bg-zinc-50/50 p-5 rounded-[24px] border border-zinc-100 space-y-4">
+                                <h4 className="text-sm font-bold text-zinc-600 uppercase tracking-wider flex items-center gap-2">
+                                    <AlertCircle size={16} className="text-zinc-600" />
+                                    Reportar Fallas
+                                </h4>
+
+                                {/* [NEW] Active Faults Warning */}
+                                {activeFaults.length > 0 && (
+                                    <div className="bg-yellow-50/50 border border-yellow-100 rounded-xl p-3 mb-2">
+                                        <p className="text-xs font-bold text-yellow-600 mb-2 uppercase tracking-wide">
+                                            ⚠️ Ya reportado (No duplicar):
+                                        </p>
+                                        <ul className="space-y-1">
+                                            {activeFaults.map((f, i) => (
+                                                <li key={i} className="text-xs text-yellow-700/80 flex items-start gap-1">
+                                                    <span>•</span>
+                                                    <span className="line-clamp-1">{f.descripcion.replace('[Reporte Salida] ', '').replace('[Reporte Entrada] ', '')}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+
+                                <div className="space-y-3">
+                                    <div className="flex gap-2">
+                                        <Input
+                                            value={newFaultText}
+                                            onChange={(e) => setNewFaultText(e.target.value)}
+                                            placeholder="Ej: Luz de freno quemada..."
+                                            className="bg-white border-zinc-200 focus-visible:ring-zinc-400"
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault()
+                                                    if (newFaultText.trim()) {
+                                                        setFaultsToAdd([...faultsToAdd, newFaultText.trim()])
+                                                        setNewFaultText("")
+                                                    }
+                                                }
+                                            }}
+                                        />
+                                        <Button
+                                            type="button"
+                                            onClick={() => {
+                                                if (newFaultText.trim()) {
+                                                    setFaultsToAdd([...faultsToAdd, newFaultText.trim()])
+                                                    setNewFaultText("")
+                                                }
+                                            }}
+                                            className="bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl aspect-square p-0 w-12 shrink-0"
+                                        >
+                                            <Plus size={20} />
+                                        </Button>
+                                    </div>
+
+                                    {/* Fault List */}
+                                    {faultsToAdd.length > 0 && (
+                                        <div className="space-y-2">
+                                            {faultsToAdd.map((fault, idx) => (
+                                                <div key={idx} className="flex items-center justify-between bg-white p-3 rounded-xl border border-zinc-100 shadow-sm animate-in slide-in-from-top-1">
+                                                    <span className="text-sm font-medium text-zinc-700">{fault}</span>
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        onClick={() => setFaultsToAdd(prev => prev.filter((_, i) => i !== idx))}
+                                                        className="h-8 w-8 text-zinc-400 hover:text-red-500 hover:bg-red-50"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </Button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Removed "Notas Adicionales" section */}
+                            {/* <div className="space-y-2">
+                                <Label className="text-zinc-500">Notas Adicionales (No genera falla)</Label>
                                 <Textarea
                                     value={observaciones}
                                     onChange={e => setObservaciones(e.target.value)}
                                     className="bg-white py-3 min-h-[80px]"
                                     placeholder="Detalle cualquier novedad encontrada..."
                                 />
-                            </div>
+                            </div> */}
                         </div>
 
                         <DialogFooter className="bg-white p-4 border-t border-zinc-100 flex-col sm:flex-col gap-2">
@@ -566,6 +662,6 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
                     </>
                 )}
             </DialogContent>
-        </Dialog>
+        </Dialog >
     )
 }

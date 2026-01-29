@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Car } from "lucide-react" // [FIX] Import Car
+import { Car, Plus, Trash2, AlertCircle } from "lucide-react" // [FIX] Import Icons
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
     AlertDialog,
@@ -24,7 +24,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { VehicleSelector, Vehicle } from "@/components/vehicle-selector"
-import { updateVehicleFuel } from "@/app/transporte/actions"
+import { submitExitReport } from "@/app/transporte/actions"
 
 // Use Vehicle type from component but extend if needed or just use it
 // The local type had 'department', let's extend
@@ -56,10 +56,14 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
     const [gasolina, setGasolina] = useState("Full")
     const [observaciones, setObservaciones] = useState("")
     const [lastKm, setLastKm] = useState<number | null>(null)
+    const [faultsToAdd, setFaultsToAdd] = useState<string[]>([]) // [NEW] Explicit faults
+    const [newFaultText, setNewFaultText] = useState("")
 
     // Custom Alert State
     const [conflictAlertOpen, setConflictAlertOpen] = useState(false)
     const [pendingVehicle, setPendingVehicle] = useState<Vehiculo | null>(null)
+
+
 
     // Checks
     const [checks, setChecks] = useState({
@@ -84,12 +88,26 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
     useEffect(() => {
         if (isOpen) {
             setStep('form') // Reset step on open
-            loadVehicles().then(({ vehicles, userId }) => { // [FIX] receive userId
-                if (initialVehicleId && vehicles) {
-                    const found = vehicles.find(v => v.id === initialVehicleId)
+            loadVehicles().then(async ({ vehicles, userId }) => {
+                if (initialVehicleId) {
+                    let found = vehicles?.find(v => v.id === initialVehicleId)
+
+                    // [FIX] Fallback: If vehicle is not in 'available' (e.g. busy or different dept), fetch it anyway for display
+                    if (!found) {
+                        const supabase = createClient()
+                        const { data: vData } = await supabase.from('vehiculos').select('*').eq('id', initialVehicleId).single()
+                        const { data: kData } = await supabase.from('vista_ultimos_kilometrajes').select('ultimo_kilometraje').eq('vehiculo_id', initialVehicleId).single()
+
+                        if (vData) {
+                            found = {
+                                ...vData,
+                                kilometraje: kData?.ultimo_kilometraje || 0
+                            }
+                        }
+                    }
+
                     if (found) {
-                        // Pass userId explicitely to avoid race condition with state
-                        handleVehicleChange(found, userId)
+                        handleVehicleChange(found, userId || undefined)
                     }
                 }
             })
@@ -167,14 +185,16 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
         const userIdToCheck = overrideUserId || currentUserId
 
         // [MOD] Assignment Check with Custom Alert
-        if (selected.assigned_driver_id && userIdToCheck && selected.assigned_driver_id !== userIdToCheck) {
+        // Cast to Vehiculo to access assigned_driver_id
+        const veh = selected as Vehiculo
+        if (veh.assigned_driver_id && userIdToCheck && veh.assigned_driver_id !== userIdToCheck) {
             // Trigger customized alert instead of window.confirm
-            setPendingVehicle(selected as Vehiculo)
+            setPendingVehicle(veh)
             setConflictAlertOpen(true)
             return // Stop here
         }
 
-        commitVehicleChange(selected as Vehiculo)
+        commitVehicleChange(veh)
     }
 
     // [NEW] Separate commit function
@@ -217,48 +237,40 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
 
         setLoading(true)
         try {
-            const supabase = createClient()
-            const { data: { user } } = await supabase.auth.getUser()
+            // [NEW] Use Server Action
+            const result = await submitExitReport({
+                vehiculo_id: vehiculoId,
+                conductor,
+                departamento,
+                km_salida: km,
+                gasolina_salida: gasolina,
+                observaciones_salida: observaciones,
 
-            const { error } = await supabase
-                .from('reportes')
-                .insert({
-                    user_id: user?.id, // [FIX] Bind report to user for Pool Mode
-                    vehiculo_id: vehiculoId,
-                    km_salida: km,
-                    conductor,
-                    departamento,
-                    gasolina_salida: gasolina,
-                    observaciones_salida: observaciones,
+                aceite_salida: checks.aceite,
+                agua_salida: checks.agua,
 
-                    aceite_salida: checks.aceite,
-                    agua_salida: checks.agua,
+                carpeta_salida: checks.carpeta,
+                gato_salida: checks.gato,
+                cruz_salida: checks.cruz,
+                triangulo_salida: checks.triangulo,
+                caucho_salida: checks.caucho,
 
-                    // Car specific
-                    gato_salida: checks.gato,
-                    cruz_salida: checks.cruz,
-                    triangulo_salida: checks.triangulo,
-                    caucho_salida: checks.caucho,
-                    carpeta_salida: checks.carpeta,
+                onu_salida: checks.onu ? 1 : 0,
+                ups_salida: checks.ups ? 1 : 0,
+                escalera_salida: checks.escalera,
+                // Moto specific
+                casco_salida: checks.casco,
+                luces_salida: checks.luces,
+                herramientas_salida: checks.herramientas,
 
-                    // Moto specific
-                    casco_salida: checks.casco,
-                    luces_salida: checks.luces,
-                    herramientas_salida: checks.herramientas,
+                faults: faultsToAdd // [NEW] Pass explicit faults
+            })
 
-                    onu_salida: checks.onu ? 1 : 0,
-                    ups_salida: checks.ups ? 1 : 0,
-                    escalera_salida: checks.escalera,
+            if (!result.success) {
+                throw new Error(result.error)
+            }
 
-                    created_at: new Date().toISOString()
-                })
-
-            if (error) throw error
-
-            // [NEW] Update Vehicle Fuel Level on Checkout via Server Action (handles parsing & permissions)
-            await updateVehicleFuel(vehiculoId, gasolina)
-
-            toast.success("Salida registrada correctamente")
+            toast.success("Salida reportada (Taller notificado si hay novedades)")
 
             // --- WhatsApp Integration ---
             const text = formatSalidaText({
@@ -286,8 +298,8 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
 
             setWhatsappText(text)
             setStep('success')
-            router.refresh()
-            if (onSuccess) onSuccess() // [NEW] Trigger refresh in parent
+            // router.refresh() // Moved to after success dialog logic if needed
+            if (onSuccess) onSuccess()
             // ----------------------------
 
             // Reset
@@ -298,6 +310,8 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
             setDepartamento("")
             setGasolina("Full")
             setObservaciones("")
+            setFaultsToAdd([]) // Reset faults
+            setNewFaultText("")
             setLastKm(null)
             setChecks({
                 aceite: false, agua: false, gato: false, cruz: false,
@@ -362,7 +376,14 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
             msg += `Escalera: ${check(data.escalera_salida)}\n\n`
         }
 
-        msg += `Observaciones: ${data.observaciones_salida || 'Ninguna'}`
+        // [NEW] Add explicit faults to WhatsApp
+        if (faultsToAdd.length > 0) {
+            msg += `*Fallas Reportadas:*\n`
+            faultsToAdd.forEach(f => msg += `• ${f}\n`)
+            msg += `\n`
+        }
+
+        return msg
         return msg
     }
 
@@ -609,15 +630,66 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
                                 )}
                             </div>
 
-                            <div className="space-y-2">
-                                <Label>Observaciones / Novedades</Label>
-                                <Textarea
-                                    value={observaciones}
-                                    onChange={e => setObservaciones(e.target.value)}
-                                    className="bg-white py-3 min-h-[80px]"
-                                    placeholder="Detalle cualquier novedad encontrada..."
-                                />
+                            {/* [NEW] Explicit Fault Reporting Section - Minimalist */}
+                            <div className="bg-zinc-50/50 p-5 rounded-[24px] border border-zinc-100 space-y-4">
+                                <h4 className="text-sm font-bold text-zinc-600 uppercase tracking-wider flex items-center gap-2">
+                                    <AlertCircle size={16} className="text-zinc-600" />
+                                    Reportar Fallas
+                                </h4>
+
+                                <div className="space-y-3">
+                                    <div className="flex gap-2">
+                                        <Input
+                                            value={newFaultText}
+                                            onChange={(e) => setNewFaultText(e.target.value)}
+                                            placeholder="Ej: Luz de freno quemada..."
+                                            className="bg-white border-zinc-200 focus-visible:ring-zinc-400"
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault()
+                                                    if (newFaultText.trim()) {
+                                                        setFaultsToAdd([...faultsToAdd, newFaultText.trim()])
+                                                        setNewFaultText("")
+                                                    }
+                                                }
+                                            }}
+                                        />
+                                        <Button
+                                            type="button"
+                                            onClick={() => {
+                                                if (newFaultText.trim()) {
+                                                    setFaultsToAdd([...faultsToAdd, newFaultText.trim()])
+                                                    setNewFaultText("")
+                                                }
+                                            }}
+                                            className="bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl aspect-square p-0 w-12 shrink-0"
+                                        >
+                                            <Plus size={20} />
+                                        </Button>
+                                    </div>
+
+                                    {/* Fault List */}
+                                    {faultsToAdd.length > 0 && (
+                                        <div className="space-y-2">
+                                            {faultsToAdd.map((fault, idx) => (
+                                                <div key={idx} className="flex items-center justify-between bg-white p-3 rounded-xl border border-zinc-100 shadow-sm animate-in slide-in-from-top-1">
+                                                    <span className="text-sm font-medium text-zinc-700">{fault}</span>
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        onClick={() => setFaultsToAdd(prev => prev.filter((_, i) => i !== idx))}
+                                                        className="h-8 w-8 text-zinc-400 hover:text-red-500 hover:bg-red-50"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </Button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
+
+
                         </div>
 
                         <DialogFooter className="bg-white p-4 border-t border-zinc-100 flex-col sm:flex-col gap-2">

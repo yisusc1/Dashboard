@@ -124,7 +124,29 @@ export async function registrarEntrada(formData: FormData) {
         }
     }
 
+    // [NEW] Auto-Generate Fault: Filter Trivial Observations
+    const obsEntrada = updateData.observaciones_entrada?.toString() || '';
+    const trivialKeywords = ['ninguna', 'ninguno', 'todo bien', 'ok', 'sin novedad', 'nada', 'n/a', 'bien', 'fino', 'sin observaciones'];
+
+    const isTrivial = trivialKeywords.some(keyword =>
+        obsEntrada.toLowerCase().trim() === keyword ||
+        obsEntrada.toLowerCase().trim() === keyword + '.' // Handle simple punctuation
+    );
+
+    if (obsEntrada.trim().length > 3 && !isTrivial) {
+        // Create Fault
+        await supabase.from('fallas').insert({
+            vehiculo_id: data.vehiculo_id, // Get from updated report data
+            descripcion: `[Reporte Entrada] ${obsEntrada}`,
+            tipo_falla: 'Mecánica', // Default
+            prioridad: 'Media',
+            estado: 'Pendiente',
+            created_at: new Date().toISOString()
+        });
+    }
+
     revalidatePath('/transporte');
+    revalidatePath('/taller'); // Update Taller
     revalidatePath('/gerencia'); // [NEW] Revalidate Administration Panel
     return { success: true, data };
 }
@@ -184,4 +206,206 @@ export async function assignVehicleToDriver(vehicleId: string) {
 
     revalidatePath('/transporte');
     return { success: true };
+}
+// [NEW] Unified Exit Report Action (Replaces Client-Side Logic)
+export async function submitExitReport(reportData: any) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // 1. Prepare Base Report Data
+    const rawData = {
+        user_id: user?.id,
+        vehiculo_id: reportData.vehiculo_id,
+        conductor: reportData.conductor,
+        departamento: reportData.departamento,
+        fecha_salida: new Date().toISOString(),
+
+        km_salida: reportData.km_salida,
+        gasolina_salida: reportData.gasolina_salida,
+        observaciones_salida: reportData.observaciones_salida,
+
+        // Chequeo Técnico
+        aceite_salida: reportData.aceite_salida,
+        agua_salida: reportData.agua_salida,
+
+        // Seguridad (Carros)
+        carpeta_salida: reportData.carpeta_salida,
+        gato_salida: reportData.gato_salida,
+        cruz_salida: reportData.cruz_salida,
+        triangulo_salida: reportData.triangulo_salida,
+        caucho_salida: reportData.caucho_salida,
+
+        // Dispositivos (Instalación)
+        onu_salida: reportData.onu_salida,
+        ups_salida: reportData.ups_salida,
+        escalera_salida: reportData.escalera_salida,
+
+        // Moto
+        casco_salida: reportData.casco_salida,
+        luces_salida: reportData.luces_salida,
+        herramientas_salida: reportData.herramientas_salida,
+    };
+
+    // 2. Insert Report
+    const { data, error } = await supabase.from('reportes').insert(rawData).select().single();
+    if (error) {
+        return { success: false, error: error.message };
+    }
+
+    // 3. Update Vehicle Fuel
+    const fuelLevel = parseFuelLevel(rawData.gasolina_salida);
+    await supabase.from('vehiculos').update({
+        current_fuel_level: fuelLevel,
+        last_fuel_update: new Date().toISOString()
+    }).eq('id', rawData.vehiculo_id);
+
+
+    // 4. [NEW] Auto-Generate Fault if there are issues
+    // Logic: If any check is FALSE (meaning BAD/MISSING) or if there are observations
+    // Note: In the UI, the switches are "Is Good/Present?". So false = bad.
+    // However, the UI labels say "Nivel de Aceite", "Gato Hidráulico".
+    // Usually, Toggle ON = Good. Toggle OFF = Bad/Missing.
+    // Let's assume the user toggles ON if everything is fine.
+    // Wait, let's verify `SalidaFormDialog`.
+    // <Switch id="aceite" checked={checks.aceite} ... />
+    // Defaults are all false.
+    // So if I check it, it means "Presente/Bueno".
+    // So if any check is FALSE, it is potentially missing?
+    // Actually, usually users strictly check what verifies.
+    // If I leave "Gato" unchecked, does it mean it's missing? Yes.
+    // But maybe for a quick simplified logic, we only look at "Observaciones".
+    // Or we look at specific critical failures.
+    // Let's stick to: "If there is explicit text content in observations, trigger a review".
+    // Generating faults for unchecked items might flood the system if they just forgot to check.
+    // BETTER STRATEGY: Only Observation text triggers a fault for now, or maybe specific "Bad" states if we had "Bad" buttons.
+    // Given the switches are likely "Confirmed Present", lack of check is ambiguous.
+    // Let's rely on `observaciones_salida`.
+
+    // [NEW] Process explicit faults
+    if (reportData.faults && Array.isArray(reportData.faults) && reportData.faults.length > 0) {
+        const faultsToInsert = reportData.faults.map((desc: string) => ({
+            vehiculo_id: rawData.vehiculo_id,
+            descripcion: `[Reporte Salida] ${desc}`,
+            tipo_falla: 'Mecánica', // Default
+            prioridad: 'Media',
+            estado: 'Pendiente',
+            created_at: new Date().toISOString()
+        }))
+
+        await supabase.from('fallas').insert(faultsToInsert)
+    }
+
+    // [MOD] Disabling auto-generation from observations as per new explicit flow
+    /* 
+    const obsSalida = rawData.observaciones_salida?.toString() || '';
+    ... (Logic removed to favor explicit button)
+    */
+
+    revalidatePath('/transporte');
+    revalidatePath('/taller'); // Update Taller
+    revalidatePath('/gerencia');
+    return { success: true, data };
+}
+
+// [NEW] Fetch Active Faults for a Vehicle
+export async function getActiveFaults(vehicleId: string) {
+    const supabase = await createClient();
+
+    try {
+        const { data, error } = await supabase
+            .from('fallas')
+            .select('descripcion, created_at, estado')
+            .eq('vehiculo_id', vehicleId)
+            .in('estado', ['Pendiente', 'En Revisión'])
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error("Error fetching active faults:", error);
+            return [];
+        }
+        return data || [];
+    } catch (err) {
+        console.error("Exception fetching active faults:", err);
+        return [];
+    }
+}
+// [NEW] Unified Entry Report Action (Replaces Client-Side Logic & registrarEntrada)
+export async function submitEntryReport(reportData: any) {
+    const supabase = await createClient();
+
+    // 1. Prepare Update Data
+    const updateData: any = {
+        fecha_entrada: new Date().toISOString(),
+
+        // Datos Operativos
+        km_entrada: reportData.km_entrada,
+        gasolina_entrada: reportData.gasolina_entrada,
+        // observaciones_entrada: reportData.observaciones_entrada, // Removed/Optional
+
+        // Chequeo Técnico (Re-chequeo)
+        aceite_entrada: reportData.aceite_entrada,
+        agua_entrada: reportData.agua_entrada,
+
+        // Seguridad (Carros)
+        carpeta_entrada: reportData.carpeta_entrada,
+        gato_entrada: reportData.gato_entrada,
+        cruz_entrada: reportData.cruz_entrada,
+        triangulo_entrada: reportData.triangulo_entrada,
+        caucho_entrada: reportData.caucho_entrada,
+
+        // Moto
+        casco_entrada: reportData.casco_entrada,
+        luces_entrada: reportData.luces_entrada,
+        herramientas_entrada: reportData.herramientas_entrada,
+
+        // Dispositivos (Instalación)
+        onu_entrada: reportData.onu_entrada ? 1 : 0,
+        ups_entrada: reportData.ups_entrada ? 1 : 0,
+        escalera_entrada: reportData.escalera_entrada,
+    };
+
+    // 2. Update Report
+    const { data, error } = await supabase.from('reportes')
+        .update(updateData)
+        .eq('id', reportData.reporte_id)
+        .select()
+        .single();
+
+    if (error) {
+        return { success: false, error: 'Database Error (Report): ' + error.message };
+    }
+
+    // 3. Update Vehicle Fuel & Mileage (Server-Side)
+    if (data.vehiculo_id) {
+        const fuelLevel = parseFuelLevel(reportData.gasolina_entrada?.toString() || "");
+
+        await supabase.from('vehiculos').update({
+            current_fuel_level: fuelLevel,
+            kilometraje: reportData.km_entrada,
+            last_fuel_update: new Date().toISOString()
+        }).eq('id', data.vehiculo_id);
+    }
+
+    // 4. Register Explicit Faults
+    if (reportData.faults && Array.isArray(reportData.faults) && reportData.faults.length > 0) {
+        const faultsToInsert = reportData.faults.map((desc: string) => ({
+            vehiculo_id: data.vehiculo_id,
+            descripcion: `[Reporte Entrada] ${desc}`,
+            tipo_falla: 'Mecánica',
+            prioridad: 'Media',
+            estado: 'Pendiente',
+            created_at: new Date().toISOString()
+        }))
+
+        // Allow partial failure for faults, but preferably not.
+        const { error: faultError } = await supabase.from('fallas').insert(faultsToInsert)
+        if (faultError) console.error("Error saving faults:", faultError)
+    }
+
+    // 5. Revalidate
+    revalidatePath('/transporte');
+    revalidatePath('/taller');
+    revalidatePath('/gerencia');
+
+    return { success: true, data };
 }
