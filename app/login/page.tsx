@@ -24,9 +24,7 @@ export default function LoginPage() {
 
     // Init Google Auth on mount (web only, but good practice)
     useEffect(() => {
-        if (!Capacitor.isNativePlatform()) {
-            GoogleAuth.initialize()
-        }
+        GoogleAuth.initialize()
     }, [])
 
     const handleLogin = async () => {

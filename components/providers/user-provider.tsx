@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { User } from "@supabase/supabase-js"
+import { toast } from "sonner" // Import at top level
 
 type UserRole = "admin" | "transporte" | "taller" | "tecnico" | "invitado" | "almacen" | "chofer" | "supervisor" | "soporte" | "planificacion" | "distribucion" | "afectaciones" | "rrhh" | "tecnologico" | "comercializacion" | "auditoria" | "combustible"
 
@@ -41,6 +42,88 @@ export function UserProvider({
     const [isLoading, setIsLoading] = useState(!initialUser)
 
     const supabase = createClient()
+
+    // Push Notifications Logic
+    useEffect(() => {
+        // Unconditional Debug Logs
+        console.log('UserProvider: Push Effect Triggered', { user_id: user?.id })
+
+        if (!user) {
+            console.log('UserProvider: waiting for user...')
+            return
+        }
+
+        const initPush = async () => {
+            try {
+                toast.info('🚀 DEBUG: Intentando Iniciar Push...', { duration: 5000 })
+
+                // Dynamic import of Capacitor plugins to avoid SSR issues
+                const { Capacitor } = await import('@capacitor/core')
+                const { PushNotifications } = await import('@capacitor/push-notifications')
+
+                // Bypass isNativePlatform check for debugging - show alert if not native
+                if (!Capacitor.isNativePlatform()) {
+                    console.warn('Not native platform, but continuing for debug...')
+                    toast.warning('⚠️ No es nativo (Web Mode)', { duration: 5000 })
+                    // In web mode, PushNotifications plugin usually throws or does nothing, 
+                    // but we want to see this message to confirm we are running.
+                    return
+                }
+
+                const permStatus = await PushNotifications.checkPermissions()
+                console.log('Perm Status:', permStatus)
+                toast.info(`Estado Permiso: ${permStatus.receive}`, { duration: 5000 })
+
+                if (permStatus.receive === 'prompt') {
+                    const newStatus = await PushNotifications.requestPermissions()
+                    if (newStatus.receive !== 'granted') {
+                        toast.error('🚫 Permiso DENEGADO por usuario')
+                        return
+                    }
+                }
+
+                if (permStatus.receive === 'granted') {
+                    await PushNotifications.register()
+                }
+
+                PushNotifications.addListener('registration', async (token) => {
+                    console.log('Push Token:', token.value)
+                    toast.success('✅ TOKEN OBTENIDO')
+
+                    const { error } = await supabase
+                        .from('user_devices')
+                        .upsert({
+                            user_id: user.id,
+                            fcm_token: token.value,
+                            platform: 'android',
+                            last_active: new Date().toISOString()
+                        }, { onConflict: 'fcm_token' })
+
+                    if (error) {
+                        toast.error('⚠️ Error DB: ' + error.message)
+                    } else {
+                        toast.success('💾 Token guardado en Supabase')
+                    }
+                })
+
+                PushNotifications.addListener('registrationError', (error) => {
+                    toast.error(`❌ Fallo Registro: ${error.error}`)
+                })
+
+                PushNotifications.addListener('pushNotificationReceived', (notification) => {
+                    toast.message(`📣 Notificación: ${notification.title}`)
+                })
+
+            } catch (e) {
+                console.error('Push Init Error:', e)
+                toast.error('🔥 CRASH: ' + e)
+            }
+        }
+
+        initPush()
+
+    }, [user])
+
 
     useEffect(() => {
         // If we already have user/profile from server, we don't need to fetch immediately
