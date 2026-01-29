@@ -45,41 +45,22 @@ export function UserProvider({
 
     // Push Notifications Logic
     useEffect(() => {
-        // Unconditional Debug Logs
-        console.log('UserProvider: Push Effect Triggered', { user_id: user?.id })
-
-        if (!user) {
-            console.log('UserProvider: waiting for user...')
-            return
-        }
+        if (!user) return
 
         const initPush = async () => {
             try {
-                toast.info('🚀 DEBUG: Intentando Iniciar Push...', { duration: 5000 })
-
                 // Dynamic import of Capacitor plugins to avoid SSR issues
                 const { Capacitor } = await import('@capacitor/core')
                 const { PushNotifications } = await import('@capacitor/push-notifications')
 
-                // Bypass isNativePlatform check for debugging - show alert if not native
                 if (!Capacitor.isNativePlatform()) {
-                    console.warn('Not native platform, but continuing for debug...')
-                    toast.warning('⚠️ No es nativo (Web Mode)', { duration: 5000 })
-                    // In web mode, PushNotifications plugin usually throws or does nothing, 
-                    // but we want to see this message to confirm we are running.
                     return
                 }
 
                 const permStatus = await PushNotifications.checkPermissions()
-                console.log('Perm Status:', permStatus)
-                toast.info(`Estado Permiso: ${permStatus.receive}`, { duration: 5000 })
 
                 if (permStatus.receive === 'prompt') {
-                    const newStatus = await PushNotifications.requestPermissions()
-                    if (newStatus.receive !== 'granted') {
-                        toast.error('🚫 Permiso DENEGADO por usuario')
-                        return
-                    }
+                    await PushNotifications.requestPermissions()
                 }
 
                 if (permStatus.receive === 'granted') {
@@ -88,7 +69,6 @@ export function UserProvider({
 
                 PushNotifications.addListener('registration', async (token) => {
                     console.log('Push Token:', token.value)
-                    toast.success('✅ TOKEN OBTENIDO')
 
                     const { error } = await supabase
                         .from('user_devices')
@@ -100,23 +80,20 @@ export function UserProvider({
                         }, { onConflict: 'fcm_token' })
 
                     if (error) {
-                        toast.error('⚠️ Error DB: ' + error.message)
-                    } else {
-                        toast.success('💾 Token guardado en Supabase')
+                        console.error('Error saving token to DB:', error)
                     }
                 })
 
                 PushNotifications.addListener('registrationError', (error) => {
-                    toast.error(`❌ Fallo Registro: ${error.error}`)
+                    console.error('Push Registration Error:', error)
                 })
 
                 PushNotifications.addListener('pushNotificationReceived', (notification) => {
-                    toast.message(`📣 Notificación: ${notification.title}`)
+                    toast.message(`📣 ${notification.title}: ${notification.body}`)
                 })
 
             } catch (e) {
                 console.error('Push Init Error:', e)
-                toast.error('🔥 CRASH: ' + e)
             }
         }
 
