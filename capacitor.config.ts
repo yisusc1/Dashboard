@@ -11,7 +11,7 @@ const config: CapacitorConfig = {
   plugins: {
     GoogleAuth: {
       scopes: ['profile', 'email'],
-      serverClientId: '766327056238-q5st3j8t2tq946s222222.apps.googleusercontent.com', // Replace with your Web Client ID from Supabase/Google Cloud
+      serverClientId: '493512081020-orvr5ip6gmfpvogne8qe5p52gstgp9jr.apps.googleusercontent.com',
       forceCodeForRefreshToken: true,
     },
   },
