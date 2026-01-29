@@ -3,11 +3,14 @@
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Chrome } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
+
+import { Capacitor } from "@capacitor/core"
+import { GoogleAuth } from "@codetrix-studio/capacitor-google-auth"
 
 export default function LoginPage() {
     const [loading, setLoading] = useState(false)
@@ -19,10 +22,37 @@ export default function LoginPage() {
     const [lastName, setLastName] = useState("")
     const [isSignUp, setIsSignUp] = useState(false)
 
+    // Init Google Auth on mount (web only, but good practice)
+    useEffect(() => {
+        if (!Capacitor.isNativePlatform()) {
+            GoogleAuth.initialize()
+        }
+    }, [])
+
     const handleLogin = async () => {
         setLoading(true)
         try {
             const supabase = createClient()
+
+            // Check if running on Android/iOS
+            if (Capacitor.isNativePlatform()) {
+                const googleUser = await GoogleAuth.signIn()
+                const idToken = googleUser.authentication.idToken
+
+                const { error } = await supabase.auth.signInWithIdToken({
+                    provider: 'google',
+                    token: idToken,
+                })
+
+                if (error) throw error
+
+                // Native login keeps you on the same page, so we refresh or redirect manually
+                router.push("/")
+                router.refresh()
+                return
+            }
+
+            // Web Flow
             const redirectTo = `${window.location.origin}/auth/callback`
             console.log("DEBUG LOGIN: Redirecting to:", redirectTo)
 
