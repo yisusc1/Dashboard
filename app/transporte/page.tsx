@@ -100,7 +100,8 @@ export default function TransportePage() {
 
             // 2. Check for Assigned Vehicle (Driver Mode)
             // IF user is 'mecanico', we SKIP Driver Mode to allow them to see ALL vehicles
-            const isMecanico = (profileData.roles || []).includes('mecanico')
+            // Normalize roles to avoid case sensitivity issues
+            const isMecanico = (profileData.roles || []).map((r: string) => r.toLowerCase()).includes('mecanico')
             let myVehicle = null
 
             if (!isMecanico) {

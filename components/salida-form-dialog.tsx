@@ -15,7 +15,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog" // [NEW] Link components
-import { CheckCircle, Send, AlertTriangle } from "lucide-react"
+import { CheckCircle, Send, AlertTriangle, Plus, X } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
@@ -81,6 +81,20 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
 
     const router = useRouter()
 
+    // [NEW] Fault List State
+    const [faultsList, setFaultsList] = useState<string[]>([])
+    const [currentFault, setCurrentFault] = useState("")
+
+    const addFault = () => {
+        if (!currentFault.trim()) return
+        setFaultsList(prev => [...prev, currentFault.trim()])
+        setCurrentFault("")
+    }
+
+    const removeFault = (index: number) => {
+        setFaultsList(prev => prev.filter((_, i) => i !== index))
+    }
+
     useEffect(() => {
         if (isOpen) {
             setStep('form') // Reset step on open
@@ -112,7 +126,9 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
             .single()
 
         const userDept = profile?.department
-        const isMecanico = (profile?.roles || []).includes('mecanico')
+        // Normalize roles to avoid case sensitivity issues (e.g. "Mecanico" vs "mecanico")
+        const roles = (profile?.roles || []).map((r: string) => r.toLowerCase())
+        const isMecanico = roles.includes('mecanico')
 
         // [NEW] Auto-fill Conductor Name
         if (profile?.first_name || profile?.last_name) {
@@ -249,6 +265,9 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
                     onu_salida: checks.onu ? 1 : 0,
                     ups_salida: checks.ups ? 1 : 0,
                     escalera_salida: checks.escalera,
+
+                    // [MOD] Save faults list as observations
+                    observaciones_salida: faultsList.length > 0 ? faultsList.join('\n') : (currentFault || ''),
 
                     created_at: new Date().toISOString()
                 })
@@ -609,14 +628,55 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
                                 )}
                             </div>
 
-                            <div className="space-y-2">
-                                <Label>Observaciones / Novedades</Label>
-                                <Textarea
-                                    value={observaciones}
-                                    onChange={e => setObservaciones(e.target.value)}
-                                    className="bg-white py-3 min-h-[80px]"
-                                    placeholder="Detalle cualquier novedad encontrada..."
-                                />
+                            <div className="space-y-3">
+                                <Label className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+                                    <AlertTriangle size={14} />
+                                    Reportar Fallas
+                                </Label>
+
+                                <div className="space-y-3">
+                                    {/* List of added faults */}
+                                    {faultsList.length > 0 && (
+                                        <div className="flex flex-wrap gap-2">
+                                            {faultsList.map((fault, index) => (
+                                                <div key={index} className="flex items-center gap-2 bg-red-50 text-red-700 px-3 py-1.5 rounded-lg text-sm font-medium border border-red-100 animate-in fade-in zoom-in duration-300">
+                                                    <span>{fault}</span>
+                                                    <button
+                                                        onClick={() => removeFault(index)}
+                                                        className="hover:bg-red-100 rounded-full p-0.5 transition-colors"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {/* Input Area */}
+                                    <div className="flex gap-2">
+                                        <div className="relative flex-1">
+                                            <Input
+                                                value={currentFault}
+                                                onChange={e => setCurrentFault(e.target.value)}
+                                                onKeyDown={e => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault()
+                                                        addFault()
+                                                    }
+                                                }}
+                                                className="h-12 rounded-xl bg-white pr-10"
+                                                placeholder="Ej: Luz de freno quemada..."
+                                            />
+                                        </div>
+                                        <Button
+                                            onClick={addFault}
+                                            disabled={!currentFault.trim()}
+                                            className="h-12 w-12 rounded-xl bg-black text-white hover:bg-zinc-800 shrink-0 p-0 flex items-center justify-center shadow-lg shadow-zinc-200/50"
+                                        >
+                                            <Plus size={24} />
+                                        </Button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
