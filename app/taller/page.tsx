@@ -270,7 +270,7 @@ export default function TallerPage() {
 
             const { data: maintenanceData } = await supabase
                 .from('maintenance_logs')
-                .select(`id, service_type, mileage, notes, service_date, created_at, vehiculos(placa, modelo)`)
+                .select(`id, service_type, mileage, notes, service_date, created_at, cost, parts_used, labor_cost, parts_cost, vehiculos(placa, modelo)`)
                 .order('created_at', { ascending: false })
                 .limit(50)
 
@@ -283,7 +283,9 @@ export default function TallerPage() {
                     description: f.descripcion,
                     category: f.tipo_falla,
                     id: f.id,
-                    mileage: null
+                    mileage: null,
+                    parts: null,
+                    cost: null
                 })) || []),
                 ...(maintenanceData?.map(m => ({
                     type: 'MAINTENANCE',
@@ -293,7 +295,11 @@ export default function TallerPage() {
                     description: m.notes || 'Mantenimiento Preventivo',
                     category: m.service_type,
                     mileage: m.mileage,
-                    id: m.id
+                    id: m.id,
+                    parts: m.parts_used,
+                    cost: m.cost,
+                    labor: m.labor_cost,
+                    partsCost: m.parts_cost
                 })) || [])
             ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
@@ -343,10 +349,11 @@ export default function TallerPage() {
     }
 
     function handleResolve(fault: Fault) {
+        setSelectedVehicleId(fault.vehiculo_id)
+        setPendingResolveId(fault.id)
+
         if (fault.tipo_falla === 'Mantenimiento') {
             console.log("Resolving Maintenance Fault:", fault.descripcion)
-            setSelectedVehicleId(fault.vehiculo_id)
-            setPendingResolveId(fault.id)
 
             // Determine Service Type from Description
             let serviceCode: string | undefined = undefined
@@ -358,22 +365,23 @@ export default function TallerPage() {
             else if (desc.includes('lavado')) serviceCode = 'WASH'
 
             if (!serviceCode) {
-                toast.warning("No se pudo detectar el servicio específico. Seleccione manualmente.")
-            } else {
-                console.log("Detected Service:", serviceCode)
+                // If unknown, let user choose but lock on Maintenance tab? or Corrective?
+                // Let's leave it undefined, user can pick.
             }
 
             setSelectedServiceType(serviceCode)
-            setMaintenanceOpen(true)
         } else {
-            updateStatus(fault.id, 'Reparado')
+            // Corrective / Other Faults
+            setSelectedServiceType(undefined)
         }
+
+        setMaintenanceOpen(true)
     }
 
     function handleMaintenanceSuccess() {
         if (pendingResolveId) {
             updateStatus(pendingResolveId, 'Reparado')
-            setPendingResolveId(null)
+            // setPendingResolveId(null) // [FIX] Don't clear this yet, or it resets the dialog success view!
         } else {
             loadFaults() // Just reload if it was a manual registration
         }
@@ -479,15 +487,17 @@ export default function TallerPage() {
                         <div className="bg-zinc-100 p-1 rounded-xl flex">
                             <button
                                 onClick={() => setView('pending')}
-                                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${view === 'pending' || view === 'board' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500'}`}
+                                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${view === 'pending' || view === 'board' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500'}`}
                             >
                                 Pendientes
+                                {pending.length > 0 && <span className="bg-red-500 text-white text-[10px] px-1.5 rounded-full">{pending.length}</span>}
                             </button>
                             <button
                                 onClick={() => setView('review')}
-                                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${view === 'review' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500'}`}
+                                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${view === 'review' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500'}`}
                             >
                                 En Revisión
+                                {inProgress.length > 0 && <span className="bg-blue-500 text-white text-[10px] px-1.5 rounded-full">{inProgress.length}</span>}
                             </button>
                             <button
                                 onClick={() => setView('history')}
@@ -651,7 +661,8 @@ export default function TallerPage() {
                                                                 ? (log.category === 'OIL_CHANGE' ? 'Cambio de Aceite' :
                                                                     log.category === 'TIMING_BELT' ? 'Correa de Tiempo' :
                                                                         log.category === 'CHAIN_KIT' ? 'Kit de Arrastre' :
-                                                                            log.category === 'WASH' ? 'Lavado' : log.category)
+                                                                            log.category === 'WASH' ? 'Lavado' :
+                                                                                log.category === 'CORRECTIVE' ? 'Correctivo' : log.category)
                                                                 : `Reparación: ${log.category}`
                                                             }
                                                         </span>
@@ -659,6 +670,20 @@ export default function TallerPage() {
                                                         {log.description}
                                                         {log.mileage && <span className="text-zinc-400 ml-2">({log.mileage.toLocaleString()} km)</span>}
                                                     </div>
+                                                    {(log.parts || log.cost > 0) && (
+                                                        <div className="text-xs text-zinc-500 mt-1 flex gap-3 text-zinc-400 bg-zinc-50 px-2 py-1 rounded w-fit">
+                                                            {log.parts && (
+                                                                <span className="flex items-center gap-1">
+                                                                    <Wrench size={10} /> {log.parts}
+                                                                </span>
+                                                            )}
+                                                            {log.cost > 0 && (
+                                                                <span className="font-mono font-medium text-emerald-600">
+                                                                    ${log.cost}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                             <div className="text-right text-xs text-zinc-400">
@@ -687,6 +712,15 @@ export default function TallerPage() {
                 lockServiceType={!!selectedServiceType}
                 lockVehicle={!!selectedVehicleId}
                 onSuccess={handleMaintenanceSuccess}
+                closingFaultId={pendingResolveId || undefined}
+            />
+
+            {/* [NEW] Transport History Dialog */}
+            <VehicleHistoryDialog
+                isOpen={historyOpen}
+                onClose={() => setHistoryOpen(false)}
+                vehicleId={historyVehicleId}
+                vehiclePlate={historyVehiclePlate}
             />
 
             {/* [NEW] Transport History Dialog */}

@@ -3,19 +3,27 @@
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 
+// [UPDATED] Interface to match new columns
 type MaintenanceData = {
     vehicle_id: string
     service_type: string
     mileage: number
     notes?: string
     performed_by?: string
-    cost?: number
+    // New fields
+    cost?: number      // Legacy total cost (optional)
+    labor_cost?: number
+    parts_cost?: number
+    parts_used?: string
 }
 
 export async function registerMaintenance(data: MaintenanceData) {
     const supabase = await createClient()
 
     try {
+        // [New] Calculate total if not provided
+        const totalCost = data.cost || ((data.labor_cost || 0) + (data.parts_cost || 0))
+
         // 1. Insert Log
         const { error: logError } = await supabase.from('maintenance_logs').insert({
             vehicle_id: data.vehicle_id,
@@ -23,7 +31,10 @@ export async function registerMaintenance(data: MaintenanceData) {
             mileage: data.mileage,
             notes: data.notes,
             performed_by: data.performed_by,
-            cost: data.cost || 0,
+            cost: totalCost,
+            labor_cost: data.labor_cost || 0,
+            parts_cost: data.parts_cost || 0,
+            parts_used: data.parts_used || "",
             service_date: new Date().toISOString()
         })
 
@@ -85,6 +96,28 @@ export async function reportFault(data: {
         return { success: true }
     } catch (error: any) {
         console.error('Report Fault Error:', error)
+        return { success: false, error: error.message }
+    }
+}
+
+export async function resolveFault(id: string) {
+    const supabase = await createClient()
+
+    try {
+        const { error } = await supabase
+            .from('fallas')
+            .update({
+                estado: 'Reparado',
+                fecha_solucion: new Date().toISOString()
+            })
+            .eq('id', id)
+
+        if (error) throw error
+
+        revalidatePath('/taller')
+        return { success: true }
+    } catch (error: any) {
+        console.error('Resolve Fault Error:', error)
         return { success: false, error: error.message }
     }
 }

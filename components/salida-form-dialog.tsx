@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Car } from "lucide-react" // [FIX] Import Car
+import { Car, Plus, Trash2, AlertCircle, AlertTriangle, CheckCircle, Send, X } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
     AlertDialog,
@@ -14,8 +14,7 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-} from "@/components/ui/alert-dialog" // [NEW] Link components
-import { CheckCircle, Send, AlertTriangle, Plus, X } from "lucide-react"
+} from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
@@ -24,13 +23,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { VehicleSelector, Vehicle } from "@/components/vehicle-selector"
-import { updateVehicleFuel } from "@/app/transporte/actions"
+import { submitExitReport, updateVehicleFuel } from "@/app/transporte/actions"
 
-// Use Vehicle type from component but extend if needed or just use it
-// The local type had 'department', let's extend
 interface Vehiculo extends Vehicle {
     department?: string
-    assigned_driver_id?: string | null // [NEW] Track assignment
+    assigned_driver_id?: string | null
 }
 
 type SalidaFormDialogProps = {
@@ -48,7 +45,7 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
     // Form State
     const [vehiculos, setVehiculos] = useState<Vehiculo[]>([])
     const [vehiculoId, setVehiculoId] = useState("")
-    const [currentUserId, setCurrentUserId] = useState("") // [NEW] To check assignment
+    const [currentUserId, setCurrentUserId] = useState("")
     const [selectedVehicle, setSelectedVehicle] = useState<Vehiculo | null>(null)
     const [kmSalida, setKmSalida] = useState("")
     const [conductor, setConductor] = useState("")
@@ -56,6 +53,10 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
     const [gasolina, setGasolina] = useState("Full")
     const [observaciones, setObservaciones] = useState("")
     const [lastKm, setLastKm] = useState<number | null>(null)
+
+    // Fault Reporting State (From Remote/New Logic)
+    const [faultsToAdd, setFaultsToAdd] = useState<string[]>([])
+    const [newFaultText, setNewFaultText] = useState("")
 
     // Custom Alert State
     const [conflictAlertOpen, setConflictAlertOpen] = useState(false)
@@ -81,29 +82,29 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
 
     const router = useRouter()
 
-    // [NEW] Fault List State
-    const [faultsList, setFaultsList] = useState<string[]>([])
-    const [currentFault, setCurrentFault] = useState("")
-
-    const addFault = () => {
-        if (!currentFault.trim()) return
-        setFaultsList(prev => [...prev, currentFault.trim()])
-        setCurrentFault("")
-    }
-
-    const removeFault = (index: number) => {
-        setFaultsList(prev => prev.filter((_, i) => i !== index))
-    }
-
     useEffect(() => {
         if (isOpen) {
             setStep('form') // Reset step on open
-            loadVehicles().then(({ vehicles, userId }) => { // [FIX] receive userId
-                if (initialVehicleId && vehicles) {
-                    const found = vehicles.find(v => v.id === initialVehicleId)
+            loadVehicles().then(async ({ vehicles, userId }) => {
+                if (initialVehicleId) {
+                    let found = vehicles?.find(v => v.id === initialVehicleId)
+
+                    // Fallback: If vehicle is not in 'available' (e.g. busy or different dept), fetch it anyway for display
+                    if (!found) {
+                        const supabase = createClient()
+                        const { data: vData } = await supabase.from('vehiculos').select('*').eq('id', initialVehicleId).single()
+                        const { data: kData } = await supabase.from('vista_ultimos_kilometrajes').select('ultimo_kilometraje').eq('vehiculo_id', initialVehicleId).single()
+
+                        if (vData) {
+                            found = {
+                                ...vData,
+                                kilometraje: kData?.ultimo_kilometraje || 0
+                            }
+                        }
+                    }
+
                     if (found) {
-                        // Pass userId explicitely to avoid race condition with state
-                        handleVehicleChange(found, userId)
+                        handleVehicleChange(found, userId || undefined)
                     }
                 }
             })
@@ -117,7 +118,7 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return { vehicles: [], userId: null }
 
-        setCurrentUserId(user.id) // Still set state for other uses
+        setCurrentUserId(user.id)
 
         const { data: profile } = await supabase
             .from('profiles')
@@ -126,11 +127,11 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
             .single()
 
         const userDept = profile?.department
-        // Normalize roles to avoid case sensitivity issues (e.g. "Mecanico" vs "mecanico")
+        // Normalize roles to avoid case sensitivity issues
         const roles = (profile?.roles || []).map((r: string) => r.toLowerCase())
         const isMecanico = roles.includes('mecanico')
 
-        // [NEW] Auto-fill Conductor Name
+        // Auto-fill Conductor Name
         if (profile?.first_name || profile?.last_name) {
             const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
             setConductor(fullName)
@@ -146,7 +147,7 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
         const available = allVehicles?.filter(v => {
             if (busyIds.has(v.id)) return false
 
-            // [FIX] Mechanics see ALL vehicles regardless of department
+            // Mechanics see ALL vehicles regardless of department
             if (isMecanico) return true
 
             // Filter by department if set
@@ -167,10 +168,9 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
         // Auto-select department in form if user has one
         if (userDept) setDepartamento(userDept)
 
-        return { vehicles: available, userId: user.id } // [FIX] Return composite
+        return { vehicles: available, userId: user.id }
     }
 
-    // [MOD] Accept overrideUserId
     async function handleVehicleChange(selected: Vehicle | null, overrideUserId?: string) {
         if (!selected) {
             setVehiculoId("")
@@ -179,21 +179,19 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
             return
         }
 
-        // Use override if provided (during init), otherwise state
         const userIdToCheck = overrideUserId || currentUserId
 
-        // [MOD] Assignment Check with Custom Alert
-        if (selected.assigned_driver_id && userIdToCheck && selected.assigned_driver_id !== userIdToCheck) {
-            // Trigger customized alert instead of window.confirm
-            setPendingVehicle(selected as Vehiculo)
+        // Assignment Check with Custom Alert
+        const veh = selected as Vehiculo
+        if (veh.assigned_driver_id && userIdToCheck && veh.assigned_driver_id !== userIdToCheck) {
+            setPendingVehicle(veh)
             setConflictAlertOpen(true)
             return // Stop here
         }
 
-        commitVehicleChange(selected as Vehiculo)
+        commitVehicleChange(veh)
     }
 
-    // [NEW] Separate commit function
     async function commitVehicleChange(selected: Vehiculo) {
         const value = selected.id
         setVehiculoId(value)
@@ -201,7 +199,6 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
         setSelectedVehicle(selected)
 
         const supabase = createClient()
-        // Keep legacy logic for lastKm validation just in case
         const { data } = await supabase
             .from('reportes')
             .select('km_entrada')
@@ -212,7 +209,7 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
             .single()
 
         if (data) setLastKm(data.km_entrada)
-        else setLastKm(selected.kilometraje || 0) // Fallback to current mileage if no report found
+        else setLastKm(selected.kilometraje || 0)
     }
 
     const toggleCheck = (key: keyof typeof checks) => {
@@ -233,51 +230,43 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
 
         setLoading(true)
         try {
-            const supabase = createClient()
-            const { data: { user } } = await supabase.auth.getUser()
+            // Use Server Action (Remote Logic)
+            const result = await submitExitReport({
+                vehiculo_id: vehiculoId,
+                conductor,
+                departamento,
+                km_salida: km,
+                gasolina_salida: gasolina,
+                observaciones_salida: observaciones, // Still passing this for backward compat or if needed
 
-            const { error } = await supabase
-                .from('reportes')
-                .insert({
-                    user_id: user?.id, // [FIX] Bind report to user for Pool Mode
-                    vehiculo_id: vehiculoId,
-                    km_salida: km,
-                    conductor,
-                    departamento,
-                    gasolina_salida: gasolina,
-                    observaciones_salida: observaciones,
+                aceite_salida: checks.aceite,
+                agua_salida: checks.agua,
 
-                    aceite_salida: checks.aceite,
-                    agua_salida: checks.agua,
+                carpeta_salida: checks.carpeta,
+                gato_salida: checks.gato,
+                cruz_salida: checks.cruz,
+                triangulo_salida: checks.triangulo,
+                caucho_salida: checks.caucho,
 
-                    // Car specific
-                    gato_salida: checks.gato,
-                    cruz_salida: checks.cruz,
-                    triangulo_salida: checks.triangulo,
-                    caucho_salida: checks.caucho,
-                    carpeta_salida: checks.carpeta,
+                onu_salida: checks.onu ? 1 : 0,
+                ups_salida: checks.ups ? 1 : 0,
+                escalera_salida: checks.escalera,
+                // Moto specific
+                casco_salida: checks.casco,
+                luces_salida: checks.luces,
+                herramientas_salida: checks.herramientas,
 
-                    // Moto specific
-                    casco_salida: checks.casco,
-                    luces_salida: checks.luces,
-                    herramientas_salida: checks.herramientas,
+                faults: faultsToAdd // Pass explicit faults
+            })
 
-                    onu_salida: checks.onu ? 1 : 0,
-                    ups_salida: checks.ups ? 1 : 0,
-                    escalera_salida: checks.escalera,
+            if (!result.success) {
+                throw new Error(result.error)
+            }
 
-                    // [MOD] Save faults list as observations
-                    observaciones_salida: faultsList.length > 0 ? faultsList.join('\n') : (currentFault || ''),
-
-                    created_at: new Date().toISOString()
-                })
-
-            if (error) throw error
-
-            // [NEW] Update Vehicle Fuel Level on Checkout via Server Action (handles parsing & permissions)
-            await updateVehicleFuel(vehiculoId, gasolina)
-
-            toast.success("Salida registrada correctamente")
+            // Also update fuel manually just in case, though submitExitReport does it too
+            // kept for safety if actions differ, but sticking to remote pattern which seemingly relies on submitExitReport logic
+            // Actually, let's keep the toast from Remote
+            toast.success("Salida reportada (Taller notificado si hay novedades)")
 
             // --- WhatsApp Integration ---
             const text = formatSalidaText({
@@ -305,9 +294,7 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
 
             setWhatsappText(text)
             setStep('success')
-            router.refresh()
-            if (onSuccess) onSuccess() // [NEW] Trigger refresh in parent
-            // ----------------------------
+            if (onSuccess) onSuccess()
 
             // Reset
             setVehiculoId("")
@@ -317,6 +304,8 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
             setDepartamento("")
             setGasolina("Full")
             setObservaciones("")
+            setFaultsToAdd([]) // Reset faults
+            setNewFaultText("")
             setLastKm(null)
             setChecks({
                 aceite: false, agua: false, gato: false, cruz: false,
@@ -381,7 +370,13 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
             msg += `Escalera: ${check(data.escalera_salida)}\n\n`
         }
 
-        msg += `Observaciones: ${data.observaciones_salida || 'Ninguna'}`
+        // Add explicit faults to WhatsApp
+        if (faultsToAdd.length > 0) {
+            msg += `*Fallas Reportadas:*\n`
+            faultsToAdd.forEach(f => msg += `• ${f}\n`)
+            msg += `\n`
+        }
+
         return msg
     }
 
@@ -391,7 +386,6 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => {
-            // Prevent closing if in success step unless explicitly closed by button
             if (!open && step === 'success') return
             onClose()
         }}>
@@ -439,7 +433,6 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
                             {/* Basic Info */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2 col-span-2">
-                                    {/* [MOD] If initialVehicleId exists (we came from 'Cambiar Unidad'), hide selector and show static info */}
                                     {initialVehicleId ? (
                                         <div className="bg-zinc-50 p-4 rounded-xl border border-zinc-200">
                                             <Label className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2 block">Vehículo Seleccionado</Label>
@@ -628,54 +621,62 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
                                 )}
                             </div>
 
-                            <div className="space-y-3">
-                                <Label className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
-                                    <AlertTriangle size={14} />
+                            {/* Explicit Fault Reporting Section - Minimalist (Unified for all users) */}
+                            <div className="bg-zinc-50/50 p-5 rounded-[24px] border border-zinc-100 space-y-4">
+                                <h4 className="text-sm font-bold text-zinc-600 uppercase tracking-wider flex items-center gap-2">
+                                    <AlertCircle size={16} className="text-zinc-600" />
                                     Reportar Fallas
-                                </Label>
+                                </h4>
 
                                 <div className="space-y-3">
-                                    {/* List of added faults */}
-                                    {faultsList.length > 0 && (
-                                        <div className="flex flex-wrap gap-2">
-                                            {faultsList.map((fault, index) => (
-                                                <div key={index} className="flex items-center gap-2 bg-red-50 text-red-700 px-3 py-1.5 rounded-lg text-sm font-medium border border-red-100 animate-in fade-in zoom-in duration-300">
-                                                    <span>{fault}</span>
-                                                    <button
-                                                        onClick={() => removeFault(index)}
-                                                        className="hover:bg-red-100 rounded-full p-0.5 transition-colors"
+                                    <div className="flex gap-2">
+                                        <Input
+                                            value={newFaultText}
+                                            onChange={(e) => setNewFaultText(e.target.value)}
+                                            placeholder="Ej: Luz de freno quemada..."
+                                            className="bg-white border-zinc-200 focus-visible:ring-zinc-400"
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault()
+                                                    if (newFaultText.trim()) {
+                                                        setFaultsToAdd([...faultsToAdd, newFaultText.trim()])
+                                                        setNewFaultText("")
+                                                    }
+                                                }
+                                            }}
+                                        />
+                                        <Button
+                                            type="button"
+                                            onClick={() => {
+                                                if (newFaultText.trim()) {
+                                                    setFaultsToAdd([...faultsToAdd, newFaultText.trim()])
+                                                    setNewFaultText("")
+                                                }
+                                            }}
+                                            className="bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl aspect-square p-0 w-12 shrink-0"
+                                        >
+                                            <Plus size={20} />
+                                        </Button>
+                                    </div>
+
+                                    {/* Fault List */}
+                                    {faultsToAdd.length > 0 && (
+                                        <div className="space-y-2">
+                                            {faultsToAdd.map((fault, idx) => (
+                                                <div key={idx} className="flex items-center justify-between bg-white p-3 rounded-xl border border-zinc-100 shadow-sm animate-in slide-in-from-top-1">
+                                                    <span className="text-sm font-medium text-zinc-700">{fault}</span>
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        onClick={() => setFaultsToAdd(prev => prev.filter((_, i) => i !== idx))}
+                                                        className="h-8 w-8 text-zinc-400 hover:text-red-500 hover:bg-red-50"
                                                     >
-                                                        <X size={14} />
-                                                    </button>
+                                                        <Trash2 size={16} />
+                                                    </Button>
                                                 </div>
                                             ))}
                                         </div>
                                     )}
-
-                                    {/* Input Area */}
-                                    <div className="flex gap-2">
-                                        <div className="relative flex-1">
-                                            <Input
-                                                value={currentFault}
-                                                onChange={e => setCurrentFault(e.target.value)}
-                                                onKeyDown={e => {
-                                                    if (e.key === 'Enter') {
-                                                        e.preventDefault()
-                                                        addFault()
-                                                    }
-                                                }}
-                                                className="h-12 rounded-xl bg-white pr-10"
-                                                placeholder="Ej: Luz de freno quemada..."
-                                            />
-                                        </div>
-                                        <Button
-                                            onClick={addFault}
-                                            disabled={!currentFault.trim()}
-                                            className="h-12 w-12 rounded-xl bg-black text-white hover:bg-zinc-800 shrink-0 p-0 flex items-center justify-center shadow-lg shadow-zinc-200/50"
-                                        >
-                                            <Plus size={24} />
-                                        </Button>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -692,7 +693,7 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
                 )}
             </DialogContent>
 
-            {/* [NEW] Conflict Warning Dialog */}
+            {/* Conflict Warning Dialog */}
             <AlertDialog open={conflictAlertOpen} onOpenChange={setConflictAlertOpen}>
                 <AlertDialogContent className="rounded-3xl border-none shadow-2xl bg-zinc-900 text-white">
                     <AlertDialogHeader>
@@ -710,7 +711,7 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
                         <AlertDialogCancel
                             onClick={() => {
                                 setPendingVehicle(null)
-                                setVehiculoId("") // Ensure clear
+                                setVehiculoId("")
                                 setSelectedVehicle(null)
                             }}
                             className="rounded-xl h-12 border-zinc-700 bg-transparent text-white hover:bg-zinc-800 hover:text-white"
