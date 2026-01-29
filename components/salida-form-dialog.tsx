@@ -145,19 +145,11 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
         const busyIds = new Set(busyReports?.map(r => r.vehiculo_id))
 
         const available = allVehicles?.filter(v => {
+            // Only filter out busy vehicles
             if (busyIds.has(v.id)) return false
 
-            // Mechanics see ALL vehicles regardless of department
-            if (isMecanico) return true
-
-            // Filter by department if set
-            if (v.department && userDept) {
-                return v.department === userDept
-            }
-
-            if (!v.department) return true
-
-            return false
+            // [MOD] Removed department restriction - All users see all vehicles
+            return true
         }).map(v => ({
             ...v,
             kilometraje: kData?.find(k => k.vehiculo_id === v.id)?.ultimo_kilometraje || 0
