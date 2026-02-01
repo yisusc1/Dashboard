@@ -57,27 +57,27 @@ export const usePushNotifications = (userId?: string) => {
 
         const register = async () => {
             try {
-                const result = await PushNotifications.requestPermissions();
-                if (result.receive === 'granted') {
-                    // toast.success("Permisos de notificación concedidos")
+                // [MOD] Passive Check - Do not request, just check.
+                // GlobalPermissions component handles the active request sequence.
+                const status = await PushNotifications.checkPermissions();
+
+                if (status.receive === 'granted') {
                     if (Capacitor.getPlatform() === 'android') {
                         await PushNotifications.createChannel({
                             id: 'default',
                             name: 'General',
                             description: 'General notifications',
-                            importance: 5, // High importance
+                            importance: 5,
                             visibility: 1,
-                            sound: 'default', // Explicit sound
+                            sound: 'default',
                             vibration: true,
                         });
                     }
                     await PushNotifications.register();
-                } else {
-                    toast.error("Permisos de notificación DENEGADOS");
                 }
+                // If 'prompt' or 'denied', do nothing. GlobalPermissions will handle the request.
             } catch (e: any) {
-                console.error("Error asking for permissions", e);
-                toast.error("Error solicitando permisos: " + (e?.message || "Desconocido"));
+                console.error("Error checking permissions", e);
             }
         }
 

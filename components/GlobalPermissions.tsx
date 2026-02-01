@@ -28,7 +28,11 @@ export function GlobalPermissions() {
                 await Filesystem.requestPermissions()
 
                 // 4. Push Notifications
-                await PushNotifications.requestPermissions()
+                const pushResult = await PushNotifications.requestPermissions()
+
+                if (pushResult.receive === 'granted') {
+                    await PushNotifications.register();
+                }
 
                 console.log("Global Permissions Requested")
                 localStorage.setItem('initial_permissions_requested', 'true')
