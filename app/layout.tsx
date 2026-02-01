@@ -76,6 +76,7 @@ export default async function RootLayout({
             <GlobalPermissions />
             <InstallPrompt />
           </VoiceProvider>
+        </UserProvider>
       </body>
     </html>
   );
