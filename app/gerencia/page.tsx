@@ -35,7 +35,7 @@ export default async function GerenciaDashboard() {
                             <span className="sr-only">Notificaciones</span>
                             🔔
                         </Link>
-                        <Link href="/dashboard" className="flex items-center gap-2 text-sm font-medium text-zinc-600 bg-white px-4 py-2 rounded-full border border-zinc-200 shadow-sm hover:bg-zinc-50 transition-colors">
+                        <Link href="/" className="flex items-center gap-2 text-sm font-medium text-zinc-600 bg-white px-4 py-2 rounded-full border border-zinc-200 shadow-sm hover:bg-zinc-50 transition-colors">
                             ⬅ Volver al Menú
                         </Link>
                     </div>

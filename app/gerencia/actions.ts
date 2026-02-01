@@ -254,7 +254,7 @@ export async function getNotificationHistory(): Promise<NotificationItem[]> {
             descripcion,
             prioridad,
             estado,
-            vehiculos (placa)
+            vehiculos (placa, modelo)
         `)
         .order('created_at', { ascending: false })
         .limit(50)
@@ -268,7 +268,7 @@ export async function getNotificationHistory(): Promise<NotificationItem[]> {
             fecha_entrada,
             conductor,
             vehiculo_id,
-            vehiculos (placa)
+            vehiculos (placa, modelo)
         `)
         .order('fecha_salida', { ascending: false })
         .limit(50)
@@ -277,33 +277,38 @@ export async function getNotificationHistory(): Promise<NotificationItem[]> {
 
     // Map Faults
     faults?.forEach((f: any) => {
+        const title = `${f.vehiculos?.modelo} (${f.vehiculos?.placa || '?'})`
         notifications.push({
             id: `f-${f.id}`,
             type: 'FALLA',
-            title: 'Falla Reportada',
+            title: title,
             description: f.descripcion,
             timestamp: f.created_at,
             vehicle_plate: f.vehiculos?.placa || '???',
             metadata: {
                 priority: f.prioridad,
-                status: f.estado
+                status: f.estado,
+                model: f.vehiculos?.modelo
             }
         })
     })
 
     // Map Trips (Exits and Entries)
     trips?.forEach((t: any) => {
+        const title = `${t.vehiculos?.modelo} (${t.vehiculos?.placa || '?'})`
+
         // Exit Event
         if (t.fecha_salida) {
             notifications.push({
                 id: `s-${t.id}`,
                 type: 'SALIDA',
-                title: 'Salida de Vehículo',
+                title: title,
                 description: `Conductor: ${t.conductor || 'Desconocido'}`,
                 timestamp: t.fecha_salida,
                 vehicle_plate: t.vehiculos?.placa || '???',
                 metadata: {
-                    driver: t.conductor
+                    driver: t.conductor,
+                    model: t.vehiculos?.modelo
                 }
             })
         }
@@ -313,12 +318,13 @@ export async function getNotificationHistory(): Promise<NotificationItem[]> {
             notifications.push({
                 id: `e-${t.id}`,
                 type: 'ENTRADA',
-                title: 'Retorno de Vehículo',
-                description: `Vehículo regresó a base.`,
+                title: title,
+                description: `Vehículo regresó a base`,
                 timestamp: t.fecha_entrada,
                 vehicle_plate: t.vehiculos?.placa || '???',
                 metadata: {
-                    driver: t.conductor
+                    driver: t.conductor,
+                    model: t.vehiculos?.modelo
                 }
             })
         }
