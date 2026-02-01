@@ -135,9 +135,7 @@ export default function LoginPage() {
                         <h1 className="text-3xl font-semibold tracking-tight text-gray-900">
                             Bienvenido
                         </h1>
-                        <p className="text-gray-500 text-sm font-medium tracking-wide uppercase">
-                            Sistema de Gestión y Operatividad
-                        </p>
+
                     </div>
 
                     <div className="w-full space-y-4 pt-4 animate-in slide-in-from-bottom-8 duration-700 fade-in fill-mode-both delay-200">
