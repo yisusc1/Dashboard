@@ -16,10 +16,10 @@ export function NotificationList({ initialNotifications }: { initialNotification
 
     const getIcon = (type: string) => {
         switch (type) {
-            case 'FALLA': return <AlertTriangle size={16} />
-            case 'SALIDA': return <Car size={16} />
-            case 'ENTRADA': return <ArrowRightLeft size={16} />
-            default: return <Clock size={16} />
+            case 'FALLA': return <AlertTriangle size={18} className="text-zinc-900" />
+            case 'SALIDA': return <Car size={18} className="text-zinc-900" />
+            case 'ENTRADA': return <ArrowRightLeft size={18} className="text-zinc-900" />
+            default: return <Clock size={18} className="text-zinc-900" />
         }
     }
 
