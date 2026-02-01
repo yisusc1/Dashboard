@@ -17,6 +17,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Sistema de Gestión",
   description: "Plataforma integral de operaciones",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
+  manifest: "/manifest.json" // Next.js generates this from manifest.ts
 };
 
 // ... imports

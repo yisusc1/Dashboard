@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Chrome } from "lucide-react"
+import Image from "next/image"
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
@@ -125,8 +126,9 @@ export default function LoginPage() {
             <div className="w-full max-w-md relative z-10 backdrop-blur-xl bg-white/70 border border-white/40 rounded-[2.5rem] p-8 shadow-xl shadow-black/5 ring-1 ring-white/60">
                 <div className="flex flex-col items-center text-center space-y-8 py-8">
                     {/* Logo Area */}
+
                     <div className="w-24 h-24 bg-gradient-to-br from-white to-gray-100 rounded-2xl flex items-center justify-center shadow-[0_8px_30px_rgb(0,0,0,0.04)] mb-2 animate-in zoom-in duration-500 border border-white/60">
-                        <div className="w-12 h-12 border-4 border-gray-900 rounded-xl" />
+                        <Image src="/logo.png" alt="Logo" width={64} height={64} className="w-16 h-16 object-contain" />
                     </div>
 
                     <div className="space-y-2 animate-in slide-in-from-bottom-4 duration-700 fade-in fill-mode-both delay-100">
