@@ -34,7 +34,7 @@ export function NotificationList({ initialNotifications }: { initialNotification
 
     const getTypeLabel = (type: string) => {
         switch (type) {
-            case 'FALLA': return 'Falla Reportada'
+            case 'FALLA': return 'Falla'
             case 'SALIDA': return 'Salida'
             case 'ENTRADA': return 'Entrada'
             default: return 'Alerta'
@@ -43,10 +43,10 @@ export function NotificationList({ initialNotifications }: { initialNotification
 
     const getTypeBadgeStyles = (type: string) => {
         switch (type) {
-            case 'FALLA': return 'bg-amber-100 text-amber-700'
-            case 'SALIDA': return 'bg-blue-100 text-blue-700'
-            case 'ENTRADA': return 'bg-green-100 text-green-700'
-            default: return 'bg-zinc-100 text-zinc-700'
+            case 'FALLA': return 'bg-amber-50 text-amber-700 border border-amber-200'
+            case 'SALIDA': return 'bg-blue-50 text-blue-700 border border-blue-200'
+            case 'ENTRADA': return 'bg-green-50 text-green-700 border border-green-200'
+            default: return 'bg-zinc-50 text-zinc-700 border border-zinc-200'
         }
     }
 
