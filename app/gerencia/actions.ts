@@ -229,7 +229,7 @@ export async function getFleetStatus(): Promise<FleetStatus[]> {
 
 export type NotificationItem = {
     id: string
-    type: 'FALLA' | 'SALIDA' | 'ENTRADA'
+    type: 'FALLA' | 'SALIDA' | 'ENTRADA' | 'REPARACION'
     title: string
     description: string
     timestamp: string
@@ -282,12 +282,15 @@ export async function getNotificationHistory(offset = 0, limit = 50): Promise<No
     // Map Faults
     faults?.forEach((f: any) => {
         const title = `${f.vehiculos?.modelo} (${f.vehiculos?.placa || '?'})`
+        const isResolved = f.estado === 'Reparado' || f.estado === 'Resuelto'
+
         notifications.push({
             id: `f-${f.id}`,
-            type: 'FALLA',
+            // If resolved, treat as REPARACION, otherwise FALLA
+            type: isResolved ? 'REPARACION' : 'FALLA',
             title: title,
-            description: f.descripcion,
-            timestamp: f.created_at,
+            description: isResolved ? 'Reparación completada por mecánico' : f.descripcion,
+            timestamp: f.created_at, // Ideally we'd use 'updated_at' if available, but created_at is fallback
             vehicle_plate: f.vehiculos?.placa || '???',
             metadata: {
                 priority: f.prioridad,

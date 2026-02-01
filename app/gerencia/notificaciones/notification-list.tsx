@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { AlertTriangle, Car, ArrowRightLeft, Clock, Trash2, Loader2 } from "lucide-react"
+import { AlertTriangle, Car, ArrowRightLeft, Clock, Trash2, Loader2, Wrench, CheckCircle } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import type { NotificationItem } from "../actions"
@@ -42,6 +42,7 @@ export function NotificationList({ initialNotifications }: { initialNotification
             case 'FALLA': return <AlertTriangle size={18} className="text-zinc-900" />
             case 'SALIDA': return <Car size={18} className="text-zinc-900" />
             case 'ENTRADA': return <ArrowRightLeft size={18} className="text-zinc-900" />
+            case 'REPARACION': return <CheckCircle size={18} className="text-zinc-900" /> // CheckCircle for completion
             default: return <Clock size={18} className="text-zinc-900" />
         }
     }
@@ -51,6 +52,7 @@ export function NotificationList({ initialNotifications }: { initialNotification
             case 'FALLA': return 'text-amber-600 bg-amber-50 border-amber-100'
             case 'SALIDA': return 'text-blue-600 bg-blue-50 border-blue-100'
             case 'ENTRADA': return 'text-green-600 bg-green-50 border-green-100'
+            case 'REPARACION': return 'text-emerald-600 bg-emerald-50 border-emerald-100'
             default: return 'text-zinc-500 bg-zinc-50 border-zinc-100'
         }
     }
@@ -60,6 +62,7 @@ export function NotificationList({ initialNotifications }: { initialNotification
             case 'FALLA': return 'Falla'
             case 'SALIDA': return 'Salida'
             case 'ENTRADA': return 'Entrada'
+            case 'REPARACION': return 'Reparación'
             default: return 'Alerta'
         }
     }
@@ -69,6 +72,7 @@ export function NotificationList({ initialNotifications }: { initialNotification
             case 'FALLA': return 'bg-amber-50 text-amber-700 border border-amber-200'
             case 'SALIDA': return 'bg-blue-50 text-blue-700 border border-blue-200'
             case 'ENTRADA': return 'bg-green-50 text-green-700 border border-green-200'
+            case 'REPARACION': return 'bg-emerald-50 text-emerald-700 border border-emerald-200'
             default: return 'bg-zinc-50 text-zinc-700 border border-zinc-200'
         }
     }

@@ -122,28 +122,55 @@ Deno.serve(async (req) => {
             title = '⛽ Carga de Combustible'
             body = `Vehículo ${record.vehicle_id} cargó ${record.liters}L (${record.mileage} Km)`
             shouldSend = true
-        } else if (table === 'fallas' && type === 'INSERT') {
-            title = '🛠️ Nueva Falla Reportada'
+        } else if (table === 'fallas') {
+            if (type === 'INSERT') {
+                title = '🛠️ Nueva Falla Reportada'
 
-            // Fetch vehicle name for better context
-            let vehicleInfo = 'Desconocido'
-            const vId = record.vehicle_id || record.vehiculo_id // Try both common implementations
+                // Fetch vehicle name for better context
+                let vehicleInfo = 'Desconocido'
+                const vId = record.vehicle_id || record.vehiculo_id // Try both common implementations
 
-            if (vId) {
-                const { data: vData } = await supabase
-                    .from('vehiculos')
-                    .select('modelo, placa')
-                    .eq('id', vId)
-                    .single()
+                if (vId) {
+                    const { data: vData } = await supabase
+                        .from('vehiculos')
+                        .select('modelo, placa')
+                        .eq('id', vId)
+                        .single()
 
-                if (vData) {
-                    vehicleInfo = `${vData.modelo} (${vData.placa})`
+                    if (vData) {
+                        vehicleInfo = `${vData.modelo} (${vData.placa})`
+                    }
+                }
+
+                // User requested: Model + Plate + Failure Description (No code)
+                body = `${vehicleInfo}\n${record.descripcion?.substring(0, 100) || 'Sin descripción'}`
+                shouldSend = true
+            } else if (type === 'UPDATE') {
+                // Check if status changed to 'Reparado' or 'Resuelto'
+                const isResolved = record.estado === 'Reparado' || record.estado === 'Resuelto'
+                const wasResolved = old_record.estado === 'Reparado' || old_record.estado === 'Resuelto'
+
+                if (isResolved && !wasResolved) {
+                    title = '✅ Reparación Completada'
+                    // Fetch vehicle name for better context
+                    let vehicleInfo = 'Desconocido'
+                    const vId = record.vehicle_id || record.vehiculo_id
+
+                    if (vId) {
+                        const { data: vData } = await supabase
+                            .from('vehiculos')
+                            .select('modelo, placa')
+                            .eq('id', vId)
+                            .single()
+
+                        if (vData) {
+                            vehicleInfo = `${vData.modelo} (${vData.placa})`
+                        }
+                    }
+                    body = `${vehicleInfo}\nLa falla ha sido solucionada por el mecánico.`
+                    shouldSend = true
                 }
             }
-
-            // User requested: Model + Plate + Failure Description (No code)
-            body = `${vehicleInfo}\n${record.descripcion?.substring(0, 100) || 'Sin descripción'}`
-            shouldSend = true
         }
 
         if (!shouldSend) {
