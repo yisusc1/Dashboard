@@ -149,6 +149,6 @@ export const config = {
          * - images - .svg, .png, .jpg, .jpeg, .gif, .webp
          * Feel free to modify this pattern to include more paths.
          */
-        "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+        "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|apk)$).*)",
     ],
 }
