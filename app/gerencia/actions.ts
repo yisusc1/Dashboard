@@ -226,3 +226,104 @@ export async function getFleetStatus(): Promise<FleetStatus[]> {
         }
     })
 }
+
+export type NotificationItem = {
+    id: string
+    type: 'FALLA' | 'SALIDA' | 'ENTRADA'
+    title: string
+    description: string
+    timestamp: string
+    vehicle_plate: string
+    metadata: {
+        priority?: string
+        status?: string
+        driver?: string
+    }
+}
+
+export async function getNotificationHistory(): Promise<NotificationItem[]> {
+    noStore()
+    const supabase = await createClient()
+
+    // 1. Fetch Recent Faults (Limit 50)
+    const { data: faults } = await supabase
+        .from("fallas")
+        .select(`
+            id,
+            created_at,
+            descripcion,
+            prioridad,
+            estado,
+            vehiculos (placa)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(50)
+
+    // 2. Fetch Recent Trips (Limit 50)
+    const { data: trips } = await supabase
+        .from("reportes")
+        .select(`
+            id,
+            fecha_salida,
+            fecha_entrada,
+            conductor,
+            vehiculo_id,
+            vehiculos (placa)
+        `)
+        .order('fecha_salida', { ascending: false })
+        .limit(50)
+
+    const notifications: NotificationItem[] = []
+
+    // Map Faults
+    faults?.forEach((f: any) => {
+        notifications.push({
+            id: `f-${f.id}`,
+            type: 'FALLA',
+            title: 'Falla Reportada',
+            description: f.descripcion,
+            timestamp: f.created_at,
+            vehicle_plate: f.vehiculos?.placa || '???',
+            metadata: {
+                priority: f.prioridad,
+                status: f.estado
+            }
+        })
+    })
+
+    // Map Trips (Exits and Entries)
+    trips?.forEach((t: any) => {
+        // Exit Event
+        if (t.fecha_salida) {
+            notifications.push({
+                id: `s-${t.id}`,
+                type: 'SALIDA',
+                title: 'Salida de Vehículo',
+                description: `Conductor: ${t.conductor || 'Desconocido'}`,
+                timestamp: t.fecha_salida,
+                vehicle_plate: t.vehiculos?.placa || '???',
+                metadata: {
+                    driver: t.conductor
+                }
+            })
+        }
+
+        // Entry Event (if exists)
+        if (t.fecha_entrada) {
+            notifications.push({
+                id: `e-${t.id}`,
+                type: 'ENTRADA',
+                title: 'Retorno de Vehículo',
+                description: `Vehículo regresó a base.`,
+                timestamp: t.fecha_entrada,
+                vehicle_plate: t.vehiculos?.placa || '???',
+                metadata: {
+                    driver: t.conductor
+                }
+            })
+        }
+    })
+
+    // Sort by Date Descending
+    return notifications.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 100)
+}

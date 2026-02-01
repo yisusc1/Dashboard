@@ -38,24 +38,22 @@ export function LiveFleetDashboard({ vehicles: initialVehicles }: { vehicles: Fl
     const [vehicles, setVehicles] = useState<FleetStatus[]>(initialVehicles)
     const [selectedVehicle, setSelectedVehicle] = useState<FleetStatus | null>(null)
     const [filter, setFilter] = useState<'ALL' | 'ROUTE' | 'AVAILABLE' | 'WORKSHOP'>('ALL')
-    const [isRefreshing, setIsRefreshing] = useState(false)
-
-    // BACKGROUND POLLING (No Page Refresh)
+    // BACKGROUND POLLING (Silent - No UI Indicator)
     useEffect(() => {
         const interval = setInterval(async () => {
-            setIsRefreshing(true) // Small visual indicator in background
+            // setIsRefreshing(true) // Removed visual trigger
             try {
                 const newData = await getFleetStatus()
                 setVehicles(newData)
             } catch (error) {
                 console.error("Polling failed", error)
-            } finally {
-                setTimeout(() => setIsRefreshing(false), 500)
             }
-        }, 5000) // Poll every 5 seconds for "Real Time" feel
+        }, 5000)
 
         return () => clearInterval(interval)
     }, [])
+
+    // Removed Manual Refresh Logic
 
     // Derived Stats
     const stats = useMemo(() => {
@@ -113,13 +111,7 @@ export function LiveFleetDashboard({ vehicles: initialVehicles }: { vehicles: Fl
                     <div className="text-2xl font-bold">{stats.maintenance}</div>
                     <div className="text-xs font-medium opacity-80 uppercase tracking-wider">Mantenimiento</div>
                 </button>
-
-                {/* Auto Refresh Indicator (Non-interactive) */}
-                <div className="md:col-span-4 flex items-center justify-end gap-2 text-zinc-300 text-xs px-2">
-                    <RefreshCcw size={12} className={isRefreshing ? "animate-spin text-green-500" : ""} />
-                    {isRefreshing ? "Sincronizando..." : "Sincronización activa (5s)"}
-                </div>
-            </div>
+            </div> // Hidden refresh indicator
 
             {/* Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">

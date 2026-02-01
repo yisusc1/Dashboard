@@ -31,16 +31,13 @@ export default async function GerenciaDashboard() {
                     </div>
 
                     <div className="flex gap-3 items-center">
-                        <Link href="/gerencia/debug" className="flex items-center gap-2 text-sm font-medium text-zinc-600 bg-white px-4 py-2 rounded-full border border-zinc-200 shadow-sm hover:bg-zinc-50">
-                            🛠️ Diagnóstico
+                        <Link href="/gerencia/notificaciones" className="flex items-center justify-center h-10 w-10 rounded-full bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50 shadow-sm transition-colors" title="Ver Historial de Notificaciones">
+                            <span className="sr-only">Notificaciones</span>
+                            🔔
                         </Link>
-                        <div className="flex items-center gap-2 text-sm font-medium text-zinc-500 bg-white px-4 py-2 rounded-full border border-zinc-200 shadow-sm">
-                            <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                            </span>
-                            Actualización en vivo
-                        </div>
+                        <Link href="/dashboard" className="flex items-center gap-2 text-sm font-medium text-zinc-600 bg-white px-4 py-2 rounded-full border border-zinc-200 shadow-sm hover:bg-zinc-50 transition-colors">
+                            ⬅ Volver al Menú
+                        </Link>
                     </div>
                 </div>
 

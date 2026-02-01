@@ -5,8 +5,8 @@ const config: CapacitorConfig = {
   appName: 'Dashboard',
   webDir: 'public',
   server: {
-    url: 'http://10.0.2.2:3000',
-    cleartext: true
+    url: 'https://aa-nine-eta.vercel.app',
+    cleartext: false // HTTPS used
   },
   plugins: {
     GoogleAuth: {
@@ -16,6 +16,11 @@ const config: CapacitorConfig = {
     },
     PushNotifications: {
       presentationOptions: ["badge", "sound", "alert"],
+    },
+    StatusBar: {
+      style: 'DARK',
+      backgroundColor: '#ffffffff', // Transparent
+      overlaysWebView: false,
     },
   },
 };
