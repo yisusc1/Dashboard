@@ -13,7 +13,7 @@ export default async function NotificationsPage() {
 
     if (!user) redirect("/login")
 
-    const notifications = await getNotificationHistory()
+    const notifications = await getNotificationHistory(0, 50)
 
     return (
         <main className="min-h-screen bg-white p-4">

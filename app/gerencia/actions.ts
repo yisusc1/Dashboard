@@ -242,11 +242,14 @@ export type NotificationItem = {
     }
 }
 
-export async function getNotificationHistory(): Promise<NotificationItem[]> {
+export async function getNotificationHistory(offset = 0, limit = 50): Promise<NotificationItem[]> {
     noStore()
     const supabase = await createClient()
 
-    // 1. Fetch Recent Faults (Limit 50)
+    // Fetch slightly more than needed to ensure correct merge sorting safety
+    const safeLimit = offset + limit
+
+    // 1. Fetch Recent Faults
     const { data: faults } = await supabase
         .from("fallas")
         .select(`
@@ -258,9 +261,9 @@ export async function getNotificationHistory(): Promise<NotificationItem[]> {
             vehiculos (placa, modelo)
         `)
         .order('created_at', { ascending: false })
-        .limit(50)
+        .limit(safeLimit)
 
-    // 2. Fetch Recent Trips (Limit 50)
+    // 2. Fetch Recent Trips
     const { data: trips } = await supabase
         .from("reportes")
         .select(`
@@ -272,7 +275,7 @@ export async function getNotificationHistory(): Promise<NotificationItem[]> {
             vehiculos (placa, modelo)
         `)
         .order('fecha_salida', { ascending: false })
-        .limit(50)
+        .limit(safeLimit)
 
     const notifications: NotificationItem[] = []
 
@@ -331,6 +334,8 @@ export async function getNotificationHistory(): Promise<NotificationItem[]> {
         }
     })
 
-    // Sort by Date Descending
-    return notifications.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 100)
+    // Sort, then slice correct page
+    return notifications
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        .slice(offset, offset + limit)
 }
