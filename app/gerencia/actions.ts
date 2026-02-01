@@ -238,6 +238,7 @@ export type NotificationItem = {
         priority?: string
         status?: string
         driver?: string
+        model?: string
     }
 }
 
