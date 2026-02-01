@@ -70,8 +70,16 @@ export default async function RootLayout({
             {children}
             {isVoiceEnabled && <VoiceAssistant />}
             <Toaster richColors position="top-center" />
-            <PushNotificationManager />
-          </VoiceProvider>
+            import {GlobalPermissions} from "@/components/GlobalPermissions";
+
+            // ... inside Layout
+            <VoiceProvider>
+              {children}
+              {isVoiceEnabled && <VoiceAssistant />}
+              <Toaster richColors position="top-center" />
+              <PushNotificationManager />
+              <GlobalPermissions />
+            </VoiceProvider>
         </UserProvider>
       </body>
     </html>
