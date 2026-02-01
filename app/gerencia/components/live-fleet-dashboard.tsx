@@ -88,9 +88,20 @@ export function LiveFleetDashboard({ vehicles: initialVehicles }: { vehicles: Fl
         return 'text-emerald-500'
     }
 
+    const dialogVehicle = useMemo(() => {
+        if (!selectedVehicle) return null
+        return {
+            ...selectedVehicle,
+            codigo: selectedVehicle.code,
+            modelo: selectedVehicle.model,
+            placa: selectedVehicle.plate,
+            foto_url: selectedVehicle.imageUrl,
+        } as any
+    }, [selectedVehicle])
+
     return (
         <div className="space-y-8">
-            {/* Quick Stats Filter Bar */}
+            {/* Quick Stats Filter Bar - Same as before */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <button onClick={() => setFilter('ALL')} className={`p-4 rounded-2xl border transition-all ${filter === 'ALL' ? 'bg-zinc-900 text-white border-zinc-900' : 'bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300'}`}>
                     <div className="text-2xl font-bold">{stats.total}</div>
@@ -231,17 +242,11 @@ export function LiveFleetDashboard({ vehicles: initialVehicles }: { vehicles: Fl
                 })}
             </div>
 
-            {selectedVehicle && (
+            {dialogVehicle && (
                 <VehicleDetailsDialog
-                    isOpen={!!selectedVehicle}
+                    isOpen={!!dialogVehicle}
                     onClose={() => setSelectedVehicle(null)}
-                    vehicle={{
-                        ...selectedVehicle,
-                        codigo: selectedVehicle.code,
-                        modelo: selectedVehicle.model,
-                        placa: selectedVehicle.plate,
-                        foto_url: selectedVehicle.imageUrl,
-                    } as any}
+                    vehicle={dialogVehicle}
                     readonly={true}
                 />
             )}
