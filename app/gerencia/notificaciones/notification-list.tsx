@@ -13,6 +13,16 @@ export function NotificationList({ initialNotifications }: { initialNotification
     const [offset, setOffset] = useState(50)
     const [hasMore, setHasMore] = useState(true)
     const [loading, setLoading] = useState(false)
+    const [lastReadTime, setLastReadTime] = useState<string | null>(null)
+
+    useEffect(() => {
+        // 1. Get previous read time to show dots
+        const lastCheck = localStorage.getItem('last_notification_check')
+        setLastReadTime(lastCheck || new Date(0).toISOString())
+
+        // 2. Update read time to now (so badge clears on next check)
+        localStorage.setItem('last_notification_check', new Date().toISOString())
+    }, [])
 
     const loadMore = async () => {
         if (loading || !hasMore) return
@@ -138,6 +148,11 @@ export function NotificationList({ initialNotifications }: { initialNotification
                                         </div>
 
                                         <div className="flex gap-3 p-3 border border-zinc-100 hover:border-zinc-200 bg-white shadow-sm rounded-xl transition-all relative z-10">
+                                            {/* Unread Dot Indicator */}
+                                            {lastReadTime && new Date(item.timestamp) > new Date(lastReadTime) && (
+                                                <div className="absolute top-3 right-3 w-2 h-2 rounded-full bg-blue-500 shadow-sm animate-pulse" title="Nueva" />
+                                            )}
+
                                             {/* Minimalist Icon Bubble */}
                                             <div className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center border ${getLocationStyles(item.type)}`}>
                                                 {getIcon(item.type)}
