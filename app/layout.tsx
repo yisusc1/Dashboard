@@ -35,6 +35,7 @@ import { VoiceAssistant } from "@/components/voice-assistant";
 import { VoiceProvider } from "@/components/voice-provider";
 import { PushNotificationManager } from "@/components/PushNotificationManager";
 import { GlobalPermissions } from "@/components/GlobalPermissions";
+import { InstallPrompt } from "@/components/InstallPrompt";
 
 export default async function RootLayout({
   children,
@@ -73,8 +74,8 @@ export default async function RootLayout({
             <Toaster richColors position="top-center" />
             <PushNotificationManager />
             <GlobalPermissions />
+            <InstallPrompt />
           </VoiceProvider>
-        </UserProvider>
       </body>
     </html>
   );
