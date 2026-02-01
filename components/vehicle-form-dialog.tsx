@@ -22,6 +22,7 @@ type Vehicle = {
     capacidad_tanque: string
     foto_url?: string
     department?: string
+    odometro_averiado?: boolean
 }
 
 type VehicleFormDialogProps = {
@@ -44,7 +45,8 @@ export function VehicleFormDialog({ isOpen, onClose, onVehicleSaved, vehicleToEd
         tipo: "Carga",
         capacidad_tanque: "",
         foto_url: "",
-        department: ""
+        department: "",
+        odometro_averiado: false // [NEW] Default
     })
 
     useEffect(() => {
@@ -59,7 +61,8 @@ export function VehicleFormDialog({ isOpen, onClose, onVehicleSaved, vehicleToEd
                 tipo: vehicleToEdit.tipo || "Carga",
                 capacidad_tanque: vehicleToEdit.capacidad_tanque || "",
                 foto_url: vehicleToEdit.foto_url || "",
-                department: vehicleToEdit.department || ""
+                department: vehicleToEdit.department || "",
+                odometro_averiado: vehicleToEdit.odometro_averiado || false // [NEW]
             })
             if (vehicleToEdit.foto_url) {
                 setPhotoPreview(vehicleToEdit.foto_url)
@@ -77,7 +80,8 @@ export function VehicleFormDialog({ isOpen, onClose, onVehicleSaved, vehicleToEd
                 tipo: "Carga",
                 capacidad_tanque: "",
                 foto_url: "",
-                department: ""
+                department: "",
+                odometro_averiado: false
             })
             setPhotoPreview(null)
         }
@@ -145,8 +149,11 @@ export function VehicleFormDialog({ isOpen, onClose, onVehicleSaved, vehicleToEd
                 tipo: formData.tipo,
                 capacidad_tanque: formData.capacidad_tanque,
                 foto_url: finalFotoUrl,
-                department: formData.department
+                department: formData.department,
+                odometro_averiado: formData.odometro_averiado // [NEW]
             }
+
+            let vehicleId = vehicleToEdit?.id
 
             let error;
             if (vehicleToEdit?.id) {
@@ -158,13 +165,40 @@ export function VehicleFormDialog({ isOpen, onClose, onVehicleSaved, vehicleToEd
                 error = updateError
             } else {
                 // Insert
-                const { error: insertError } = await supabase
+                const { data: newVehicle, error: insertError } = await supabase
                     .from("vehiculos")
                     .insert(dataToSave)
+                    .select('id') // Need ID for fault creation
+                    .single()
+
+                if (newVehicle) vehicleId = newVehicle.id
                 error = insertError
             }
 
             if (error) throw error
+
+            // [NEW] Logic: If odometro_averiado is TRUE, create automatic Fault
+            if (formData.odometro_averiado && vehicleId) {
+                // Check if active fault exists to avoid duplicates
+                const { data: existingFaults } = await supabase
+                    .from('fallas')
+                    .select('id')
+                    .eq('vehiculo_id', vehicleId)
+                    .eq('descripcion', 'Falla de Odómetro (Reporte Automático)')
+                    .in('estado', ['Pendiente', 'En Revisión'])
+
+                if (!existingFaults || existingFaults.length === 0) {
+                    await supabase.from('fallas').insert({
+                        vehiculo_id: vehicleId,
+                        descripcion: 'Falla de Odómetro (Reporte Automático)',
+                        tipo_falla: 'Mecánica',
+                        prioridad: 'Alta',
+                        estado: 'Pendiente',
+                        created_at: new Date().toISOString()
+                    })
+                    toast.warning("Falla de Odómetro registrada automáticamente en Taller")
+                }
+            }
 
             toast.success(vehicleToEdit ? "Vehículo actualizado" : "Vehículo creado")
             onVehicleSaved()
@@ -312,6 +346,32 @@ export function VehicleFormDialog({ isOpen, onClose, onVehicleSaved, vehicleToEd
                                             {type}
                                         </button>
                                     ))}
+                                </div>
+                            </div>
+
+                            {/* [NEW] Odometer Status Switch */}
+                            <div className="col-span-1 md:col-span-2 bg-red-50 p-4 rounded-xl border border-red-100 flex items-center justify-between">
+                                <div className="space-y-1">
+                                    <div className="font-bold text-red-900 flex items-center gap-2">
+                                        🔴 Odómetro Averiado
+                                    </div>
+                                    <p className="text-xs text-red-700/80">
+                                        Activar si el contador de KM no funciona.
+                                        Esto creará una alerta inmediata en Taller.
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <span className={`text-sm font-bold ${formData.odometro_averiado ? 'text-red-700' : 'text-zinc-400'}`}>
+                                        {formData.odometro_averiado ? "AVERIA ACTIVA" : "OPERATIVO"}
+                                    </span>
+                                    {/* Simple Toggle Button */}
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, odometro_averiado: !formData.odometro_averiado })}
+                                        className={`w-14 h-8 rounded-full p-1 transition-all ${formData.odometro_averiado ? 'bg-red-500' : 'bg-zinc-300'}`}
+                                    >
+                                        <div className={`h-6 w-6 bg-white rounded-full shadow-sm transition-all ${formData.odometro_averiado ? 'translate-x-6' : 'translate-x-0'}`} />
+                                    </button>
                                 </div>
                             </div>
 

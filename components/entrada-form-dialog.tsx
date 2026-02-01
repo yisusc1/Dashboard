@@ -28,6 +28,7 @@ type Reporte = {
         placa: string
         codigo: string
         tipo: string
+        odometro_averiado?: boolean
     }
 }
 
@@ -120,7 +121,8 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
                 conductor,
                 departamento,
                 created_at,
-                vehiculos ( modelo, placa, codigo, tipo )
+                created_at,
+                vehiculos ( modelo, placa, codigo, tipo, odometro_averiado )
             `)
             .is('km_entrada', null)
             .order('created_at', { ascending: false })
@@ -168,14 +170,20 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
 
 
         // [FIX] Strict Validation
-        if (selectedReport && km <= selectedReport.km_salida) {
-            toast.error(`Error Crítico: El KM de entrada (${km}) NO puede ser menor o igual al de salida (${selectedReport.km_salida}). Verifique el tablero.`)
-            return
+        // Bypass if odometer broken
+        const isOdometerBroken = (selectedReport?.vehiculos as any)?.odometro_averiado
+
+        if (!isOdometerBroken) {
+            if (selectedReport && km <= selectedReport.km_salida) {
+                toast.error(`Error Crítico: El KM de entrada (${km}) NO puede ser menor o igual al de salida (${selectedReport.km_salida}). Verifique el tablero.`)
+                return
+            }
         }
 
         // [NEW] Anomaly Detection (Warning)
         const diff = selectedReport ? km - selectedReport.km_salida : 0
-        if (diff > 1000) {
+        // Skip anomaly check if broken?? No, big jump is still weird. But 0 diff is expected.
+        if (diff > 1000 && !isOdometerBroken) {
             // Check if user already confirmed via a secondary state or simply use a confirm dialog
             // For now, simpler approach: use native confirm or custom logic. 
             // Since browsers block native confirm in some contexts or it looks bad, let's use a simple state check or assume browser confirm is acceptable for this edge case temporarily, 
@@ -443,9 +451,23 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
                                         label="Vehículo en Ruta"
                                     />
                                     {selectedReport && (
-                                        <p className="text-xs text-zinc-500 text-right">
-                                            Conductor: {selectedReport.conductor} • Salida: {selectedReport.km_salida.toLocaleString()} km
-                                        </p>
+                                        <div className="mt-2">
+                                            {/* [NEW] Odometer Warning */}
+                                            {(selectedReport.vehiculos as any)?.odometro_averiado && (
+                                                <div className="mb-2 bg-yellow-50 border border-yellow-200 rounded-lg p-2.5 flex items-start gap-2">
+                                                    <AlertTriangle size={16} className="text-yellow-600 shrink-0 mt-0.5" />
+                                                    <div>
+                                                        <p className="text-xs font-bold text-yellow-700">⚠️ Odómetro Averiado</p>
+                                                        <p className="text-[10px] text-yellow-600/90 leading-tight">
+                                                            Se permite ingresar el mismo kilometraje de salida.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            <p className="text-xs text-zinc-500 text-right">
+                                                Conductor: {selectedReport.conductor} • Salida: {selectedReport.km_salida.toLocaleString()} km
+                                            </p>
+                                        </div>
                                     )}
                                 </div>
 

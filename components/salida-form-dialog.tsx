@@ -28,6 +28,7 @@ import { submitExitReport, updateVehicleFuel } from "@/app/transporte/actions"
 interface Vehiculo extends Vehicle {
     department?: string
     assigned_driver_id?: string | null
+    odometro_averiado?: boolean
 }
 
 type SalidaFormDialogProps = {
@@ -215,9 +216,24 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
         }
 
         const km = parseInt(kmSalida)
-        if (lastKm !== null && km < lastKm) {
-            toast.error(`Error Crítico: El kilometraje (${km}) no puede ser menor al histórico del vehículo (${lastKm} km). Verifique el tablero.`)
-            return
+
+        // [MOD] Bypass strict validation if odometer is broken
+        // If not broken, enforce rules
+        if (!selectedVehicle?.odometro_averiado) {
+            if (lastKm !== null && km < lastKm) {
+                toast.error(`Error Crítico: El kilometraje (${km}) no puede ser menor al histórico del vehículo (${lastKm} km). Verifique el tablero.`)
+                return
+            }
+        } else {
+            // Odometer Broken Logic??
+            // Actually, if it's broken, user might input SAME value as lastKm.
+            // We just skip the "less than" check to allow corrections or same value, 
+            // but maybe still warn if it's drastically different? 
+            // Letting it pass for now as requested "Same value allowed" which `km < lastKm` doesn't block (it blocks LESS).
+            // Wait, `km < lastKm` blocks strictly less. So equal is allowed?
+            // Re-reading user request: "Permite ingresar el mismo kilometraje".
+            // My previous code: `km < lastKm`. So Equal WAS allowed already?
+            // Usually yes. But let's be explicit avoiding the block.
         }
 
         // [NEW] Anomaly Detection
@@ -447,6 +463,18 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
                                                     </div>
                                                 </div>
                                             </div>
+                                            {/* [NEW] Odometer Warning */}
+                                            {selectedVehicle?.odometro_averiado && (
+                                                <div className="mt-3 bg-yellow-50 border border-yellow-200 rounded-lg p-2.5 flex items-start gap-2">
+                                                    <AlertTriangle size={16} className="text-yellow-600 shrink-0 mt-0.5" />
+                                                    <div>
+                                                        <p className="text-xs font-bold text-yellow-700">⚠️ Odómetro Averiado</p>
+                                                        <p className="text-[10px] text-yellow-600/90 leading-tight">
+                                                            Validación de kilometraje relajada. Reporte el valor visible en tablero.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     ) : (
                                         <VehicleSelector

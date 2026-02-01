@@ -104,15 +104,24 @@ export async function resolveFault(id: string) {
     const supabase = await createClient()
 
     try {
-        const { error } = await supabase
+        const { data: updatedFault, error } = await supabase
             .from('fallas')
             .update({
                 estado: 'Reparado',
                 fecha_solucion: new Date().toISOString()
             })
             .eq('id', id)
+            .select('descripcion, vehiculo_id') // [NEW] Fetch data to check type
+            .single()
 
         if (error) throw error
+
+        // [NEW] Automatic Odometer Fix (Circuit Breaker)
+        if (updatedFault && updatedFault.descripcion.includes('Falla de Odómetro')) {
+            await supabase.from('vehiculos')
+                .update({ odometro_averiado: false })
+                .eq('id', updatedFault.vehiculo_id)
+        }
 
         revalidatePath('/taller')
         return { success: true }

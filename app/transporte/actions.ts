@@ -254,8 +254,17 @@ export async function submitExitReport(reportData: any) {
         .eq('vehiculo_id', reportData.vehiculo_id)
         .single()
 
+    // [NEW] Check Odometer Status
+    const { data: vehicleData } = await supabase
+        .from('vehiculos')
+        .select('odometro_averiado')
+        .eq('id', reportData.vehiculo_id)
+        .single()
+
     const lastKm = lastKmData?.ultimo_kilometraje || 0
-    if (Number(reportData.km_salida) < lastKm) {
+    const isBroken = vehicleData?.odometro_averiado
+
+    if (!isBroken && Number(reportData.km_salida) < lastKm) {
         return { success: false, error: `Error de Integridad: El kilometraje de salida (${reportData.km_salida}) es menor al histórico (${lastKm}). Acción rechazada.` }
     }
 
@@ -379,15 +388,21 @@ export async function submitEntryReport(reportData: any) {
 
     // 1.5. Server-Side Validation [NEW]
     // Entry Check: Cannot be <= Exit KM of this specific report
+    // [MOD] Fetch vehicle odometer status as well
     const { data: currentReport } = await supabase
         .from('reportes')
-        .select('km_salida')
+        .select('km_salida, vehiculo_id, vehiculos(odometro_averiado)')
         .eq('id', reportData.reporte_id)
         .single()
 
     if (currentReport) {
-        if (Number(reportData.km_entrada) <= currentReport.km_salida) {
-            return { success: false, error: `Error de Integridad: El KM de entrada (${reportData.km_entrada}) no puede ser menor o igual al de salida (${currentReport.km_salida}).` }
+        // @ts-ignore
+        const isBroken = currentReport.vehiculos?.odometro_averiado || false
+
+        if (!isBroken) {
+            if (Number(reportData.km_entrada) <= currentReport.km_salida) {
+                return { success: false, error: `Error de Integridad: El KM de entrada (${reportData.km_entrada}) no puede ser menor o igual al de salida (${currentReport.km_salida}).` }
+            }
         }
     }
 
