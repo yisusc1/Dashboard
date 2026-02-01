@@ -44,3 +44,6 @@ next-env.d.ts
 
 certificates
 .env*.local
+
+# Firebase Secrets
+asistente-483918-firebase-adminsdk-fbsvc-d650aebb54.json

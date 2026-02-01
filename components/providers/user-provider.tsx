@@ -43,63 +43,7 @@ export function UserProvider({
 
     const supabase = createClient()
 
-    // Push Notifications Logic
-    useEffect(() => {
-        if (!user) return
 
-        const initPush = async () => {
-            try {
-                // Dynamic import of Capacitor plugins to avoid SSR issues
-                const { Capacitor } = await import('@capacitor/core')
-                const { PushNotifications } = await import('@capacitor/push-notifications')
-
-                if (!Capacitor.isNativePlatform()) {
-                    return
-                }
-
-                const permStatus = await PushNotifications.checkPermissions()
-
-                if (permStatus.receive === 'prompt') {
-                    await PushNotifications.requestPermissions()
-                }
-
-                if (permStatus.receive === 'granted') {
-                    await PushNotifications.register()
-                }
-
-                PushNotifications.addListener('registration', async (token) => {
-                    console.log('Push Token:', token.value)
-
-                    const { error } = await supabase
-                        .from('user_devices')
-                        .upsert({
-                            user_id: user.id,
-                            fcm_token: token.value,
-                            platform: 'android',
-                            last_active: new Date().toISOString()
-                        }, { onConflict: 'fcm_token' })
-
-                    if (error) {
-                        console.error('Error saving token to DB:', error)
-                    }
-                })
-
-                PushNotifications.addListener('registrationError', (error) => {
-                    console.error('Push Registration Error:', error)
-                })
-
-                PushNotifications.addListener('pushNotificationReceived', (notification) => {
-                    toast.message(`📣 ${notification.title}: ${notification.body}`)
-                })
-
-            } catch (e) {
-                console.error('Push Init Error:', e)
-            }
-        }
-
-        initPush()
-
-    }, [user])
 
 
     useEffect(() => {

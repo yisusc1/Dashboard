@@ -62,9 +62,11 @@ export default function LoginPage() {
             })
 
             if (error) throw error
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error logging in:", error)
-            toast.error("Error al iniciar sesión con Google")
+            // Extract detailed error message if available
+            const errorMessage = error?.message || error?.error?.message || JSON.stringify(error) || "Error desconocido"
+            toast.error(`Error Google: ${errorMessage}`)
             setLoading(false)
         }
     }

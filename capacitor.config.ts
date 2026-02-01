@@ -5,14 +5,17 @@ const config: CapacitorConfig = {
   appName: 'Dashboard',
   webDir: 'public',
   server: {
-    url: 'https://proyecto-principal-pearl.vercel.app',
+    url: 'http://10.0.2.2:3000',
     cleartext: true
   },
   plugins: {
     GoogleAuth: {
       scopes: ['profile', 'email'],
       serverClientId: '820734797192-i79t4gkvss50nq8hqr48qe5oeleb97an.apps.googleusercontent.com',
-      forceCodeForRefreshToken: true,
+      forceCodeForRefreshToken: false,
+    },
+    PushNotifications: {
+      presentationOptions: ["badge", "sound", "alert"],
     },
   },
 };

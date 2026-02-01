@@ -1,0 +1,280 @@
+﻿
+> Configure project :app
+WARNING: The option setting 'android.usesSdkInManifest.disallowed=false' is deprecated.
+The current default is 'true'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: The option setting 'android.sdk.defaultTargetSdkToCompileSdkIfUnset=false' is deprecated.
+The current default is 'true'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: The option setting 'android.enableAppCompileTimeRClass=false' is deprecated.
+The current default is 'true'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: The option setting 'android.builtInKotlin=false' is deprecated.
+The current default is 'true'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: The option setting 'android.newDsl=false' is deprecated.
+The current default is 'true'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: The option setting 'android.r8.optimizedResourceShrinking=false' is deprecated.
+The current default is 'true'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: The option setting 'android.defaults.buildfeatures.resvalues=true' is deprecated.
+The current default is 'false'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :capacitor-action-sheet
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :capacitor-android
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :capacitor-camera
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :capacitor-cordova-android-plugins
+WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :capacitor-device
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :capacitor-filesystem
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :capacitor-geolocation
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :capacitor-push-notifications
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :capacitor-voice-recorder
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :codetrix-studio-capacitor-google-auth
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Task :app:signingReport
+Variant: debug
+Config: debug
+Store: C:\Users\jmlrk\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: D5:37:ED:00:98:87:6D:6C:5C:C9:CE:52:47:C3:2D:1E
+SHA1: F4:54:23:A5:1A:21:33:0B:1C:75:02:9D:AD:82:1D:95:0B:E6:6D:3B
+SHA-256: 8E:5C:14:6C:ED:15:10:AF:C8:84:7F:07:65:6C:DC:E3:36:9B:5E:37:DB:FA:5E:84:D5:39:A2:98:9A:9F:B3:6E
+Valid until: lunes, 24 de enero de 2056
+----------
+Variant: release
+Config: null
+Store: null
+Alias: null
+----------
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\jmlrk\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: D5:37:ED:00:98:87:6D:6C:5C:C9:CE:52:47:C3:2D:1E
+SHA1: F4:54:23:A5:1A:21:33:0B:1C:75:02:9D:AD:82:1D:95:0B:E6:6D:3B
+SHA-256: 8E:5C:14:6C:ED:15:10:AF:C8:84:7F:07:65:6C:DC:E3:36:9B:5E:37:DB:FA:5E:84:D5:39:A2:98:9A:9F:B3:6E
+Valid until: lunes, 24 de enero de 2056
+----------
+
+> Task :capacitor-action-sheet:signingReport
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\jmlrk\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: D5:37:ED:00:98:87:6D:6C:5C:C9:CE:52:47:C3:2D:1E
+SHA1: F4:54:23:A5:1A:21:33:0B:1C:75:02:9D:AD:82:1D:95:0B:E6:6D:3B
+SHA-256: 8E:5C:14:6C:ED:15:10:AF:C8:84:7F:07:65:6C:DC:E3:36:9B:5E:37:DB:FA:5E:84:D5:39:A2:98:9A:9F:B3:6E
+Valid until: lunes, 24 de enero de 2056
+----------
+
+> Task :capacitor-android:signingReport
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\jmlrk\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: D5:37:ED:00:98:87:6D:6C:5C:C9:CE:52:47:C3:2D:1E
+SHA1: F4:54:23:A5:1A:21:33:0B:1C:75:02:9D:AD:82:1D:95:0B:E6:6D:3B
+SHA-256: 8E:5C:14:6C:ED:15:10:AF:C8:84:7F:07:65:6C:DC:E3:36:9B:5E:37:DB:FA:5E:84:D5:39:A2:98:9A:9F:B3:6E
+Valid until: lunes, 24 de enero de 2056
+----------
+
+> Task :capacitor-camera:signingReport
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\jmlrk\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: D5:37:ED:00:98:87:6D:6C:5C:C9:CE:52:47:C3:2D:1E
+SHA1: F4:54:23:A5:1A:21:33:0B:1C:75:02:9D:AD:82:1D:95:0B:E6:6D:3B
+SHA-256: 8E:5C:14:6C:ED:15:10:AF:C8:84:7F:07:65:6C:DC:E3:36:9B:5E:37:DB:FA:5E:84:D5:39:A2:98:9A:9F:B3:6E
+Valid until: lunes, 24 de enero de 2056
+----------
+
+> Task :capacitor-cordova-android-plugins:signingReport
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\jmlrk\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: D5:37:ED:00:98:87:6D:6C:5C:C9:CE:52:47:C3:2D:1E
+SHA1: F4:54:23:A5:1A:21:33:0B:1C:75:02:9D:AD:82:1D:95:0B:E6:6D:3B
+SHA-256: 8E:5C:14:6C:ED:15:10:AF:C8:84:7F:07:65:6C:DC:E3:36:9B:5E:37:DB:FA:5E:84:D5:39:A2:98:9A:9F:B3:6E
+Valid until: lunes, 24 de enero de 2056
+----------
+
+> Task :capacitor-device:signingReport
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\jmlrk\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: D5:37:ED:00:98:87:6D:6C:5C:C9:CE:52:47:C3:2D:1E
+SHA1: F4:54:23:A5:1A:21:33:0B:1C:75:02:9D:AD:82:1D:95:0B:E6:6D:3B
+SHA-256: 8E:5C:14:6C:ED:15:10:AF:C8:84:7F:07:65:6C:DC:E3:36:9B:5E:37:DB:FA:5E:84:D5:39:A2:98:9A:9F:B3:6E
+Valid until: lunes, 24 de enero de 2056
+----------
+
+> Task :capacitor-filesystem:signingReport
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\jmlrk\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: D5:37:ED:00:98:87:6D:6C:5C:C9:CE:52:47:C3:2D:1E
+SHA1: F4:54:23:A5:1A:21:33:0B:1C:75:02:9D:AD:82:1D:95:0B:E6:6D:3B
+SHA-256: 8E:5C:14:6C:ED:15:10:AF:C8:84:7F:07:65:6C:DC:E3:36:9B:5E:37:DB:FA:5E:84:D5:39:A2:98:9A:9F:B3:6E
+Valid until: lunes, 24 de enero de 2056
+----------
+
+> Task :capacitor-geolocation:signingReport
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\jmlrk\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: D5:37:ED:00:98:87:6D:6C:5C:C9:CE:52:47:C3:2D:1E
+SHA1: F4:54:23:A5:1A:21:33:0B:1C:75:02:9D:AD:82:1D:95:0B:E6:6D:3B
+SHA-256: 8E:5C:14:6C:ED:15:10:AF:C8:84:7F:07:65:6C:DC:E3:36:9B:5E:37:DB:FA:5E:84:D5:39:A2:98:9A:9F:B3:6E
+Valid until: lunes, 24 de enero de 2056
+----------
+
+> Task :capacitor-push-notifications:signingReport
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\jmlrk\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: D5:37:ED:00:98:87:6D:6C:5C:C9:CE:52:47:C3:2D:1E
+SHA1: F4:54:23:A5:1A:21:33:0B:1C:75:02:9D:AD:82:1D:95:0B:E6:6D:3B
+SHA-256: 8E:5C:14:6C:ED:15:10:AF:C8:84:7F:07:65:6C:DC:E3:36:9B:5E:37:DB:FA:5E:84:D5:39:A2:98:9A:9F:B3:6E
+Valid until: lunes, 24 de enero de 2056
+----------
+
+> Task :capacitor-voice-recorder:signingReport
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\jmlrk\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: D5:37:ED:00:98:87:6D:6C:5C:C9:CE:52:47:C3:2D:1E
+SHA1: F4:54:23:A5:1A:21:33:0B:1C:75:02:9D:AD:82:1D:95:0B:E6:6D:3B
+SHA-256: 8E:5C:14:6C:ED:15:10:AF:C8:84:7F:07:65:6C:DC:E3:36:9B:5E:37:DB:FA:5E:84:D5:39:A2:98:9A:9F:B3:6E
+Valid until: lunes, 24 de enero de 2056
+----------
+
+> Task :codetrix-studio-capacitor-google-auth:signingReport
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\jmlrk\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: D5:37:ED:00:98:87:6D:6C:5C:C9:CE:52:47:C3:2D:1E
+SHA1: F4:54:23:A5:1A:21:33:0B:1C:75:02:9D:AD:82:1D:95:0B:E6:6D:3B
+SHA-256: 8E:5C:14:6C:ED:15:10:AF:C8:84:7F:07:65:6C:DC:E3:36:9B:5E:37:DB:FA:5E:84:D5:39:A2:98:9A:9F:B3:6E
+Valid until: lunes, 24 de enero de 2056
+----------
+
+[Incubating] Problems report is available at: file:///C:/Users/jmlrk/OneDrive/Desktop/AA/android/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.1.0/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 1s
+11 actionable tasks: 11 executed
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.1.0/userguide/configuration_cache_enabling.html

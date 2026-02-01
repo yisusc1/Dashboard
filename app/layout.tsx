@@ -28,6 +28,7 @@ import { getSystemSettings } from "./admin/settings-actions";
 import { VoiceAssistant } from "@/components/voice-assistant";
 
 import { VoiceProvider } from "@/components/voice-provider";
+import { PushNotificationManager } from "@/components/PushNotificationManager";
 
 export default async function RootLayout({
   children,
@@ -64,6 +65,7 @@ export default async function RootLayout({
             {children}
             {isVoiceEnabled && <VoiceAssistant />}
             <Toaster richColors position="top-center" />
+            <PushNotificationManager />
           </VoiceProvider>
         </UserProvider>
       </body>
