@@ -4,9 +4,12 @@ import { Capacitor } from '@capacitor/core';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 
+import { useRouter } from 'next/navigation';
+
 export const usePushNotifications = (userId?: string) => {
     const [token, setToken] = useState<string | null>(null);
     const supabase = createClient();
+    const router = useRouter();
 
     useEffect(() => {
         if (!Capacitor.isNativePlatform()) {
@@ -72,6 +75,8 @@ export const usePushNotifications = (userId?: string) => {
 
             await PushNotifications.addListener('pushNotificationActionPerformed', notification => {
                 console.log('Push notification action performed', notification.actionId, notification.inputValue);
+                // Redirect to notification history
+                router.push('/gerencia/notificaciones');
             });
         };
 
