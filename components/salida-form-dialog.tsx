@@ -216,8 +216,15 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
 
         const km = parseInt(kmSalida)
         if (lastKm !== null && km < lastKm) {
-            toast.error(`El kilometraje no puede ser menor al anterior (${lastKm} km)`)
+            toast.error(`Error Crítico: El kilometraje (${km}) no puede ser menor al histórico del vehículo (${lastKm} km). Verifique el tablero.`)
             return
+        }
+
+        // [NEW] Anomaly Detection
+        if (lastKm !== null && (km - lastKm) > 1000) {
+            if (!window.confirm(`⚠️ ADVERTENCIA DE SEGURIDAD ⚠️\n\nEl kilometraje ingresado (${km}) es ${km - lastKm} km mayor al último registrado.\n\n¿Es correcto este salto sin reporte previo?`)) {
+                return
+            }
         }
 
         setLoading(true)
