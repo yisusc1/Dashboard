@@ -6,6 +6,7 @@ import Link from "next/link"
 import { getFleetStatus } from "./actions"
 import { LiveFleetDashboard } from "./components/live-fleet-dashboard"
 import { RealtimeNotifications } from "./components/realtime-notifications"
+import { Bell } from "lucide-react"
 
 export const dynamic = "force-dynamic"
 
@@ -31,11 +32,11 @@ export default async function GerenciaDashboard() {
                     </div>
 
                     <div className="flex gap-3 items-center">
-                        <Link href="/gerencia/notificaciones" className="flex items-center justify-center h-10 w-10 rounded-full bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50 shadow-sm transition-colors" title="Ver Historial de Notificaciones">
+                        <Link href="/gerencia/notificaciones" className="flex items-center justify-center h-10 w-10 rounded-full bg-white/80 backdrop-blur-md border border-zinc-100/50 text-zinc-400 hover:text-zinc-900 hover:bg-white hover:shadow-md transition-all duration-300" title="Ver Historial de Notificaciones">
                             <span className="sr-only">Notificaciones</span>
-                            🔔
+                            <Bell size={20} strokeWidth={2} />
                         </Link>
-                        <Link href="/" className="flex items-center gap-2 text-sm font-medium text-zinc-600 bg-white px-4 py-2 rounded-full border border-zinc-200 shadow-sm hover:bg-zinc-50 transition-colors">
+                        <Link href="/" className="flex items-center gap-2 text-sm font-medium text-zinc-500 hover:text-zinc-900 bg-transparent hover:bg-white/50 px-4 py-2 rounded-full transition-all duration-300">
                             ⬅ Volver al Menú
                         </Link>
                     </div>

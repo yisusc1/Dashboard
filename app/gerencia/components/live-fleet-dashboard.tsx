@@ -111,7 +111,7 @@ export function LiveFleetDashboard({ vehicles: initialVehicles }: { vehicles: Fl
                     <div className="text-2xl font-bold">{stats.maintenance}</div>
                     <div className="text-xs font-medium opacity-80 uppercase tracking-wider">Mantenimiento</div>
                 </button>
-            </div> // Hidden refresh indicator
+            </div>
 
             {/* Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
