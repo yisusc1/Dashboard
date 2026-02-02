@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
+import { format } from "date-fns"
 
 export interface FuelLogData {
     ticket_number: string
@@ -67,7 +68,7 @@ export async function createFuelLog(data: FuelLogData) {
 
         const { error } = await supabase.from("fuel_logs").insert({
             ticket_number: data.ticket_number,
-            fuel_date: data.fuel_date.toISOString(),
+            fuel_date: new Date().toISOString(), // [SEC] Always use server time
             vehicle_id: data.vehicle_id,
             driver_name: data.driver_name,
             liters: data.liters,
@@ -142,6 +143,31 @@ export async function getFuelLogs(filters?: { startDate?: string, endDate?: stri
     return data
 }
 
+export async function getTodayStats() {
+    const supabase = await createClient()
+    const today = new Date()
+    const startDate = format(today, "yyyy-MM-dd") + " 00:00:00"
+    const endDate = format(today, "yyyy-MM-dd") + " 23:59:59"
+
+    const { data, error } = await supabase
+        .from("fuel_logs")
+        .select("liters")
+        .gte("fuel_date", startDate)
+        .lte("fuel_date", endDate)
+
+    if (error) {
+        console.error("Error fetching stats:", error)
+        return { totalLiters: 0, count: 0 }
+    }
+
+    const totalLiters = data.reduce((sum, log) => sum + (log.liters || 0), 0)
+
+    return {
+        totalLiters,
+        count: data.length
+    }
+}
+
 export async function getVehicleDetailsAction(vehicleId: string) {
     const supabase = await createClient()
 
@@ -173,4 +199,54 @@ export async function getVehicleDetailsAction(vehicleId: string) {
         ...vehicle,
         last_fuel: lastFuel || null
     }
+}
+
+export async function generateDailyReport(dateString: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { success: false, error: "Usuario no autenticado" }
+
+    // 1. Fetch Logs for DATE
+    const startDate = `${dateString} 00:00:00`
+    const endDate = `${dateString} 23:59:59`
+
+    const { data: logs, error: lError } = await supabase
+        .from("fuel_logs")
+        .select(`
+            liters,
+            vehicle:vehiculos(modelo, placa)
+        `)
+        .gte("fuel_date", startDate)
+        .lte("fuel_date", endDate)
+
+    if (lError) return { success: false, error: lError.message }
+    if (!logs || logs.length === 0) return { success: false, error: "No hay cargas registradas en esta fecha." }
+
+    // 2. Aggregate Data
+    // We list every transaction or aggregate? User asked for list of vehicles.
+    // Let's aggregate by Vehicle ID (Model + Placa)
+    const vehicleMap = new Map<string, { model: string, liters: number }>()
+
+    logs.forEach((log: any) => {
+        const key = `${log.vehicle?.modelo} (${log.vehicle?.placa})`
+        const current = vehicleMap.get(key) || { model: key, liters: 0 }
+        current.liters += (log.liters || 0)
+        vehicleMap.set(key, current)
+    })
+
+    const details = Array.from(vehicleMap.values())
+    const totalLiters = logs.reduce((sum, l) => sum + (l.liters || 0), 0)
+
+    // 3. Save Report
+    const { error } = await supabase.from("fuel_daily_reports").insert({
+        report_date: dateString,
+        supervisor_id: user.id,
+        total_liters: totalLiters,
+        details: details
+    })
+
+    if (error) return { success: false, error: "Error guardando reporte: " + error.message }
+
+    return { success: true, totalLiters, count: logs.length }
 }

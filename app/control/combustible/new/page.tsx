@@ -108,7 +108,8 @@ function NewFuelLogContent() {
             liters: 0,
             mileage: 0,
             ticket_url: "",
-            notes: ""
+            notes: "",
+            fuel_date: new Date() // [NEW] Default to current date/time
         },
     })
 
@@ -272,49 +273,19 @@ function NewFuelLogContent() {
                                     control={form.control}
                                     name="fuel_date"
                                     render={({ field }) => (
-                                        <FormItem className="flex flex-col">
+                                        <FormItem>
                                             <FormLabel>Fecha y Hora</FormLabel>
-                                            <Popover>
-                                                <PopoverTrigger asChild>
-                                                    <FormControl>
-                                                        <Button
-                                                            variant={"outline"}
-                                                            className={cn(
-                                                                "w-full h-12 rounded-xl pl-3 text-left font-normal border-gray-200",
-                                                                !field.value && "text-muted-foreground"
-                                                            )}
-                                                        >
-                                                            {field.value ? (
-                                                                format(field.value, "dd/MM/yyyy HH:mm")
-                                                            ) : (
-                                                                <span>Seleccione fecha</span>
-                                                            )}
-                                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                        </Button>
-                                                    </FormControl>
-                                                </PopoverTrigger>
-                                                <PopoverContent className="w-auto p-0" align="start">
-                                                    <Calendar
-                                                        mode="single"
-                                                        selected={field.value}
-                                                        onSelect={field.onChange}
-                                                        initialFocus
+                                            <FormControl>
+                                                <div className="relative">
+                                                    <CalendarIcon className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+                                                    <Input
+                                                        readOnly
+                                                        disabled
+                                                        value={field.value ? format(field.value, "dd/MM/yyyy HH:mm") : format(new Date(), "dd/MM/yyyy HH:mm")}
+                                                        className="pl-10 h-12 rounded-xl bg-gray-50 text-gray-600 font-medium"
                                                     />
-                                                    <div className="p-3 border-t">
-                                                        <Input
-                                                            type="time"
-                                                            className="w-full"
-                                                            onChange={(e) => {
-                                                                const date = field.value || new Date()
-                                                                const [hours, minutes] = e.target.value.split(':')
-                                                                date.setHours(parseInt(hours))
-                                                                date.setMinutes(parseInt(minutes))
-                                                                field.onChange(date)
-                                                            }}
-                                                        />
-                                                    </div>
-                                                </PopoverContent>
-                                            </Popover>
+                                                </div>
+                                            </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}

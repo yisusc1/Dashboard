@@ -6,7 +6,8 @@ import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { ArrowLeft, Fuel, Plus, FileSpreadsheet, Search, Filter, Calendar as CalendarIcon, ExternalLink, QrCode, Truck, User as UserIcon, Gauge, X } from "lucide-react"
 import { DatePickerWithRange } from "@/components/ui/date-range-picker"
-import { DateRange } from "react-day-picker"
+import { DateRange } from "react-day-picker" // Keep existing
+import { DailyReportDialog } from "./daily-report-dialog"
 
 import { Button } from "@/components/ui/button"
 import { DesktopModeToggle } from "@/components/desktop-mode-toggle"
@@ -30,7 +31,7 @@ import {
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 
-import { getFuelLogs, getVehicles } from "./actions"
+import { getFuelLogs, getVehicles, getTodayStats } from "./actions"
 
 export default function FuelControlPage() {
     const [logs, setLogs] = useState<any[]>([])
@@ -42,16 +43,19 @@ export default function FuelControlPage() {
     const [selectedVehicle, setSelectedVehicle] = useState("all")
     const [dateRange, setDateRange] = useState<DateRange | undefined>()
     const [selectedLog, setSelectedLog] = useState<any | null>(null)
+    const [todayStats, setTodayStats] = useState({ totalLiters: 0, count: 0 })
 
     useEffect(() => {
         setIsMounted(true)
         // Load initial data
         Promise.all([
             getVehicles(),
-            getFuelLogs()
-        ]).then(([vehData, logData]) => {
+            getFuelLogs(),
+            getTodayStats() // [NEW] Fetch Stats
+        ]).then(([vehData, logData, statsData]) => {
             setVehicles(vehData || [])
             setLogs(logData || [])
+            setTodayStats(statsData || { totalLiters: 0, count: 0 })
             setLoading(false)
         })
     }, [])
@@ -70,6 +74,7 @@ export default function FuelControlPage() {
     }
 
     const exportToExcel = () => {
+        // ... existing export code ...
         // Simple CSV Export implementation
         if (logs.length === 0) return
 
@@ -118,26 +123,48 @@ export default function FuelControlPage() {
                             <p className="text-sm md:text-base text-slate-500">Gestión de carga y tickets</p>
                         </div>
                     </div>
-                    <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                        <DesktopModeToggle />
+                </div>
 
-                        <Button variant="outline" onClick={exportToExcel} className="flex-1 md:flex-none gap-2 rounded-xl h-12 bg-white hover:bg-slate-50 border-slate-200 text-slate-700 shadow-sm">
-                            <FileSpreadsheet size={18} className="text-green-600" />
-                            <span className="md:inline font-medium">Exportar</span>
-                        </Button>
-                        <Link href="/control/combustible/scan" className="flex-1 md:flex-none">
-                            <Button variant="secondary" className="w-full h-12 gap-2 bg-zinc-900 text-white hover:bg-zinc-800 rounded-xl shadow-lg shadow-zinc-900/20 font-medium">
-                                <QrCode size={18} />
-                                <span className="md:inline">Escanear</span>
-                            </Button>
-                        </Link>
-                        <Link href="/control/combustible/new" className="flex-1 md:flex-none">
-                            <Button className="w-full h-12 gap-2 bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg shadow-blue-600/20 font-bold text-white">
-                                <Plus size={18} />
-                                <span className="md:inline">Nuevo Ticket</span>
-                            </Button>
-                        </Link>
+                {/* [NEW] Today Stats Card */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-white rounded-[24px] p-6 border border-slate-100 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-1">Litros Hoy</p>
+                            <h3 className="text-3xl font-bold text-slate-900">{todayStats.totalLiters.toFixed(2)} L</h3>
+                            <p className="text-xs text-emerald-600 font-medium mt-1">
+                                +{todayStats.count} cargas realizadas
+                            </p>
+                        </div>
+                        <div className="h-14 w-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                            <Fuel size={32} />
+                        </div>
                     </div>
+                    {/* Placeholder for future stats or empty spacing */}
+                    <div className="hidden md:block col-span-2"></div>
+                </div>
+
+                {/* ACTION BUTTONS ROW (Moved down) */}
+                <div className="flex flex-col sm:flex-row gap-3 w-full justify-end">
+                    <DesktopModeToggle />
+
+                    <DailyReportDialog />
+
+                    <Button variant="outline" onClick={exportToExcel} className="flex-1 md:flex-none gap-2 rounded-xl h-12 bg-white hover:bg-slate-50 border-slate-200 text-slate-700 shadow-sm">
+                        <FileSpreadsheet size={18} className="text-green-600" />
+                        <span className="md:inline font-medium">Exportar</span>
+                    </Button>
+                    <Link href="/control/combustible/scan" className="flex-1 md:flex-none">
+                        <Button variant="secondary" className="w-full h-12 gap-2 bg-zinc-900 text-white hover:bg-zinc-800 rounded-xl shadow-lg shadow-zinc-900/20 font-medium">
+                            <QrCode size={18} />
+                            <span className="md:inline">Escanear</span>
+                        </Button>
+                    </Link>
+                    <Link href="/control/combustible/new" className="flex-1 md:flex-none">
+                        <Button className="w-full h-12 gap-2 bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg shadow-blue-600/20 font-bold text-white">
+                            <Plus size={18} />
+                            <span className="md:inline">Nuevo Ticket</span>
+                        </Button>
+                    </Link>
                 </div>
 
                 {/* Filters - Glassmorphism & Premium Design */}
