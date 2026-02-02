@@ -248,7 +248,16 @@ export async function generateDailyReport(dateString: string) {
 
     if (error) return { success: false, error: "Error guardando reporte: " + error.message }
 
-    const supervisorName = `${user.user_metadata?.first_name || ""} ${user.user_metadata?.last_name || ""}`.trim()
+    // Fetch supervisor profile name
+    const { data: profile } = await supabase
+        .from("profiles")
+        .select("first_name, last_name")
+        .eq("id", user.id)
+        .single()
+
+    const supervisorName = profile
+        ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim()
+        : "Supervisor"
 
     return { success: true, totalLiters, count: logs.length, details: details, supervisorName }
 }
