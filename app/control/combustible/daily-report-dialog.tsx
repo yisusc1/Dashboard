@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { CalendarIcon, FileText, Loader2, CheckCircle2 } from "lucide-react"
@@ -27,9 +27,13 @@ import { generateDailyReport } from "./actions"
 
 export function DailyReportDialog() {
     const [open, setOpen] = useState(false)
-    const [date, setDate] = useState<Date>(new Date())
+    const [date, setDate] = useState<Date>()
     const [loading, setLoading] = useState(false)
-    const [successData, setSuccessData] = useState<{ total: number, count: number } | null>(null)
+    const [successData, setSuccessData] = useState<{ total: number, count: number, details?: any[], date?: string, supervisor?: string } | null>(null)
+
+    useEffect(() => {
+        setDate(new Date())
+    }, [])
 
     const handleGenerate = async () => {
         if (!date) return
@@ -42,7 +46,13 @@ export function DailyReportDialog() {
 
             if (res.success) {
                 toast.success("Reporte generado correctamente")
-                setSuccessData({ total: res.totalLiters || 0, count: res.count || 0 })
+                setSuccessData({
+                    total: res.totalLiters || 0,
+                    count: res.count || 0,
+                    details: res.details,
+                    date: dateStr,
+                    supervisor: res.supervisorName
+                })
             } else {
                 toast.error(res.error || "Error al generar reporte")
             }
@@ -52,6 +62,27 @@ export function DailyReportDialog() {
         } finally {
             setLoading(false)
         }
+    }
+
+    const handleWhatsApp = () => {
+        if (!successData) return
+
+        const vehiclesList = successData.details?.map((v: any, index: number) =>
+            `${index + 1}. ${v.model} / ${v.liters.toFixed(2)} L`
+        ).join("\n")
+
+        const message = `*Reporte de Combustible Diario*
+
+*Fecha:* ${successData.date}
+*Supervisor:* ${successData.supervisor || "N/A"}
+
+*Vehículos:*
+${vehiclesList}
+
+*Total:* ${successData.total.toFixed(2)} L`
+
+        const url = `https://wa.me/?text=${encodeURIComponent(message)}`
+        window.open(url, '_blank')
     }
 
     const reset = () => {
