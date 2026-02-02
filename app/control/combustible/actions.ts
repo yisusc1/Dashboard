@@ -248,5 +248,7 @@ export async function generateDailyReport(dateString: string) {
 
     if (error) return { success: false, error: "Error guardando reporte: " + error.message }
 
-    return { success: true, totalLiters, count: logs.length }
+    const supervisorName = `${user.user_metadata?.first_name || ""} ${user.user_metadata?.last_name || ""}`.trim()
+
+    return { success: true, totalLiters, count: logs.length, details: details, supervisorName }
 }

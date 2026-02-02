@@ -135,9 +135,14 @@ export function DailyReportDialog() {
                             </div>
                         </div>
 
-                        <Button onClick={reset} className="w-full h-12 rounded-xl bg-slate-900">
-                            Cerrar
-                        </Button>
+                        <div className="flex flex-col gap-3 w-full">
+                            <Button onClick={handleWhatsApp} className="w-full h-12 rounded-xl bg-green-600 hover:bg-green-700 font-bold text-white shadow-lg shadow-green-200">
+                                Enviar por WhatsApp
+                            </Button>
+                            <Button variant="ghost" onClick={reset} className="w-full h-12 rounded-xl">
+                                Cerrar
+                            </Button>
+                        </div>
                     </div>
                 )}
             </DialogContent>
