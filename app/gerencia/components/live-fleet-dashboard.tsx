@@ -61,7 +61,7 @@ export function LiveFleetDashboard({ vehicles: initialVehicles }: { vehicles: Fl
             total: vehicles.length,
             inRoute: vehicles.filter(v => v.status === 'IN_ROUTE').length,
             available: vehicles.filter(v => v.status === 'AVAILABLE').length,
-            maintenance: vehicles.filter(v => v.status === 'MAINTENANCE' || v.status === 'CRITICAL').length
+            maintenance: vehicles.filter(v => v.status === 'MAINTENANCE').length
         }
     }, [vehicles])
 
@@ -69,14 +69,19 @@ export function LiveFleetDashboard({ vehicles: initialVehicles }: { vehicles: Fl
         if (filter === 'ALL') return vehicles
         if (filter === 'ROUTE') return vehicles.filter(v => v.status === 'IN_ROUTE')
         if (filter === 'AVAILABLE') return vehicles.filter(v => v.status === 'AVAILABLE')
-        if (filter === 'WORKSHOP') return vehicles.filter(v => v.status === 'MAINTENANCE' || v.status === 'CRITICAL')
+        if (filter === 'WORKSHOP') return vehicles.filter(v => v.status === 'MAINTENANCE')
         return vehicles
     }, [vehicles, filter])
 
-    const getStatusConfig = (status: FleetStatus['status']) => {
-        switch (status) {
+    const getStatusConfig = (vehicle: FleetStatus) => {
+        switch (vehicle.status) {
             case 'IN_ROUTE': return { label: "En Ruta", color: "bg-green-500", text: "text-green-700", bg: "bg-green-50", border: "border-green-200" }
-            case 'CRITICAL': return { label: "Falla Crítica", color: "bg-red-500", text: "text-red-700", bg: "bg-red-50", border: "border-red-200" }
+            case 'CRITICAL':
+                // Check severity
+                if (vehicle.faultsSummary.critical > 0 || vehicle.faultsSummary.high > 0) {
+                    return { label: "Falla Crítica", color: "bg-red-500", text: "text-red-700", bg: "bg-red-50", border: "border-red-200" }
+                }
+                return { label: "Falla Pendiente", color: "bg-orange-500", text: "text-orange-700", bg: "bg-orange-50", border: "border-orange-200" }
             case 'MAINTENANCE': return { label: "En Taller", color: "bg-amber-500", text: "text-amber-700", bg: "bg-amber-50", border: "border-amber-200" }
             default: return { label: "Disponible", color: "bg-zinc-400", text: "text-zinc-700", bg: "bg-zinc-50", border: "border-zinc-200" }
         }
@@ -127,7 +132,7 @@ export function LiveFleetDashboard({ vehicles: initialVehicles }: { vehicles: Fl
             {/* Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredVehicles.map((vehicle) => {
-                    const status = getStatusConfig(vehicle.status)
+                    const status = getStatusConfig(vehicle)
                     return (
                         <Card
                             key={vehicle.id}

@@ -192,7 +192,7 @@ export function VehicleFormDialog({ isOpen, onClose, onVehicleSaved, vehicleToEd
                         vehiculo_id: vehicleId,
                         descripcion: 'Falla de Odómetro (Reporte Automático)',
                         tipo_falla: 'Mecánica',
-                        prioridad: 'Alta',
+                        prioridad: 'Baja',
                         estado: 'Pendiente',
                         created_at: new Date().toISOString()
                     })
