@@ -141,6 +141,13 @@ export async function correctMileage(source: MileageSource, newValue: number) {
             .eq('vehiculo_id', source.vehicleId)
             .gt('km_salida', newValue)
 
+        // 5. [NEW] Clamp Maintenance Logs (Likely the missing piece causing View persistence)
+        await supabase
+            .from('maintenance_logs')
+            .update({ mileage: newValue })
+            .eq('vehicle_id', source.vehicleId)
+            .gt('mileage', newValue)
+
         revalidatePath('/admin/vehiculos')
         revalidatePath('/control/combustible')
         revalidatePath('/transporte')
