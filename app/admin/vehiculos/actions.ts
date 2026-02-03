@@ -35,83 +35,81 @@ export async function getMileageSource(vehicleId: string, currentTotalMileage: n
             vehicleId: vehicleId
         }
     }
-}
 
-// 2. Check Reports (Entry)
-const { data: entryReport } = await supabase
-    .from('reportes')
-    .select('id, km_entrada, fecha_entrada, created_at')
-    .eq('vehiculo_id', vehicleId)
-    .eq('km_entrada', currentTotalMileage)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .single()
+    // 2. Check Reports (Entry)
+    const { data: entryReport } = await supabase
+        .from('reportes')
+        .select('id, km_entrada, fecha_entrada, created_at')
+        .eq('vehiculo_id', vehicleId)
+        .eq('km_entrada', currentTotalMileage)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
 
-if (entryReport) {
+    if (entryReport) {
+        return {
+            type: 'report_entry',
+            id: entryReport.id,
+            currentValue: entryReport.km_entrada,
+            date: entryReport.fecha_entrada || entryReport.created_at,
+            description: 'Reporte de Entrada',
+            vehicleId: vehicleId
+        }
+    }
+
+    // 3. Check Reports (Exit)
+    const { data: exitReport } = await supabase
+        .from('reportes')
+        .select('id, km_salida, fecha_salida, created_at')
+        .eq('vehiculo_id', vehicleId)
+        .eq('km_salida', currentTotalMileage)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+    if (exitReport) {
+        return {
+            type: 'report_exit',
+            id: exitReport.id,
+            currentValue: exitReport.km_salida,
+            date: exitReport.fecha_salida || exitReport.created_at,
+            description: 'Reporte de Salida',
+            vehicleId: vehicleId
+        }
+    }
+
+    // 4. Check Master Vehicle Record (Fallback)
+    const { data: vehicle } = await supabase
+        .from('vehiculos')
+        .select('id, kilometraje, updated_at')
+        .eq('id', vehicleId)
+        .eq('kilometraje', currentTotalMileage)
+        .single()
+
+    if (vehicle) {
+        return {
+            type: 'legacy', // Or 'master_record'
+            id: vehicle.id,
+            currentValue: vehicle.kilometraje,
+            date: vehicle.updated_at,
+            description: 'Registro Maestro (Vehículos)',
+            vehicleId: vehicleId // Actually vehicle.id is the same
+        }
+    }
+
     return {
-        type: 'report_entry',
-        id: entryReport.id,
-        currentValue: entryReport.km_entrada,
-        date: entryReport.fecha_entrada || entryReport.created_at,
-        description: 'Reporte de Entrada',
+        type: 'unknown',
+        id: vehicleId,
+        currentValue: currentTotalMileage,
+        date: new Date().toISOString(),
+        description: 'Origen Desconocido (Forzar Corrección)',
         vehicleId: vehicleId
     }
-}
-    }
-
-// 3. Check Reports (Exit)
-const { data: exitReport } = await supabase
-    .from('reportes')
-    .select('id, km_salida, fecha_salida, created_at')
-    .eq('vehiculo_id', vehicleId)
-    .eq('km_salida', currentTotalMileage)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .single()
-
-if (exitReport) {
-    return {
-        type: 'report_exit',
-        id: exitReport.id,
-        currentValue: exitReport.km_salida,
-        date: exitReport.fecha_salida || exitReport.created_at,
-        description: 'Reporte de Salida',
-        vehicleId: vehicleId
-    }
-}
-    }
-
-// 4. Check Master Vehicle Record (Fallback)
-// If the error exists only in 'vehiculos' (or we couldn't match a log), we should treat the vehicle record itself as the source.
-const { data: vehicle } = await supabase
-    .from('vehiculos')
-    .select('id, kilometraje, updated_at')
-    .eq('id', vehicleId)
-    .eq('kilometraje', currentTotalMileage)
-    .single()
-
-if (vehicle) {
-    return {
-        type: 'legacy', // Or 'master_record'
-        id: vehicle.id,
-        currentValue: vehicle.kilometraje,
-        date: vehicle.updated_at,
-        description: 'Registro Maestro (Vehículos)'
-    }
-}
-
-return {
-    type: 'unknown',
-    id: vehicleId,
-    currentValue: currentTotalMileage,
-    date: new Date().toISOString(),
-    description: 'Origen Desconocido (Forzar Corrección)'
-}
 }
 
 export async function correctMileage(source: MileageSource, newValue: number) {
     const supabase = await createClient()
-    let error = null
+    let error: any = null
 
     if (source.type === 'fuel_log') {
         const { error: err } = await supabase
