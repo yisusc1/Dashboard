@@ -349,14 +349,17 @@ export async function submitExitReport(reportData: any) {
 
     // [NEW] Process explicit faults
     if (reportData.faults && Array.isArray(reportData.faults) && reportData.faults.length > 0) {
-        const faultsToInsert = reportData.faults.map((desc: string) => ({
-            vehiculo_id: rawData.vehiculo_id,
-            descripcion: `[Reporte Salida] ${desc}`,
-            tipo_falla: 'Mecánica', // Default
-            prioridad: 'Media',
-            estado: 'Pendiente',
-            created_at: new Date().toISOString()
-        }))
+        const faultsToInsert = reportData.faults.map((desc: string) => {
+            const isOdometer = desc.toLowerCase().includes('odómetro') || desc.toLowerCase().includes('odometro')
+            return {
+                vehiculo_id: rawData.vehiculo_id,
+                descripcion: `[Reporte Salida] ${desc}`,
+                tipo_falla: isOdometer ? 'Eléctrica' : 'Mecánica', // Default
+                prioridad: isOdometer ? 'Baja' : 'Media',
+                estado: 'Pendiente',
+                created_at: new Date().toISOString()
+            }
+        })
 
         await supabase.from('fallas').insert(faultsToInsert)
     }
@@ -477,14 +480,17 @@ export async function submitEntryReport(reportData: any) {
 
     // 4. Register Explicit Faults
     if (reportData.faults && Array.isArray(reportData.faults) && reportData.faults.length > 0) {
-        const faultsToInsert = reportData.faults.map((desc: string) => ({
-            vehiculo_id: data.vehiculo_id,
-            descripcion: `[Reporte Entrada] ${desc}`,
-            tipo_falla: 'Mecánica',
-            prioridad: 'Media',
-            estado: 'Pendiente',
-            created_at: new Date().toISOString()
-        }))
+        const faultsToInsert = reportData.faults.map((desc: string) => {
+            const isOdometer = desc.toLowerCase().includes('odómetro') || desc.toLowerCase().includes('odometro')
+            return {
+                vehiculo_id: data.vehiculo_id,
+                descripcion: `[Reporte Entrada] ${desc}`,
+                tipo_falla: isOdometer ? 'Eléctrica' : 'Mecánica',
+                prioridad: isOdometer ? 'Baja' : 'Media',
+                estado: 'Pendiente',
+                created_at: new Date().toISOString()
+            }
+        })
 
         // Allow partial failure for faults, but preferably not.
         const { error: faultError } = await supabase.from('fallas').insert(faultsToInsert)
