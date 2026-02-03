@@ -24,6 +24,23 @@ export async function registerMaintenance(data: MaintenanceData) {
         // [New] Calculate total if not provided
         const totalCost = data.cost || ((data.labor_cost || 0) + (data.parts_cost || 0))
 
+        // [NEW] Validate Integrity (300km Rule)
+        // Fetch current status
+        const { data: vStatus } = await supabase.from('vehiculos').select('odometro_averiado').eq('id', data.vehicle_id).single()
+        const isBroken = vStatus?.odometro_averiado || false
+
+        const { data: lastKmData } = await supabase.from('vista_ultimos_kilometrajes').select('ultimo_kilometraje').eq('vehiculo_id', data.vehicle_id).single()
+        const currentKm = lastKmData?.ultimo_kilometraje || 0
+
+        if (!isBroken) {
+            if (data.mileage < currentKm) {
+                return { success: false, error: `El kilometraje (${data.mileage}) no puede ser menor al actual (${currentKm}).` }
+            }
+            if (data.mileage > currentKm + 300) {
+                return { success: false, error: `Error: El kilometraje excede el límite de 300km respecto al actual. Verifica si hay un cero de más.` }
+            }
+        }
+
         // 1. Insert Log
         const { error: logError } = await supabase.from('maintenance_logs').insert({
             vehicle_id: data.vehicle_id,
