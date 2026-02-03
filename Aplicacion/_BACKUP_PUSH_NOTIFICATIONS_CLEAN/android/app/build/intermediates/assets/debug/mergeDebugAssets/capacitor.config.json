@@ -1,0 +1,19 @@
+{
+	"appId": "com.dashboard.app",
+	"appName": "Dashboard",
+	"webDir": "public",
+	"server": {
+		"url": "https://proyecto-principal-pearl.vercel.app",
+		"cleartext": true
+	},
+	"plugins": {
+		"GoogleAuth": {
+			"scopes": [
+				"profile",
+				"email"
+			],
+			"serverClientId": "820734797192-i79t4gkvss50nq8hqr48qe5oeleb97an.apps.googleusercontent.com",
+			"forceCodeForRefreshToken": true
+		}
+	}
+}

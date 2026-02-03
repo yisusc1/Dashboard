@@ -57,6 +57,30 @@ export async function crearSalida(formData: FormData) {
         escalera_salida: formData.get('escalera_salida') === 'on',
     };
 
+    // [NEW] Hard Limit Validation (300km)
+    // We need to fetch the last mileage to validate strictly even for FormData actions
+    const { data: lastKmData } = await supabase
+        .from('vista_ultimos_kilometrajes')
+        .select('ultimo_kilometraje')
+        .eq('vehiculo_id', rawData.vehiculo_id)
+        .single();
+
+    const lastKm = lastKmData?.ultimo_kilometraje || 0;
+    const kmSalida = Number(rawData.km_salida);
+
+    // Fetch vehicle status for odometer break check
+    const { data: vData } = await supabase.from('vehiculos').select('odometro_averiado').eq('id', rawData.vehiculo_id).single();
+    const isBroken = vData?.odometro_averiado || false;
+
+    if (!isBroken) {
+        if (kmSalida <= lastKm) {
+            return { success: false, error: `El kilometraje (${kmSalida}) debe ser mayor al actual (${lastKm}).` };
+        }
+        if (kmSalida > lastKm + 300) {
+            return { success: false, error: `Error: El kilometraje ingresado (${kmSalida}) excede el límite de 300km respecto al anterior (${lastKm}). Verifica si hay un error de escritura.` };
+        }
+    }
+
     const { data, error } = await supabase.from('reportes').insert(rawData).select().single();
     if (error) {
         return { success: false, error: error.message };
@@ -80,6 +104,23 @@ export async function crearSalida(formData: FormData) {
 export async function registrarEntrada(formData: FormData) {
     const supabase = await createClient();
     const reporte_id = formData.get('reporte_id') as string;
+
+    // Fetch Report to validate ranges
+    const { data: currentReport } = await supabase.from('reportes').select('km_salida, vehiculo_id, vehiculos(odometro_averiado)').eq('id', reporte_id).single();
+    if (!currentReport) return { success: false, error: "Reporte no encontrado" };
+
+    const kmEntrada = Number(formData.get('km_entrada'));
+    // @ts-ignore
+    const isBroken = currentReport.vehiculos?.odometro_averiado || false;
+
+    if (!isBroken) {
+        if (kmEntrada <= currentReport.km_salida) {
+            return { success: false, error: `El KM de entrada debe ser mayor al de salida (${currentReport.km_salida}).` };
+        }
+        if (kmEntrada > currentReport.km_salida + 300) {
+            return { success: false, error: `Error: El recorrido (${kmEntrada - currentReport.km_salida} km) excede el límite permitido de 300km.` };
+        }
+    }
 
     const updateData = {
         fecha_entrada: new Date().toISOString(),
@@ -267,6 +308,9 @@ export async function submitExitReport(reportData: any) {
     if (!isBroken && Number(reportData.km_salida) < lastKm) {
         return { success: false, error: `Error de Integridad: El kilometraje de salida (${reportData.km_salida}) es menor al histórico (${lastKm}). Acción rechazada.` }
     }
+    if (!isBroken && Number(reportData.km_salida) > lastKm + 300) {
+        return { success: false, error: `Error de Integridad: El kilometraje (${reportData.km_salida}) excede el límite de 300km respecto al histórico (${lastKm}). Verifica si agregaste un cero de más.` }
+    }
 
     // 2. Insert Report
     const { data, error } = await supabase.from('reportes').insert(rawData).select().single();
@@ -402,6 +446,9 @@ export async function submitEntryReport(reportData: any) {
         if (!isBroken) {
             if (Number(reportData.km_entrada) <= currentReport.km_salida) {
                 return { success: false, error: `Error de Integridad: El KM de entrada (${reportData.km_entrada}) no puede ser menor o igual al de salida (${currentReport.km_salida}).` }
+            }
+            if (Number(reportData.km_entrada) > currentReport.km_salida + 300) {
+                return { success: false, error: `Error de Integridad: El recorrido reportado (${Number(reportData.km_entrada) - currentReport.km_salida} km) excede el límite permitido de 300km.` }
             }
         }
     }

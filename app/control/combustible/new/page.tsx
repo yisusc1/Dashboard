@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { format } from "date-fns"
-import { CalendarIcon, Upload, Loader2, Save, ArrowLeft, Fuel, Car } from "lucide-react"
+import { CalendarIcon, Upload, Loader2, Save, ArrowLeft, Fuel, Car, AlertTriangle } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
@@ -80,6 +80,14 @@ function NewFuelLogContent() {
     const [pendingVehicleId, setPendingVehicleId] = useState<string | null>(null)
     const [pendingVehicleModel, setPendingVehicleModel] = useState("")
     const [pendingDriverName, setPendingDriverName] = useState("")
+
+    // [NEW] Correction Alert State
+    const [correctionAlertOpen, setCorrectionAlertOpen] = useState(false)
+    const [correctionData, setCorrectionData] = useState<{
+        newMileage: number,
+        currentSystemKm: number,
+        vehicleId: string
+    } | null>(null)
 
     const supabase = createClient()
 
@@ -177,15 +185,30 @@ function NewFuelLogContent() {
         }
     }
 
-    const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    const onSubmit = async (values: z.infer<typeof formSchema>, force: boolean = false) => {
         setLoading(true)
         try {
-            const res = await createFuelLog(values)
+            // @ts-ignore - Extending the type dynamically
+            const payload = { ...values, forceCorrection: force }
+
+            const res = await createFuelLog(payload)
+
             if (res.success) {
-                toast.success("Registro guardado correctamente")
+                toast.success(force ? "Corrección aplicada y registro guardado" : "Registro guardado correctamente")
                 router.push("/control/combustible")
+                setCorrectionAlertOpen(false) // Close if open
             } else {
-                toast.error("Error: " + res.error)
+                if (res.requiresCorrection && res.currentSystemKm) {
+                    // Trigger Correction Flow
+                    setCorrectionData({
+                        newMileage: values.mileage,
+                        currentSystemKm: res.currentSystemKm,
+                        vehicleId: values.vehicle_id
+                    })
+                    setCorrectionAlertOpen(true)
+                } else {
+                    toast.error("Error: " + res.error)
+                }
             }
         } catch (error) {
             toast.error("Error inesperado")
@@ -479,6 +502,43 @@ function NewFuelLogContent() {
                             className="rounded-xl h-12 bg-yellow-500 text-black font-bold hover:bg-yellow-400"
                         >
                             Confirmar Carga
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            {/* MILEAGE CORRECTION ALERT */}
+            <AlertDialog open={correctionAlertOpen} onOpenChange={setCorrectionAlertOpen}>
+                <AlertDialogContent className="rounded-3xl border-none shadow-2xl bg-white text-zinc-900">
+                    <AlertDialogHeader>
+                        <div className="mx-auto bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mb-4 text-red-600">
+                            <AlertTriangle size={32} />
+                        </div>
+                        <AlertDialogTitle className="text-center text-xl font-bold">Incongruencia de Kilometraje</AlertDialogTitle>
+                        <AlertDialogDescription className="text-center text-zinc-500 text-base space-y-2">
+                            <p>
+                                El sistema registra <strong>{correctionData?.currentSystemKm?.toLocaleString()} km</strong>, pero estás intentando ingresar <strong>{correctionData?.newMileage?.toLocaleString()} km</strong>.
+                            </p>
+                            <div className="bg-red-50 p-3 rounded-xl border border-red-100 text-red-800 text-sm font-medium">
+                                Esto suele pasar si un registro anterior fue ingresado incorrectamente (ej. un cero de más).
+                            </div>
+                            <p className="pt-2">¿Deseas corregir el sistema usando tu dato como el verdadero?</p>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="flex-col sm:flex-row gap-2 mt-4">
+                        <AlertDialogCancel
+                            onClick={() => setCorrectionAlertOpen(false)}
+                            className="rounded-xl h-12 border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50"
+                        >
+                            Cancelar
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => {
+                                // Execute with FORCE flag
+                                form.handleSubmit((v) => onSubmit(v, true))()
+                            }}
+                            className="rounded-xl h-12 bg-red-600 text-white font-bold hover:bg-red-700"
+                        >
+                            Sí, Corregir y Guardar
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

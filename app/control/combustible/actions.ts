@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { format } from "date-fns"
+import { getMileageSource, correctMileage } from "@/app/admin/vehiculos/actions"
 
 export interface FuelLogData {
     ticket_number: string
@@ -13,6 +14,7 @@ export interface FuelLogData {
     mileage: number
     ticket_url?: string
     notes?: string
+    forceCorrection?: boolean // [NEW] Allow supervisor to force fix
 }
 
 export async function getVehicles() {
@@ -59,10 +61,38 @@ export async function createFuelLog(data: FuelLogData) {
         // If no mileage record exists, we assume 0 or allow the entry (it might be the first one)
         const currentKm = vehicleMileage?.ultimo_kilometraje || 0
 
+
         if (data.mileage <= currentKm) {
-            return {
-                success: false,
-                error: `El kilometraje ingresado (${data.mileage}) debe ser mayor al actual (${currentKm})`
+            // [NEW] Check if correction is requested
+            if (data.forceCorrection) {
+                // 1. Find the BAD record preventing this
+                // We assume 'data.mileage' IS the correct current value, so any record > data.mileage is wrong.
+                // We need to find the specific record that is setting 'currentKm'.
+                const source = await getMileageSource(data.vehicle_id, currentKm)
+
+                if (source) {
+                    // 2. Correct it to be consistent (e.g. slightly less than new mileage or equal)
+                    // Strategy: Set the BAD record to be equal to Previous Valid Record? 
+                    // Or just set it to current entered mileage - 1?
+                    // To be safe, let's set it to the new mileage.
+
+                    const { success, error } = await correctMileage(source, data.mileage)
+                    if (!success) {
+                        return { success: false, error: `Error al corregir registro previo: ${error}` }
+                    }
+                    // Continue to insert...
+                } else {
+                    return { success: false, error: "No se pudo encontrar el registro erróneo para corregirlo automticamente." }
+                }
+
+            } else {
+                // Standard Error
+                return {
+                    success: false,
+                    error: `El kilometraje (${data.mileage}) es menor al actual del sistema (${currentKm}).`,
+                    requiresCorrection: true, // Signal UI to show option
+                    currentSystemKm: currentKm
+                }
             }
         }
 
