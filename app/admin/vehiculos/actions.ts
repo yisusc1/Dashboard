@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js' // [NEW] For Admin Bypass
 import { revalidatePath } from 'next/cache'
 
 export type MileageSource = {
@@ -108,7 +109,27 @@ export async function getMileageSource(vehicleId: string, currentTotalMileage: n
 }
 
 export async function correctMileage(source: MileageSource, newValue: number) {
-    const supabase = await createClient()
+    // 1. Standard Client (for Auth Check if needed, but we are in Server Action)
+    // We already trust the caller (Admin UI).
+
+    // 2. Admin Client (Bypass RLS)
+    // We need this because fuel_logs might belong to other users (drivers) and standard Admin user might not have Update RLS on them.
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (!serviceRoleKey) {
+        console.error("Missing SUPABASE_SERVICE_ROLE_KEY")
+        return { success: false, error: "Configuration Error: Missing Service Key" }
+    }
+
+    const supabase = createAdminClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        serviceRoleKey,
+        {
+            auth: {
+                autoRefreshToken: false,
+                persistSession: false
+            }
+        }
+    )
 
     // [NUCLEAR OPTION] Force Consistency
     // Instead of just fixing one record, we fix the ecosystem to ensure the View (MAX) returns 'newValue'.
