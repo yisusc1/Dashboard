@@ -109,72 +109,47 @@ export async function getMileageSource(vehicleId: string, currentTotalMileage: n
 
 export async function correctMileage(source: MileageSource, newValue: number) {
     const supabase = await createClient()
-    let error: any = null
 
-    if (source.type === 'fuel_log') {
-        const { error: err } = await supabase
+    // [NUCLEAR OPTION] Force Consistency
+    // Instead of just fixing one record, we fix the ecosystem to ensure the View (MAX) returns 'newValue'.
+
+    try {
+        // 1. Update Master Record (The Truth)
+        if (source.vehicleId) {
+            await supabase.from('vehiculos').update({ kilometraje: newValue }).eq('id', source.vehicleId)
+        }
+
+        // 2. Clamp Fuel Logs
+        // Any log greater than newValue is obviously wrong (or from the future), so we flatten it.
+        await supabase
             .from('fuel_logs')
             .update({ mileage: newValue })
-            .eq('id', source.id)
-        error = err
-    } else if (source.type === 'report_entry') {
-        const { error: err } = await supabase
+            .eq('vehicle_id', source.vehicleId)
+            .gt('mileage', newValue)
+
+        // 3. Clamp Entry Reports
+        await supabase
             .from('reportes')
             .update({ km_entrada: newValue })
-            .eq('id', source.id)
-        error = err
-    } else if (source.type === 'report_exit') {
-        const { error: err } = await supabase
+            .eq('vehiculo_id', source.vehicleId)
+            .gt('km_entrada', newValue)
+
+        // 4. Clamp Exit Reports
+        await supabase
             .from('reportes')
             .update({ km_salida: newValue })
-            .eq('id', source.id)
-        error = err
-    } else if (source.type === 'legacy' || source.type === 'unknown') {
-        // Direct update to vehicle master record
-        // We do nothing here, because we ALWAYS update the vehicle record below.
-    }
+            .eq('vehiculo_id', source.vehicleId)
+            .gt('km_salida', newValue)
 
-    if (error) {
-        console.error("Error correcting mileage:", error)
+        revalidatePath('/admin/vehiculos')
+        revalidatePath('/control/combustible')
+        revalidatePath('/transporte')
+        revalidatePath('/gerencia')
+
+        return { success: true }
+
+    } catch (error: any) {
+        console.error("Error correcting mileage (Aggressive):", error)
         return { success: false, error: error.message }
     }
-
-    // [CRITICAL FIX] ALWAYS update the Master Vehicle Record
-    // The view 'vista_ultimos_kilometrajes' likely takes MAX(vehiculos.kilometraje, reports, logs).
-    // If we only fix the log, the stale high value in 'vehiculos' might remain.
-    // So we must force push the new value to 'vehiculos' as well.
-    // We need the vehicle_id. 'source.id' provides it for legacy/unknown.
-    // For others, we need to fetch it or pass it. 
-    // Wait, 'source' structure doesn't have vehicle_id easily accessible for logs/reports (we'd have to query).
-    // Let's change the function signature or fetch it? 
-    // Actually, 'getMileageSource' took vehicleId as arg, but didn't return it.
-    // Let's just fix specific tables first, but we really need to fix 'vehiculos'.
-
-    // Quick Hack: If source is log/report, we might not know vehicle ID easily without query.
-    // BUT! The user flow usually comes from a context where we know the vehicle.
-    // Refactor: We need vehicle_id in 'correctMileage' or inside 'source'. 
-
-    // For now, let's look at how we can get vehicle_id.
-    // Let's query it if needed, or assume 'source.id' is usable.
-    // Actually, let's just add 'vehicle_id' to the Source type.
-
-    // ... (See next chunk for Type update) ...
-
-    // Assuming we added vehicleId to source:
-    if (source.vehicleId) {
-        const { error: masterError } = await supabase
-            .from('vehiculos')
-            .update({ kilometraje: newValue })
-            .eq('id', source.vehicleId)
-
-        if (masterError) console.error("Error updating master vehicle record:", masterError)
-    }
-
-    if (error) {
-        console.error("Error correcting mileage:", error)
-        return { success: false, error: error.message }
-    }
-
-    revalidatePath('/admin/vehiculos')
-    return { success: true }
 }
