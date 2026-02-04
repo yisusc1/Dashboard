@@ -331,7 +331,7 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
 
         } catch (error) {
             console.error(error)
-            toast.error("Error al registrar salida")
+            toast.error(error instanceof Error ? error.message : "Error al registrar salida")
         } finally {
             setLoading(false)
         }
