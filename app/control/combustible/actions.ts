@@ -114,9 +114,10 @@ export async function createFuelLog(data: FuelLogData) {
         revalidatePath("/gerencia")
         revalidatePath("/transporte")
 
-        // [NEW] Auto-reset vehicle fuel to 100% (Full) on refuel
+        // [NEW] Auto-reset vehicle fuel to 100% (Full) on refuel AND update Mileage (Write-Through)
         const { error: updateError } = await supabase.from("vehiculos").update({
             current_fuel_level: 100,
+            kilometraje: data.mileage, // [CRITICAL] Sync Master Record
             last_fuel_update: new Date().toISOString()
         }).eq("id", data.vehicle_id)
 
