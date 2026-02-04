@@ -309,7 +309,8 @@ export async function submitExitReport(reportData: any) {
     if (!isBroken && Number(reportData.km_salida) < lastKm) {
         return { success: false, error: `Error de Integridad: El kilometraje de salida (${reportData.km_salida}) es menor al histórico (${lastKm}). Acción rechazada.` }
     }
-    if (!isBroken && Number(reportData.km_salida) > lastKm + 300) {
+    // [MODIFIED] Allow initialization if lastKm is 0
+    if (!isBroken && lastKm > 0 && Number(reportData.km_salida) > lastKm + 300) {
         return { success: false, error: `Error de Integridad: El kilometraje (${reportData.km_salida}) excede el límite de 300km respecto al histórico (${lastKm}). Verifica si agregaste un cero de más.` }
     }
 

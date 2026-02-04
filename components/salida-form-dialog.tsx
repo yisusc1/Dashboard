@@ -220,7 +220,7 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
         // [MOD] Bypass strict validation if odometer is broken
         // If not broken, enforce rules
         if (!selectedVehicle?.odometro_averiado) {
-            if (lastKm !== null && km < lastKm) {
+            if (lastKm !== null && lastKm > 0 && km < lastKm) {
                 toast.error(`Error Crítico: El kilometraje (${km}) no puede ser menor al histórico del vehículo (${lastKm} km). Verifique el tablero.`)
                 return
             }

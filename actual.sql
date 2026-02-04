@@ -97,6 +97,17 @@ CREATE TABLE public.fallas (
   CONSTRAINT fallas_vehiculo_id_fkey FOREIGN KEY (vehiculo_id) REFERENCES public.vehiculos(id),
   CONSTRAINT fallas_reportado_por_fkey FOREIGN KEY (reportado_por) REFERENCES auth.users(id)
 );
+CREATE TABLE public.fuel_daily_reports (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  report_date date NOT NULL,
+  generated_at timestamp with time zone NOT NULL DEFAULT now(),
+  supervisor_id uuid,
+  total_liters numeric NOT NULL,
+  details jsonb NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT fuel_daily_reports_pkey PRIMARY KEY (id),
+  CONSTRAINT fuel_daily_reports_supervisor_id_fkey FOREIGN KEY (supervisor_id) REFERENCES auth.users(id)
+);
 CREATE TABLE public.fuel_logs (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   created_at timestamp with time zone DEFAULT now(),
@@ -112,6 +123,25 @@ CREATE TABLE public.fuel_logs (
   CONSTRAINT fuel_logs_pkey PRIMARY KEY (id),
   CONSTRAINT fuel_logs_vehicle_id_fkey FOREIGN KEY (vehicle_id) REFERENCES public.vehiculos(id),
   CONSTRAINT fuel_logs_supervisor_id_profiles_fkey FOREIGN KEY (supervisor_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.installations (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  fecha date,
+  mes text,
+  tecnico_1 text,
+  tecnico_2 text,
+  router text,
+  nombre_cliente text,
+  cedula text,
+  zona text,
+  sector text,
+  asesor text,
+  estatus text,
+  plan text,
+  power_go text,
+  servicio text,
+  CONSTRAINT installations_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.inventory_assignment_items (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -266,14 +296,26 @@ CREATE TABLE public.maintenance_logs (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   created_at timestamp with time zone DEFAULT now(),
   vehicle_id uuid NOT NULL,
-  service_type text NOT NULL CHECK (service_type = ANY (ARRAY['OIL_CHANGE'::text, 'TIMING_BELT'::text, 'TIRE_ROTATION'::text, 'CHAIN_KIT'::text, 'WASH'::text, 'OTHER'::text])),
+  service_type text NOT NULL CHECK (service_type = ANY (ARRAY['OIL_CHANGE'::text, 'TIMING_BELT'::text, 'TIRE_ROTATION'::text, 'OTHER'::text, 'CHAIN_KIT'::text, 'WASH'::text, 'CORRECTIVE'::text])),
   mileage numeric NOT NULL,
   service_date date DEFAULT CURRENT_DATE,
   performed_by text,
   notes text,
   cost numeric DEFAULT 0,
+  parts_used text,
+  labor_cost numeric DEFAULT 0,
+  parts_cost numeric DEFAULT 0,
   CONSTRAINT maintenance_logs_pkey PRIMARY KEY (id),
   CONSTRAINT maintenance_logs_vehicle_id_fkey FOREIGN KEY (vehicle_id) REFERENCES public.vehiculos(id)
+);
+CREATE TABLE public.network_nodes (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  nombre text NOT NULL,
+  latitud double precision NOT NULL,
+  longitud double precision NOT NULL,
+  tipo text NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT network_nodes_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.notifications (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -453,6 +495,17 @@ CREATE TABLE public.technician_daily_reports (
   CONSTRAINT technician_daily_reports_team_id_fkey FOREIGN KEY (team_id) REFERENCES public.teams(id),
   CONSTRAINT technician_daily_reports_vehicle_id_fkey FOREIGN KEY (vehicle_id) REFERENCES public.vehiculos(id)
 );
+CREATE TABLE public.user_devices (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  fcm_token text NOT NULL UNIQUE,
+  device_name text,
+  platform text,
+  last_active timestamp with time zone DEFAULT now(),
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT user_devices_pkey PRIMARY KEY (id),
+  CONSTRAINT user_devices_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
 CREATE TABLE public.vehiculos (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   created_at timestamp with time zone NOT NULL DEFAULT now(),
@@ -473,6 +526,7 @@ CREATE TABLE public.vehiculos (
   last_wash_date timestamp with time zone,
   assigned_driver_id uuid,
   department text,
+  odometro_averiado boolean DEFAULT false,
   CONSTRAINT vehiculos_pkey PRIMARY KEY (id),
   CONSTRAINT vehiculos_assigned_driver_id_fkey FOREIGN KEY (assigned_driver_id) REFERENCES public.profiles(id)
 );
