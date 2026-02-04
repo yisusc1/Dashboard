@@ -236,12 +236,7 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
             // Usually yes. But let's be explicit avoiding the block.
         }
 
-        // [NEW] Anomaly Detection
-        if (lastKm !== null && (km - lastKm) > 1000) {
-            if (!window.confirm(`⚠️ ADVERTENCIA DE SEGURIDAD ⚠️\n\nEl kilometraje ingresado (${km}) es ${km - lastKm} km mayor al último registrado.\n\n¿Es correcto este salto sin reporte previo?`)) {
-                return
-            }
-        }
+
 
         setLoading(true)
         try {
