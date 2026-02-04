@@ -36,7 +36,8 @@ export async function registerMaintenance(data: MaintenanceData) {
             if (data.mileage < currentKm) {
                 return { success: false, error: `El kilometraje (${data.mileage}) no puede ser menor al actual (${currentKm}).` }
             }
-            if (data.mileage > currentKm + 300) {
+            // [MODIFIED] Allow initialization if currentKm is 0
+            if (currentKm > 0 && data.mileage > currentKm + 300) {
                 return { success: false, error: `Error: El kilometraje excede el límite de 300km respecto al actual. Verifica si hay un cero de más.` }
             }
         }

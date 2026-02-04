@@ -76,7 +76,8 @@ export async function crearSalida(formData: FormData) {
         if (kmSalida <= lastKm) {
             return { success: false, error: `El kilometraje (${kmSalida}) debe ser mayor al actual (${lastKm}).` };
         }
-        if (kmSalida > lastKm + 300) {
+        // [MODIFIED] Allow initialization if lastKm is 0
+        if (lastKm > 0 && kmSalida > lastKm + 300) {
             return { success: false, error: `Error: El kilometraje ingresado (${kmSalida}) excede el límite de 300km respecto al anterior (${lastKm}). Verifica si hay un error de escritura.` };
         }
     }
