@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'Dashboard',
   webDir: 'public',
   server: {
-    url: 'https://aa-nine-eta.vercel.app',
+    url: 'https://proyecto-principal-pearl.vercel.app',
     cleartext: false // HTTPS used
   },
   plugins: {
