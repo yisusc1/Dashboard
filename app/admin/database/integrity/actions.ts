@@ -15,23 +15,7 @@ export async function runIntegrityCheck(): Promise<IntegrityIssue[]> {
     const issues: IntegrityIssue[] = []
 
     try {
-        // 1. Check Negative Stock
-        const { data: negStock } = await supabase
-            .from("inventory_products")
-            .select("id, name, current_stock")
-            .lt("current_stock", 0)
 
-        if (negStock) {
-            negStock.forEach(p => {
-                issues.push({
-                    type: 'CRITICAL',
-                    title: 'Stock Negativo',
-                    description: `El producto "${p.name}" tiene stock de ${p.current_stock}.`,
-                    entityId: p.id,
-                    table: 'inventory_products'
-                })
-            })
-        }
 
         // 2. Check Fuel Logs without Vehicle
         // (Assuming Left Join or similar, but simplified check: logs where vehicle_id is null or not found)

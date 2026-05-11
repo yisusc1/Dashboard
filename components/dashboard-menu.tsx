@@ -116,31 +116,8 @@ export function DashboardMenu() {
                 </VoiceHint>
             )}
 
-            {/* SUPERVISOR AUDITORIA */}
-            {isModuleEnabled("module_control") && canAccess("auditoria") && (
-                <VoiceHint command="Auditoría" side="top">
-                    <Link
-                        href="/control"
-                        className="group relative overflow-hidden bg-white rounded-[32px] p-8 border border-zinc-200 shadow-sm hover:shadow-xl hover:border-zinc-300 transition-all duration-300 block"
-                    >
-                        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
-                            <ShieldCheck size={120} />
-                        </div>
-                        <div className="relative z-10 flex flex-col h-full justify-between space-y-8">
-                            <div className="w-14 h-14 rounded-2xl bg-zinc-100 flex items-center justify-center text-zinc-900 group-hover:bg-black group-hover:text-white transition-colors">
-                                <ShieldCheck size={28} />
-                            </div>
-                            <div>
-                                <h2 className="text-2xl font-bold text-zinc-900 mb-2">Auditoría</h2>
-                                <p className="text-zinc-500 font-medium">Fiscalización de material y vehículos por técnico.</p>
-                            </div>
-                            <div className="flex items-center text-zinc-900 font-semibold group-hover:translate-x-2 transition-transform">
-                                Iniciar Auditoría <span className="ml-2">→</span>
-                            </div>
-                        </div>
-                    </Link>
-                </VoiceHint>
-            )}
+
+
 
             {/* COMBUSTIBLE */}
             {isModuleEnabled("module_combustible") && (canAccess("combustible") || (hasRole("supervisor") && dept === "Transporte")) && (

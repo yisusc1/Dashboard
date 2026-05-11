@@ -2,65 +2,20 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { AlertTriangle, ArrowLeft, Database, FileWarning, Fuel, Loader2, PackageX, Trash2, Factory, PackagePlus, Stethoscope, CheckCircle2 } from "lucide-react"
+import { ArrowLeft, Fuel, Loader2, Trash2, Stethoscope, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 import { toast } from "sonner"
-import { resetFuelLogsAction, resetInventoryAction, resetOperationsAction } from "./actions"
-import { seedProductsAction } from "./seed/actions"
+import { resetFuelLogsAction } from "./actions"
 import { runIntegrityCheck, type IntegrityIssue } from "./integrity/actions"
 import { useRouter } from "next/navigation"
 
 export default function DatabaseManagementPage() {
-    const [inventoryLoading, setInventoryLoading] = useState(false)
-    const [opsLoading, setOpsLoading] = useState(false)
     const [fuelLoading, setFuelLoading] = useState(false)
-
-    // New States
-    const [seederLoading, setSeederLoading] = useState(false)
     const [integrityLoading, setIntegrityLoading] = useState(false)
     const [integrityIssues, setIntegrityIssues] = useState<IntegrityIssue[]>([])
 
-
     const router = useRouter()
-
-    const handleResetInventory = async () => {
-        if (!confirm("⚠️ ¿ESTÁS SEGURO?\n\nEsto borrará:\n- Todo el historial de movimientos.\n- Todas las asignaciones.\n- Pondrá el stock a 0.\n\nNO borrará productos ni vehículos.")) return
-
-        setInventoryLoading(true)
-        try {
-            const result = await resetInventoryAction()
-            if (result.success) {
-                toast.success("Inventario vaciado correctamente")
-                router.refresh()
-            } else {
-                toast.error("Error: " + result.error)
-            }
-        } catch (error) {
-            toast.error("Error de conexión")
-        } finally {
-            setInventoryLoading(false)
-        }
-    }
-
-    const handleResetOps = async () => {
-        if (!confirm("⚠️ ¿ESTÁS SEGURO?\n\nEsto borrará:\n- Todas las auditorías.\n- Todas las asignaciones de inventario.\n- Seriales.\n\nNO borrará inventario ni vehículos.")) return
-
-        setOpsLoading(true)
-        try {
-            const result = await resetOperationsAction()
-            if (result.success) {
-                toast.success("Operaciones reiniciadas correctamente")
-                router.refresh()
-            } else {
-                toast.error("Error: " + result.error)
-            }
-        } catch (error) {
-            toast.error("Error de conexión")
-        } finally {
-            setOpsLoading(false)
-        }
-    }
 
     const handleResetFuel = async () => {
         if (!confirm("⚠️ ¿ESTÁS SEGURO?\n\nEsto borrará:\n- Todo el historial de carga de combustible.\n\nNO borrará los vehículos.")) return
@@ -78,23 +33,6 @@ export default function DatabaseManagementPage() {
             toast.error("Error de conexión")
         } finally {
             setFuelLoading(false)
-        }
-    }
-
-    const handleSeedProducts = async (count: number) => {
-        setSeederLoading(true)
-        try {
-            const result = await seedProductsAction(count)
-            if (result.success) {
-                toast.success(result.message)
-                router.refresh()
-            } else {
-                toast.error("Error: " + result.error)
-            }
-        } catch (error) {
-            toast.error("Error de conexión")
-        } finally {
-            setSeederLoading(false)
         }
     }
 
@@ -128,59 +66,9 @@ export default function DatabaseManagementPage() {
                 <p className="text-slate-500">Herramientas de limpieza y reinicio para pruebas (Testing).</p>
             </div>
 
-            {/* RESET ACTIONS */}
             <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                {/* 1. INVENTORY */}
-                <Card className="border-red-200 bg-red-50/30">
-                    <CardHeader>
-                        <div className="w-12 h-12 rounded-lg bg-red-100 flex items-center justify-center text-red-600 mb-4">
-                            <PackageX size={24} />
-                        </div>
-                        <CardTitle className="text-xl text-red-700">Vaciar Inventario</CardTitle>
-                        <CardDescription>Reinicia el stock a 0 y borra movimientos.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="text-sm text-red-800 bg-red-100/50 p-3 rounded-lg border border-red-100">
-                            <strong>Conserva:</strong> Productos, Vehículos.
-                        </div>
-                        <Button
-                            variant="destructive"
-                            className="w-full font-bold"
-                            onClick={handleResetInventory}
-                            disabled={inventoryLoading}
-                        >
-                            {inventoryLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
-                            Vaciar Almacén
-                        </Button>
-                    </CardContent>
-                </Card>
-
-                {/* 2. OPERATIONS */}
-                <Card className="border-orange-200 bg-orange-50/30">
-                    <CardHeader>
-                        <div className="w-12 h-12 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600 mb-4">
-                            <FileWarning size={24} />
-                        </div>
-                        <CardTitle className="text-xl text-orange-700">Reiniciar Operaciones</CardTitle>
-                        <CardDescription>Borra auditorías, asignaciones y seriales.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="text-sm text-orange-800 bg-orange-100/50 p-3 rounded-lg border border-orange-100">
-                            <strong>Conserva:</strong> Stock, Vehículos, Productos.
-                        </div>
-                        <Button
-                            className="w-full font-bold bg-orange-600 hover:bg-orange-700 text-white"
-                            onClick={handleResetOps}
-                            disabled={opsLoading}
-                        >
-                            {opsLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
-                            Borrar Reportes
-                        </Button>
-                    </CardContent>
-                </Card>
-
-                {/* 3. FUEL */}
+                {/* FUEL */}
                 <Card className="border-blue-200 bg-blue-50/30">
                     <CardHeader>
                         <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 mb-4">
@@ -204,35 +92,7 @@ export default function DatabaseManagementPage() {
                     </CardContent>
                 </Card>
 
-            </div>
-
-            {/* SEEDER & INTEGRITY SECTION */}
-            <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
-
-                {/* 4. SEEDER */}
-                <Card className="border-emerald-200 bg-emerald-50/30">
-                    <CardHeader>
-                        <div className="w-12 h-12 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 mb-4">
-                            <Factory size={24} />
-                        </div>
-                        <CardTitle className="text-xl text-emerald-700">Fábrica de Datos</CardTitle>
-                        <CardDescription>Genera datos de prueba automáticamente.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <Button
-                            variant="outline"
-                            className="w-full justify-start text-emerald-700 border-emerald-200 hover:bg-emerald-100"
-                            onClick={() => handleSeedProducts(50)}
-                            disabled={seederLoading}
-                        >
-                            {seederLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PackagePlus className="mr-2 h-4 w-4" />}
-                            Generar 50 Productos
-                        </Button>
-                        <p className="text-xs text-emerald-800">Crea productos aleatorios con stock positivo.</p>
-                    </CardContent>
-                </Card>
-
-                {/* 5. INTEGRITY */}
+                {/* INTEGRITY */}
                 <Card className="border-zinc-200 bg-white">
                     <CardHeader>
                         <div className="w-12 h-12 rounded-lg bg-zinc-100 flex items-center justify-center text-zinc-600 mb-4">
