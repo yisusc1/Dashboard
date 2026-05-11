@@ -335,15 +335,10 @@ function VehiculosContent() {
                                         {vehicle.color || '-'}
                                     </div>
                                     <div className="col-span-2 mt-3 flex justify-between items-center">
-                                        {vehicle.department && (
-                                            <div className="bg-zinc-100 text-zinc-500 text-xs px-2 py-1 rounded-md font-medium">
-                                                {vehicle.department}
-                                            </div>
-                                        )}
-                                        <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-bold ${(vehicle.current_fuel_level || 0) <= 25 ? "bg-red-50 text-red-600" :
+                                        <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-bold ml-auto ${(vehicle.current_fuel_level || 0) <= 25 ? "bg-red-50 text-red-600" :
                                             (vehicle.current_fuel_level || 0) <= 50 ? "bg-yellow-50 text-yellow-700" :
                                                 "bg-emerald-50 text-emerald-700"
-                                            } ${!vehicle.department ? "ml-auto" : ""}`}>
+                                            }`}>
                                             <Fuel size={14} />
                                             <span>{vehicle.current_fuel_level || 0}%</span>
                                         </div>

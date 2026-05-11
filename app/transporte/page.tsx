@@ -206,14 +206,7 @@ export default function TransportePage() {
             .select('id, modelo, placa, codigo, foto_url, department') // [FIX] Added department to check
             .order('modelo', { ascending: true })
 
-        // [RULE] If NOT admin/mecanico, filter by department
-        // Assuming profile has 'department' field.
-        const isSuperUser = (profile.roles || []).includes('admin') || (profile.roles || []).includes('mecanico')
-        // @ts-ignore - Check if department exists in profile type or implied
-        if (!isSuperUser && profile.department) {
-            // @ts-ignore
-            query = query.or(`department.eq.${profile.department},department.is.null`) // Show user's dept OR shared/null
-        }
+        // Department filter removed per user request: all vehicles are global for module users.
 
         const { data: allVehicles } = await query
 

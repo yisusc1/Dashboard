@@ -21,7 +21,6 @@ type Vehicle = {
     tipo: string
     capacidad_tanque: string
     foto_url?: string
-    department?: string
     odometro_averiado?: boolean
 }
 
@@ -45,7 +44,6 @@ export function VehicleFormDialog({ isOpen, onClose, onVehicleSaved, vehicleToEd
         tipo: "Carga",
         capacidad_tanque: "",
         foto_url: "",
-        department: "",
         odometro_averiado: false // [NEW] Default
     })
 
@@ -61,7 +59,6 @@ export function VehicleFormDialog({ isOpen, onClose, onVehicleSaved, vehicleToEd
                 tipo: vehicleToEdit.tipo || "Carga",
                 capacidad_tanque: vehicleToEdit.capacidad_tanque || "",
                 foto_url: vehicleToEdit.foto_url || "",
-                department: vehicleToEdit.department || "",
                 odometro_averiado: vehicleToEdit.odometro_averiado || false // [NEW]
             })
             if (vehicleToEdit.foto_url) {
@@ -80,7 +77,6 @@ export function VehicleFormDialog({ isOpen, onClose, onVehicleSaved, vehicleToEd
                 tipo: "Carga",
                 capacidad_tanque: "",
                 foto_url: "",
-                department: "",
                 odometro_averiado: false
             })
             setPhotoPreview(null)
@@ -149,7 +145,6 @@ export function VehicleFormDialog({ isOpen, onClose, onVehicleSaved, vehicleToEd
                 tipo: formData.tipo,
                 capacidad_tanque: formData.capacidad_tanque,
                 foto_url: finalFotoUrl,
-                department: formData.department,
                 odometro_averiado: formData.odometro_averiado // [NEW]
             }
 
@@ -375,22 +370,7 @@ export function VehicleFormDialog({ isOpen, onClose, onVehicleSaved, vehicleToEd
                                 </div>
                             </div>
 
-                            <div className="col-span-1 md:col-span-2">
-                                <label className="block text-sm font-semibold text-zinc-900 mb-2 pl-1">Departamento Asignado</label>
-                                <Select
-                                    value={formData.department}
-                                    onValueChange={(val) => setFormData({ ...formData, department: val })}
-                                >
-                                    <SelectTrigger className="h-12 rounded-xl bg-zinc-50 border-zinc-200">
-                                        <SelectValue placeholder="Seleccionar Departamento" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {DEPARTMENTS.map((dept) => (
-                                            <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                            {/* Removed Department Select */}
                         </div>
 
                         <div className="pt-4">

@@ -281,17 +281,7 @@ export function VehicleDetailsDialog({ isOpen, onClose, vehicle, onUpdate, reado
                                     )}
                                 </div>
 
-                                {/* Department display */}
-                                {
-                                    vehicle.department && (
-                                        <div className="mb-6 bg-zinc-50 p-3 rounded-xl border border-zinc-100 flex items-center justify-between">
-                                            <span className="text-zinc-500 text-sm font-medium">Departamento</span>
-                                            <span className="font-bold text-zinc-900 bg-white px-3 py-1 rounded-lg border border-zinc-200 shadow-sm text-sm">
-                                                {vehicle.department}
-                                            </span>
-                                        </div>
-                                    )
-                                }
+                                {/* Department display removed */}
 
                                 <div className="grid grid-cols-2 gap-3 mb-6">
                                     <div className="bg-white p-3 rounded-xl border border-zinc-100 shadow-sm">
