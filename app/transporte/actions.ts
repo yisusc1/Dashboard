@@ -177,12 +177,14 @@ export async function registrarEntrada(formData: FormData) {
 
     if (obsEntrada.trim().length > 3 && !isTrivial) {
         // Create Fault
+        const conductorName = formData.get('conductor')?.toString() || 'Desconocido';
         await supabase.from('fallas').insert({
             vehiculo_id: data.vehiculo_id, // Get from updated report data
-            descripcion: `[Reporte Entrada] ${obsEntrada}`,
+            descripcion: obsEntrada,
             tipo_falla: 'Mecánica', // Default
             prioridad: 'Media',
             estado: 'Pendiente',
+            reported_by: conductorName,
             created_at: new Date().toISOString()
         });
     }
@@ -440,7 +442,7 @@ export async function submitEntryReport(reportData: any) {
     // [MOD] Fetch vehicle odometer status as well
     const { data: currentReport } = await supabase
         .from('reportes')
-        .select('km_salida, vehiculo_id, vehiculos(odometro_averiado)')
+        .select('km_salida, vehiculo_id, conductor, vehiculos(odometro_averiado)')
         .eq('id', reportData.reporte_id)
         .single()
 
@@ -481,15 +483,18 @@ export async function submitEntryReport(reportData: any) {
     }
 
     // 4. Register Explicit Faults
+    // @ts-ignore
+    const conductorName = currentReport?.conductor || 'Desconocido'
     if (reportData.faults && Array.isArray(reportData.faults) && reportData.faults.length > 0) {
         const faultsToInsert = reportData.faults.map((desc: string) => {
             const isOdometer = desc.toLowerCase().includes('odómetro') || desc.toLowerCase().includes('odometro')
             return {
                 vehiculo_id: data.vehiculo_id,
-                descripcion: `[Reporte Entrada] ${desc}`,
+                descripcion: desc,
                 tipo_falla: isOdometer ? 'Eléctrica' : 'Mecánica',
                 prioridad: isOdometer ? 'Baja' : 'Media',
                 estado: 'Pendiente',
+                reported_by: conductorName,
                 created_at: new Date().toISOString()
             }
         })

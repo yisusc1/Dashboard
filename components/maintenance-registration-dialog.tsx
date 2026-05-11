@@ -228,6 +228,7 @@ export function MaintenanceRegistrationDialog({
                     faultType,
                     faultPriority,
                     partsUsed,
+                    performedBy: userName,
                     originalFaultDescription // Pass to success view
                 }
             })
@@ -346,8 +347,8 @@ export function MaintenanceRegistrationDialog({
             <DialogContent className="max-w-md bg-zinc-50 p-0 gap-0 overflow-hidden border-none rounded-3xl">
                 <div className="p-6 pb-4 bg-white border-b border-zinc-100">
                     <DialogHeader>
-                        <DialogTitle className="text-xl font-bold text-zinc-900">Registrar Mantenimiento</DialogTitle>
-                        <DialogDescription>Seleccione el vehículo y el tipo de servicio realizado.</DialogDescription>
+                        <DialogTitle className="text-xl font-bold text-zinc-900">{closingFaultId ? 'Registrar Reparación' : 'Registrar Mantenimiento'}</DialogTitle>
+                        <DialogDescription>{closingFaultId ? 'Registra el trabajo realizado para cerrar esta falla.' : 'Seleccione el vehículo y el tipo de servicio realizado.'}</DialogDescription>
                     </DialogHeader>
                 </div>
 
@@ -408,8 +409,8 @@ export function MaintenanceRegistrationDialog({
                     </div>
 
                     {/* 2. Service Type */}
-                    {/* 2. Toggle Mode (Only if vehicle selected) */}
-                    {selectedVehicle && (
+                    {/* 2. Toggle Mode (Only if vehicle selected AND not resolving a specific fault) */}
+                    {selectedVehicle && !closingFaultId && (
                         <div className="bg-zinc-100 p-1 rounded-xl flex gap-1">
                             <button
                                 onClick={() => setActiveTab('maintenance')}
@@ -429,6 +430,14 @@ export function MaintenanceRegistrationDialog({
                             >
                                 Falla
                             </button>
+                        </div>
+                    )}
+
+                    {/* Fault context banner when resolving */}
+                    {closingFaultId && originalFaultDescription && (
+                        <div className="bg-amber-50 border border-amber-200 p-3 rounded-xl">
+                            <p className="text-[10px] font-black text-amber-700 uppercase tracking-wider mb-1">Falla a Resolver</p>
+                            <p className="text-sm font-bold text-amber-900">{originalFaultDescription}</p>
                         </div>
                     )}
 

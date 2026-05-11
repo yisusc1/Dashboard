@@ -6,12 +6,16 @@ import { createClient } from "@/lib/supabase/client"
 import { VehicleFormDialog } from "@/components/vehicle-form-dialog"
 import { VehicleDetailsDialog } from "@/components/vehicle-details-dialog"
 import { MileageCorrectionDialog } from "@/components/mileage-correction-dialog"
-import { Plus, Search, Car, Bike, Truck, MoreVertical, Pencil, Trash2, Home as HomeIcon, MapPin, Zap, Wrench, AlertTriangle, CheckCircle, Fuel } from "lucide-react"
+import { Plus, Search, Car, Bike, Truck, MoreVertical, Pencil, Trash2, Home as HomeIcon, MapPin, Zap, Wrench, AlertTriangle, CheckCircle, Fuel, Clock, User as UserIcon, XCircle } from "lucide-react"
 
 
 import { LogoutButton } from "@/components/ui/logout-button"
 import Image from "next/image"
 import { toast } from "sonner"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -66,6 +70,14 @@ function VehiculosContent() {
     const [deletingVehicle, setDeletingVehicle] = useState<Vehicle | null>(null)
     const [detailsVehicle, setDetailsVehicle] = useState<Vehicle | null>(null)
     const [correctionVehicle, setCorrectionVehicle] = useState<Vehicle | null>(null)
+
+    // Open Trips State
+    const [openTrips, setOpenTrips] = useState<any[]>([])
+    const [forceCloseDialog, setForceCloseDialog] = useState(false)
+    const [tripToClose, setTripToClose] = useState<any | null>(null)
+    const [forceCloseKm, setForceCloseKm] = useState("")
+    const [forceCloseNote, setForceCloseNote] = useState("")
+    const [closingTrip, setClosingTrip] = useState(false)
 
     // Calculate filteredVehicles based on manual search
     const filteredVehicles = vehicles.filter(v =>
@@ -160,6 +172,29 @@ function VehiculosContent() {
             }) || []
 
             setVehicles(mergedVehicles)
+
+            // 5. Fetch Open Trips (no km_entrada)
+            const { data: tripsData } = await supabase
+                .from('reportes')
+                .select('id, vehiculo_id, conductor, km_salida, fecha_salida, user_id')
+                .is('km_entrada', null)
+                .order('fecha_salida', { ascending: false })
+
+            if (tripsData && tripsData.length > 0) {
+                const enrichedTrips = tripsData.map(t => {
+                    const v = mergedVehicles.find(v => v.id === t.vehiculo_id)
+                    const hoursActive = Math.floor((Date.now() - new Date(t.fecha_salida).getTime()) / (1000 * 3600))
+                    return {
+                        ...t,
+                        vehicleModel: v?.modelo || 'Desconocido',
+                        vehiclePlaca: v?.placa || '',
+                        hoursActive
+                    }
+                })
+                setOpenTrips(enrichedTrips)
+            } else {
+                setOpenTrips([])
+            }
         } catch (error) {
             console.error('Error loading vehicles:', error)
             toast.error('Error al cargar vehículos')
@@ -263,6 +298,53 @@ function VehiculosContent() {
                         Agregar Vehículo
                     </button>
                 </div>
+
+                {/* OPEN TRIPS ALERT */}
+                {openTrips.length > 0 && (
+                    <div className="mb-8 bg-amber-50 border border-amber-200 rounded-[24px] p-5 shadow-sm">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="h-10 w-10 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600">
+                                <Clock size={20} />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-amber-900 text-lg">Viajes Abiertos</h3>
+                                <p className="text-xs text-amber-700">{openTrips.length} vehículo{openTrips.length > 1 ? 's' : ''} sin registrar entrada</p>
+                            </div>
+                        </div>
+                        <div className="space-y-3">
+                            {openTrips.map(trip => (
+                                <div key={trip.id} className="bg-white rounded-2xl border border-amber-100 p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-bold text-zinc-900">{trip.vehicleModel}</span>
+                                            <span className="text-xs font-mono bg-zinc-100 text-zinc-500 px-2 py-[2px] rounded-md">{trip.vehiclePlaca}</span>
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-zinc-500">
+                                            <span className="flex items-center gap-1"><UserIcon size={12} /> {trip.conductor || 'Sin conductor'}</span>
+                                            <span className="flex items-center gap-1"><MapPin size={12} /> Salida: {trip.km_salida?.toLocaleString()} km</span>
+                                            <span className={`flex items-center gap-1 font-bold ${trip.hoursActive > 12 ? 'text-red-500' : trip.hoursActive > 6 ? 'text-amber-600' : 'text-zinc-500'}`}>
+                                                <Clock size={12} /> {trip.hoursActive}h activo
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                            setTripToClose(trip)
+                                            setForceCloseKm(trip.km_salida?.toString() || "")
+                                            setForceCloseNote("")
+                                            setForceCloseDialog(true)
+                                        }}
+                                        className="h-10 rounded-xl border-amber-200 text-amber-700 hover:bg-amber-100 hover:text-amber-800 font-bold text-sm shrink-0"
+                                    >
+                                        <XCircle size={16} className="mr-[6px]" />
+                                        Forzar Entrada
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* GRID */}
                 {loading ? (
@@ -420,6 +502,85 @@ function VehiculosContent() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* FORCE CLOSE TRIP DIALOG */}
+            <Dialog open={forceCloseDialog} onOpenChange={(open) => { if (!open) setForceCloseDialog(false) }}>
+                <DialogContent className="max-w-md rounded-3xl border-none shadow-2xl bg-white p-6">
+                    <DialogHeader>
+                        <div className="mx-auto bg-amber-100 w-16 h-16 rounded-full flex items-center justify-center mb-4 text-amber-600">
+                            <XCircle size={32} />
+                        </div>
+                        <DialogTitle className="text-center text-xl font-bold text-zinc-900">Forzar Cierre de Viaje</DialogTitle>
+                        <DialogDescription className="text-center text-zinc-500">
+                            Cerrarás administrativamente el viaje de <strong>{tripToClose?.vehicleModel}</strong> ({tripToClose?.vehiclePlaca}) — Conductor: {tripToClose?.conductor || 'Desconocido'}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4 mt-4">
+                        <div>
+                            <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2 block">KM Estimado de Entrada</label>
+                            <Input
+                                type="number"
+                                min={tripToClose?.km_salida || 0}
+                                value={forceCloseKm}
+                                onChange={e => setForceCloseKm(e.target.value)}
+                                placeholder="Ej. 45320"
+                                className="h-14 rounded-2xl font-mono font-bold text-lg"
+                            />
+                            <p className="text-[10px] text-zinc-400 mt-1">KM de salida registrado: {tripToClose?.km_salida?.toLocaleString() || 0}</p>
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2 block">Nota de Cierre</label>
+                            <Textarea
+                                value={forceCloseNote}
+                                onChange={e => setForceCloseNote(e.target.value)}
+                                placeholder="Motivo del cierre administrativo..."
+                                className="resize-none h-24 rounded-2xl"
+                            />
+                        </div>
+                    </div>
+
+                    <DialogFooter className="flex-col sm:flex-row gap-3 mt-6">
+                        <Button
+                            variant="outline"
+                            onClick={() => setForceCloseDialog(false)}
+                            className="rounded-2xl h-12 border-zinc-200"
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            disabled={closingTrip || !forceCloseKm}
+                            onClick={async () => {
+                                if (!tripToClose || !forceCloseKm) return
+                                setClosingTrip(true)
+                                try {
+                                    const supabase = createClient()
+                                    const { error } = await supabase
+                                        .from('reportes')
+                                        .update({
+                                            km_entrada: parseInt(forceCloseKm),
+                                            fecha_entrada: new Date().toISOString(),
+                                            observaciones_entrada: `[Cierre Administrativo] ${forceCloseNote || 'Sin nota'}`
+                                        })
+                                        .eq('id', tripToClose.id)
+                                    if (error) throw error
+                                    toast.success('Viaje cerrado administrativamente')
+                                    setForceCloseDialog(false)
+                                    setTripToClose(null)
+                                    loadVehicles()
+                                } catch (err: any) {
+                                    toast.error('Error al cerrar viaje: ' + err.message)
+                                } finally {
+                                    setClosingTrip(false)
+                                }
+                            }}
+                            className="rounded-2xl h-12 bg-amber-600 text-white hover:bg-amber-700 font-bold shadow-lg shadow-amber-200"
+                        >
+                            {closingTrip ? 'Cerrando...' : 'Confirmar Cierre'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
         </main>
     )

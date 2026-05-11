@@ -26,6 +26,7 @@ type Fault = {
     estado: 'Pendiente' | 'En Revisión' | 'Reparado' | 'Descartado'
     fecha_solucion?: string
     isMaintenance?: boolean
+    reported_by?: string
 }
 
 export default function TallerPage() {
@@ -75,7 +76,7 @@ export default function TallerPage() {
             // 1. Fetch Existing Faults
             const { data: faultsData, error } = await supabase
                 .from('fallas')
-                .select(`id, vehiculo_id, descripcion, tipo_falla, prioridad, created_at, estado, fecha_solucion, vehiculos (placa, modelo, foto_url)`)
+                .select(`id, vehiculo_id, descripcion, tipo_falla, prioridad, created_at, estado, fecha_solucion, reported_by, vehiculos (placa, modelo, foto_url)`)
                 .neq('estado', 'Reparado')
                 .neq('estado', 'Descartado')
                 .order('created_at', { ascending: false })
@@ -128,7 +129,8 @@ export default function TallerPage() {
                 ...f,
                 placa: f.vehiculos?.placa || 'Desconocido',
                 modelo: f.vehiculos?.modelo || 'Desconocido',
-                foto_url: f.vehiculos?.foto_url
+                foto_url: f.vehiculos?.foto_url,
+                reported_by: f.reported_by
             })) || []
 
             setFaults([...maintenanceAlerts, ...mappedFaults])
@@ -160,15 +162,48 @@ export default function TallerPage() {
         setLoadingHistory(true)
         const supabase = createClient()
         try {
-            const { data: faultsData } = await supabase.from('fallas').select(`id, descripcion, tipo_falla, fecha_solucion, created_at, vehiculos(placa, modelo)`).eq('estado', 'Reparado').order('fecha_solucion', { ascending: false }).limit(50)
-            const { data: maintenanceData } = await supabase.from('maintenance_logs').select(`id, service_type, mileage, notes, service_date, created_at, cost, parts_used, labor_cost, parts_cost, vehiculos(placa, modelo)`).order('created_at', { ascending: false }).limit(50)
+            const { data: faultsData } = await supabase.from('fallas').select(`id, descripcion, tipo_falla, fecha_solucion, created_at, reported_by, vehiculo_id, vehiculos(placa, modelo)`).eq('estado', 'Reparado').order('fecha_solucion', { ascending: false }).limit(50)
+            const { data: maintenanceData } = await supabase.from('maintenance_logs').select(`id, service_type, mileage, notes, service_date, created_at, cost, parts_used, labor_cost, parts_cost, vehicle_id, performed_by, vehiculos(placa, modelo)`).order('created_at', { ascending: false }).limit(50)
+
+            // Build a set of fault IDs that have been resolved via a CORRECTIVE maintenance log
+            // We match by vehicle_id + notes containing the fault description
+            const correctiveLogs = maintenanceData?.filter(m => m.service_type === 'CORRECTIVE') || []
+            const resolvedFaultIds = new Set<string>()
+
+            // For each corrective log, find matching fault and mark as resolved
+            const enrichedCorrective = correctiveLogs.map(m => {
+                const matchingFault = faultsData?.find(f => 
+                    f.vehiculo_id === m.vehicle_id && 
+                    m.notes?.includes(f.descripcion)
+                )
+                if (matchingFault) resolvedFaultIds.add(matchingFault.id)
+                return {
+                    ...m,
+                    matchedFault: matchingFault
+                }
+            })
 
             const combined = [
-                ...(faultsData?.map((f: any) => ({
-                    type: 'REPAIR', date: f.fecha_solucion || f.created_at, vehicle: f.vehiculos?.modelo || 'Desconocido', placa: f.vehiculos?.placa || '', description: f.descripcion, category: f.tipo_falla, id: f.id, mileage: null, parts: null, cost: null
+                // Faults that were NOT resolved via a corrective log (standalone repairs)
+                ...(faultsData?.filter(f => !resolvedFaultIds.has(f.id)).map((f: any) => ({
+                    type: 'REPAIR', date: f.fecha_solucion || f.created_at, vehicle: f.vehiculos?.modelo || 'Desconocido', placa: f.vehiculos?.placa || '', description: f.descripcion, category: f.tipo_falla, id: f.id, mileage: null, parts: null, cost: null, reportedBy: f.reported_by
                 })) || []),
-                ...(maintenanceData?.map((m: any) => ({
-                    type: 'MAINTENANCE', date: m.service_date || m.created_at, vehicle: m.vehiculos?.modelo || 'Desconocido', placa: m.vehiculos?.placa || '', description: m.notes || 'Mantenimiento', category: m.service_type, mileage: m.mileage, id: m.id, parts: m.parts_used, cost: m.cost, labor: m.labor_cost, partsCost: m.parts_cost
+                // Corrective logs (consolidated with their fault if matched)
+                ...enrichedCorrective.map((m: any) => {
+                    const faultDesc = m.matchedFault?.descripcion || ''
+                    const workNotes = m.notes?.replace(`[Falla: ${faultDesc}] `, '') || m.notes || ''
+                    return {
+                        type: 'CORRECTIVE', date: m.service_date || m.created_at, vehicle: m.vehiculos?.modelo || 'Desconocido', placa: m.vehiculos?.placa || '', 
+                        description: workNotes, 
+                        faultDescription: faultDesc,
+                        category: 'Reparación', id: m.id, mileage: m.mileage, parts: m.parts_used, cost: m.cost, 
+                        performedBy: m.performed_by,
+                        reportedBy: m.matchedFault?.reported_by
+                    }
+                }),
+                // Non-corrective maintenance logs
+                ...(maintenanceData?.filter(m => m.service_type !== 'CORRECTIVE').map((m: any) => ({
+                    type: 'MAINTENANCE', date: m.service_date || m.created_at, vehicle: m.vehiculos?.modelo || 'Desconocido', placa: m.vehiculos?.placa || '', description: m.notes || 'Mantenimiento', category: m.service_type, mileage: m.mileage, id: m.id, parts: m.parts_used, cost: m.cost, performedBy: m.performed_by
                 })) || [])
             ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
@@ -353,7 +388,7 @@ export default function TallerPage() {
                                             <div key={log.id} className="bg-white p-4 rounded-2xl border border-zinc-200 flex flex-col gap-3 shadow-sm">
                                                 <div className="flex justify-between items-start">
                                                     <div className="flex items-center gap-3">
-                                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${log.type === 'REPAIR' ? 'bg-emerald-50 text-emerald-600' : 'bg-indigo-50 text-indigo-600'}`}>
+                                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${log.type === 'CORRECTIVE' ? 'bg-amber-50 text-amber-600' : log.type === 'REPAIR' ? 'bg-emerald-50 text-emerald-600' : 'bg-indigo-50 text-indigo-600'}`}>
                                                             {log.type === 'REPAIR' ? <CheckCircle size={18} /> : <Wrench size={18} />}
                                                         </div>
                                                         <div>
@@ -366,10 +401,24 @@ export default function TallerPage() {
                                                         <div>{new Date(log.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                                                     </div>
                                                 </div>
+
+                                                {/* Fault info for corrective repairs */}
+                                                {log.type === 'CORRECTIVE' && log.faultDescription && (
+                                                    <div className="bg-amber-50 p-3 rounded-xl border border-amber-100">
+                                                        <p className="text-[10px] font-black text-amber-700 uppercase tracking-wider mb-1">Falla {log.reportedBy ? `• Reportada por ${log.reportedBy}` : ''}</p>
+                                                        <p className="text-sm font-medium text-amber-900">{log.faultDescription}</p>
+                                                    </div>
+                                                )}
+
                                                 <div className="bg-zinc-50 p-3 rounded-xl border border-zinc-100">
-                                                    <p className="text-sm text-zinc-600"><span className="font-bold text-zinc-900">{log.category}:</span> {log.description}</p>
-                                                    {(log.parts || log.cost > 0) && (
+                                                    <p className="text-[10px] font-black text-zinc-400 uppercase tracking-wider mb-1">
+                                                        {log.type === 'CORRECTIVE' ? 'Trabajo Realizado' : log.type === 'REPAIR' ? log.category : 'Servicio'}
+                                                        {log.performedBy ? ` • por ${log.performedBy}` : ''}
+                                                    </p>
+                                                    <p className="text-sm text-zinc-700 font-medium">{log.description}</p>
+                                                    {(log.parts || log.cost > 0 || log.mileage) && (
                                                         <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                                                            {log.mileage && <span className="bg-white text-zinc-600 border border-zinc-200 px-2 py-1 rounded-md">{log.mileage.toLocaleString()} km</span>}
                                                             {log.parts && <span className="bg-white text-zinc-600 border border-zinc-200 px-2 py-1 rounded-md">Repuestos: {log.parts}</span>}
                                                             {log.cost > 0 && <span className="bg-emerald-50 text-emerald-700 px-2 py-1 rounded-md font-mono font-medium">${log.cost}</span>}
                                                         </div>
@@ -451,6 +500,9 @@ function MobileFaultCard({ fault, actionText, actionColor, onAction, onSecondary
                     {fault.tipo_falla}
                 </div>
                 <p className="text-sm text-zinc-700 font-medium">{fault.descripcion}</p>
+                {fault.reported_by && (
+                    <p className="text-xs text-zinc-400 mt-1 font-bold">Conductor: {fault.reported_by}</p>
+                )}
             </div>
 
             <div className="flex flex-col sm:flex-row gap-2 mt-1">
