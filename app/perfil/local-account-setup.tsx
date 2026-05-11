@@ -62,15 +62,17 @@ export function LocalAccountSetup({ email }: LocalAccountSetupProps) {
           className="pl-8 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300"
         >
           <div className="grid gap-4 p-4 rounded-2xl bg-zinc-50 border border-zinc-200">
-            <div className="space-y-1">
-              <Label className="text-xs text-zinc-500 ml-1">Nuevo Usuario</Label>
-              <Input 
-                name="username" 
-                placeholder="Ej: jlima" 
-                className="bg-white" 
-                required 
-              />
-            </div>
+            {isGoogleUser && (
+              <div className="space-y-1">
+                <Label className="text-xs text-zinc-500 ml-1">Nuevo Usuario</Label>
+                <Input 
+                  name="username" 
+                  placeholder="Ej: jlima" 
+                  className="bg-white" 
+                  required 
+                />
+              </div>
+            )}
             
             <div className="space-y-1">
               <Label className="text-xs text-zinc-500 ml-1">Nueva Contraseña</Label>

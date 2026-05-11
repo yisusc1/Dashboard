@@ -8,16 +8,6 @@ export async function setupLocalUser(formData: FormData) {
     const username = formData.get("username") as string
     const password = formData.get("password") as string
 
-    if (!username || !password) {
-      return { success: false, message: "Usuario y contraseña son requeridos." }
-    }
-
-    if (password.length < 6) {
-      return { success: false, message: "La contraseña debe tener al menos 6 caracteres." }
-    }
-
-    const virtualEmail = username.includes("@") ? username.toLowerCase().trim() : `${username.toLowerCase().trim()}@dashboard.local`
-
     const supabase = await createClient()
     
     // Verificar que el usuario esté logueado
@@ -36,36 +26,66 @@ export async function setupLocalUser(formData: FormData) {
       process.env.SUPABASE_SERVICE_ROLE_KEY
     )
 
-    // Actualizar el usuario con privilegios de administrador para saltar confirmación de email
-    const { data: updatedUser, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-      user.id,
-      {
-        email: virtualEmail,
-        password: password,
-        user_metadata: {
-          ...user.user_metadata,
-          username: username.toLowerCase().trim()
+    const isGoogleUser = user.email && !user.email.includes("@dashboard.local")
+
+    if (isGoogleUser) {
+      if (!username || !password) {
+        return { success: false, message: "Usuario y contraseña son requeridos." }
+      }
+
+      if (password.length < 6) {
+        return { success: false, message: "La contraseña debe tener al menos 6 caracteres." }
+      }
+
+      const virtualEmail = username.includes("@") ? username.toLowerCase().trim() : `${username.toLowerCase().trim()}@dashboard.local`
+
+      const { data: updatedUser, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+        user.id,
+        {
+          email: virtualEmail,
+          password: password,
+          user_metadata: {
+            ...user.user_metadata,
+            username: username.toLowerCase().trim()
+          }
         }
+      )
+
+      if (updateError) {
+        console.error("Error updating user:", updateError)
+        if (updateError.message.includes("already registered") || updateError.message.includes("unique")) {
+          return { success: false, message: "Ese nombre de usuario ya está en uso." }
+        }
+        return { success: false, message: `Error: ${updateError.message}` }
       }
-    )
 
-    if (updateError) {
-      console.error("Error updating user:", updateError)
-      if (updateError.message.includes("already registered") || updateError.message.includes("unique")) {
-        return { success: false, message: "Ese nombre de usuario ya está en uso." }
+      const { error: profileError } = await supabaseAdmin
+        .from("profiles")
+        .update({ email: virtualEmail })
+        .eq("id", user.id)
+
+      if (profileError) {
+        console.error("Error updating profile email:", profileError)
       }
-      return { success: false, message: `Error: ${updateError.message}` }
-    }
+    } else {
+      // Usuario ya es local, solo cambiar contraseña
+      if (!password) {
+        return { success: false, message: "La contraseña es requerida." }
+      }
 
-    // Actualizar también el email en la tabla profiles para que quede consistente
-    const { error: profileError } = await supabaseAdmin
-      .from("profiles")
-      .update({ email: virtualEmail })
-      .eq("id", user.id)
+      if (password.length < 6) {
+        return { success: false, message: "La contraseña debe tener al menos 6 caracteres." }
+      }
 
-    if (profileError) {
-      console.error("Error updating profile email:", profileError)
-      // No fallamos si esto falla, lo más importante era actualizar auth.users
+      const { data: updatedUser, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+        user.id,
+        { password: password }
+      )
+
+      if (updateError) {
+        console.error("Error updating user password:", updateError)
+        return { success: false, message: `Error: ${updateError.message}` }
+      }
     }
 
     return { success: true, message: "Usuario local configurado correctamente." }
