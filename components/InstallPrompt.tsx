@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Capacitor } from "@capacitor/core"
+
 import { X, Download, Smartphone } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
@@ -10,8 +10,7 @@ export function InstallPrompt() {
     const [isVisible, setIsVisible] = useState(false)
 
     useEffect(() => {
-        // 1. Check if Native (Don't show on Android/iOS app)
-        if (Capacitor.isNativePlatform()) return
+
 
         // 2. Check if dismissed recently (e.g., 24h cooldown)
         const dismissedAt = localStorage.getItem("install_prompt_dismissed")

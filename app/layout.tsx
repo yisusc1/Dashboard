@@ -31,8 +31,7 @@ import { getSystemSettings } from "./admin/settings-actions";
 // ... existing imports
 
 
-import { PushNotificationManager } from "@/components/PushNotificationManager";
-import { GlobalPermissions } from "@/components/GlobalPermissions";
+
 import { InstallPrompt } from "@/components/InstallPrompt";
 
 export default async function RootLayout({
@@ -65,8 +64,7 @@ export default async function RootLayout({
         <UserProvider initialUser={user} initialProfile={profile}>
             {children}
             <Toaster richColors position="top-center" />
-            <PushNotificationManager />
-            <GlobalPermissions />
+
             <InstallPrompt />
         </UserProvider>
       </body>
