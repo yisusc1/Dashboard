@@ -4,9 +4,8 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { getPendingAudits } from "./actions"
 
-import { Users, User, ShieldCheck, ChevronRight, ArrowLeft, AlertCircle, Disc, Fuel } from "lucide-react"
+import { Users, User, ShieldCheck, ChevronRight, ArrowLeft, AlertCircle, Fuel } from "lucide-react"
 import { DesktopModeToggle } from "@/components/desktop-mode-toggle"
-import { DailyReportDialog } from "@/components/daily-report-dialog"
 
 export default async function ControlPage() {
     const cookieStore = await cookies()
@@ -70,14 +69,6 @@ export default async function ControlPage() {
                                 Gestión de Equipos
                             </Button>
                         </Link>
-                        <Link href="/control/spools" className="w-full md:w-auto">
-                            <Button className="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/20 font-bold rounded-xl h-12 px-6">
-                                <Disc className="mr-2 h-5 w-5" />
-                                Gestión de Bobinas
-                            </Button>
-                        </Link>
-                        <DailyReportDialog teams={teams || []} />
-
                     </div>
                 </div>
             </div>
