@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { LinkedAccounts } from "./linked-accounts"
+import { LocalAccountSetup } from "./local-account-setup"
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -137,6 +138,8 @@ export default async function ProfilePage() {
             <div className="space-y-4 pt-4">
               <LinkedAccounts identities={user.identities || []} />
               
+              <LocalAccountSetup email={user.email} />
+
               <div className="text-xs text-zinc-400 text-center mt-8">
                 ID de Usuario: <span className="font-mono">{user.id}</span>
               </div>
