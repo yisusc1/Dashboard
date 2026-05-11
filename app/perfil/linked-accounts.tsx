@@ -42,7 +42,7 @@ export function LinkedAccounts({ identities }: LinkedAccountsProps) {
     if (!googleIdentity) return
     setLoading(true)
     try {
-      const { error } = await supabase.auth.unlinkIdentity(googleIdentity.identity_id)
+      const { error } = await supabase.auth.unlinkIdentity(googleIdentity)
       if (error) throw error
       
       toast.success("Cuenta de Google desvinculada correctamente")
