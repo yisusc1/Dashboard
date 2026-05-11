@@ -33,7 +33,7 @@ export async function resetInventoryAction() {
         // 5. Reset Serials
         await supabase.from("inventory_serials").delete().neq("serial_number", "00000_IGNORE")
 
-        revalidatePath("/almacen")
+        revalidatePath("/control")
         revalidatePath("/admin/database")
         return { success: true }
     } catch (error: any) {
@@ -63,32 +63,21 @@ export async function resetOperationsAction() {
             throw new Error("Clave Maestra de Admin no configurada (SUPABASE_SERVICE_ROLE_KEY). No se puede reiniciar.")
         }
 
-        // 1. Audits & Reports (Child Tables)
+        // 1. Audits
         await supabase.from("inventory_audits").delete().neq("id", "00000000-0000-0000-0000-000000000000")
-        await supabase.from("technician_daily_reports").delete().neq("id", 0)
 
-        // 2. Activity Data
-        await supabase.from("soportes").delete().neq("id", "00000000-0000-0000-0000-000000000000")
-        await supabase.from("cierres").delete().neq("id", 0)
-        await supabase.from("revisiones").delete().neq("id", "00000000-0000-0000-0000-000000000000")
-
-        // 3. Assignments (Asignaciones)
-        // Must delete items first, then headers.
+        // 2. Assignments (items first, then headers)
         await supabase.from("inventory_assignment_items").delete().neq("id", "00000000-0000-0000-0000-000000000000")
         await supabase.from("inventory_assignments").delete().neq("id", "00000000-0000-0000-0000-000000000000")
 
-        // 4. Clients (Users said "Borra clientes")
-        await supabase.from("clientes").delete().neq("id", "00000000-0000-0000-0000-000000000000")
-
-        // 5. Serials (User requested removal)
-        // This might kill stock tracking, but it's what they asked for "Reiniciar Operaciones -> inventory_serials"
+        // 3. Reset Serials
         await supabase.from("inventory_serials").delete().neq("serial_number", "00000_IGNORE")
 
         // 4. Try RPC as backup? No, manual should suffice.
         // const { error: rpcError } = await supabase.rpc('reset_operations_v2')
         // if (rpcError) throw rpcError
 
-        revalidatePath("/tecnicos")
+        revalidatePath("/control")
         revalidatePath("/admin/database")
         return { success: true }
     } catch (error: any) {

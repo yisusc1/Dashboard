@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { getAuditData, saveAudit, getAuditInstallations } from "../../actions"
+import { getAuditData, saveAudit } from "../../actions"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -18,7 +18,7 @@ export default function AuditPage() {
     const [counts, setCounts] = useState<Record<string, number>>({})
     const [reconcile, setReconcile] = useState(false)
     const [notes, setNotes] = useState("")
-    const [installations, setInstallations] = useState<any[]>([])
+
 
     useEffect(() => {
         async function load() {
@@ -35,27 +35,7 @@ export default function AuditPage() {
                 })
                 setCounts(initialCounts)
 
-                // Fetch Installations if date is available
-                if (res.created_at) {
-                    const date = new Date(res.created_at)
-                    const minDate = new Date(date)
-                    minDate.setHours(0, 0, 0, 0)
-                    const maxDate = new Date(date)
-                    maxDate.setHours(23, 59, 59, 999)
 
-                    // If Team, likely need separate logic, but defaulting to single entity check for now
-                    // Or assuming res.technician.id is the Profile ID if Type is User
-                    if (res.technician?.type !== 'TEAM') {
-                        const installs = await getAuditInstallations(res.technician.id, minDate.toISOString(), maxDate.toISOString())
-                        setInstallations(installs || [])
-                    } else if (res.technician?.members) {
-                        // Parallel fetch for all members
-                        const allInstalls = await Promise.all(res.technician.members.map((mId: string) =>
-                            getAuditInstallations(mId, minDate.toISOString(), maxDate.toISOString())
-                        ))
-                        setInstallations(allInstalls.flat())
-                    }
-                }
             } catch (e: any) {
                 toast.error("Error cargando auditoría: " + e.message)
             } finally {
@@ -282,75 +262,7 @@ export default function AuditPage() {
                     {/* RIGHT COLUMN: INSTALLATIONS & NOTES */}
                     <div className="space-y-6">
 
-                        {/* INSTALLATIONS CARD */}
-                        <Card className="border-slate-200 bg-white dark:bg-slate-900 shadow-sm rounded-2xl overflow-hidden">
-                            <CardHeader className="bg-slate-50/50 pb-4 border-b border-slate-100">
-                                <div className="flex items-center gap-3">
-                                    <div className="h-10 w-10 rounded-xl bg-violet-100 text-violet-600 flex items-center justify-center">
-                                        <Wifi size={20} />
-                                    </div>
-                                    <div>
-                                        <CardTitle className="text-lg font-bold text-slate-900">Instalaciones Realizadas</CardTitle>
-                                        <CardDescription className="text-xs">
-                                            {installations.length} reportes en este turno
-                                        </CardDescription>
-                                    </div>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="p-0">
-                                {installations.length === 0 ? (
-                                    <div className="p-8 text-center">
-                                        <Cloud className="mx-auto h-10 w-10 text-slate-200 mb-2" />
-                                        <p className="text-sm text-slate-400">Sin instalaciones registradas hoy.</p>
-                                    </div>
-                                ) : (
-                                    <div className="divide-y divide-slate-100">
-                                        {installations.map((inst) => (
-                                            <div key={inst.id} className="p-4 hover:bg-slate-50 transition-colors">
-                                                <div className="flex justify-between items-start mb-3">
-                                                    <div>
-                                                        <h4 className="font-bold text-slate-800 text-sm">{inst.cliente?.nombre || "Cliente Desconocido"}</h4>
-                                                        <p className="text-xs text-slate-500 font-medium">{inst.cliente?.plan || "Plan N/A"} • {inst.cliente?.onu}</p>
-                                                        <p className="text-[10px] text-slate-400 mt-1">{inst.cliente?.direccion}</p>
-                                                    </div>
-                                                    <span className="text-[10px] font-mono text-slate-300">
-                                                        {new Date(inst.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                    </span>
-                                                </div>
-
-                                                {/* Material Usage Grid */}
-                                                <div className="grid grid-cols-4 gap-2 mt-3">
-                                                    {inst.metraje_usado > 0 && (
-                                                        <div className="bg-slate-100 rounded p-1.5 text-center">
-                                                            <span className="block text-[8px] uppercase text-slate-500 font-bold tracking-wider">Cable</span>
-                                                            <span className="text-xs font-bold text-slate-700">{inst.metraje_usado}m</span>
-                                                        </div>
-                                                    )}
-                                                    {inst.conectores > 0 && (
-                                                        <div className="bg-slate-100 rounded p-1.5 text-center">
-                                                            <span className="block text-[8px] uppercase text-slate-500 font-bold tracking-wider">Conv</span>
-                                                            <span className="text-xs font-bold text-slate-700">{inst.conectores}</span>
-                                                        </div>
-                                                    )}
-                                                    {inst.tensores > 0 && (
-                                                        <div className="bg-slate-100 rounded p-1.5 text-center">
-                                                            <span className="block text-[8px] uppercase text-slate-500 font-bold tracking-wider">Tens</span>
-                                                            <span className="text-xs font-bold text-slate-700">{inst.tensores}</span>
-                                                        </div>
-                                                    )}
-                                                    {inst.rosetas === "Si" && (
-                                                        <div className="bg-slate-100 rounded p-1.5 text-center">
-                                                            <span className="block text-[8px] uppercase text-slate-500 font-bold tracking-wider">Roseta</span>
-                                                            <span className="text-xs font-bold text-emerald-600">SI</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
+                        {/* INSTALLATIONS CARD - Removed (cierres table eliminated) */}
 
                         {/* NOTES CARD (Moved here) */}
                         <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-200">

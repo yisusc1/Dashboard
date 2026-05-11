@@ -25,7 +25,7 @@ export default function DatabaseManagementPage() {
     const router = useRouter()
 
     const handleResetInventory = async () => {
-        if (!confirm("⚠️ ¿ESTÁS SEGURO?\n\nEsto borrará:\n- Todo el historial de movimientos.\n- Todas las asignaciones.\n- Pondrá el stock a 0.\n\nNO borrará productos ni clientes.")) return
+        if (!confirm("⚠️ ¿ESTÁS SEGURO?\n\nEsto borrará:\n- Todo el historial de movimientos.\n- Todas las asignaciones.\n- Pondrá el stock a 0.\n\nNO borrará productos ni vehículos.")) return
 
         setInventoryLoading(true)
         try {
@@ -44,7 +44,7 @@ export default function DatabaseManagementPage() {
     }
 
     const handleResetOps = async () => {
-        if (!confirm("⚠️ ¿ESTÁS SEGURO?\n\nEsto borrará:\n- Todos los reportes/cierres.\n- Todos los clientes.\n- Asignaciones de técnicos.\n\nNO borrará inventario ni vehículos.")) return
+        if (!confirm("⚠️ ¿ESTÁS SEGURO?\n\nEsto borrará:\n- Todas las auditorías.\n- Todas las asignaciones de inventario.\n- Seriales.\n\nNO borrará inventario ni vehículos.")) return
 
         setOpsLoading(true)
         try {
@@ -142,7 +142,7 @@ export default function DatabaseManagementPage() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="text-sm text-red-800 bg-red-100/50 p-3 rounded-lg border border-red-100">
-                            <strong>Conserva:</strong> Productos, Clientes, Vehículos.
+                            <strong>Conserva:</strong> Productos, Vehículos.
                         </div>
                         <Button
                             variant="destructive"
@@ -163,7 +163,7 @@ export default function DatabaseManagementPage() {
                             <FileWarning size={24} />
                         </div>
                         <CardTitle className="text-xl text-orange-700">Reiniciar Operaciones</CardTitle>
-                        <CardDescription>Borra clientes, reportes y asignaciones.</CardDescription>
+                        <CardDescription>Borra auditorías, asignaciones y seriales.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="text-sm text-orange-800 bg-orange-100/50 p-3 rounded-lg border border-orange-100">

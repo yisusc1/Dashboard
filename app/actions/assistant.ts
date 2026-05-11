@@ -29,7 +29,7 @@ const tools = [
                     properties: {
                         table: {
                             type: SchemaType.STRING,
-                            description: "Nombre de la tabla a consultar (ej: 'clientes', 'vehiculos', 'inventory_products')."
+                            description: "Nombre de la tabla a consultar (ej: 'vehiculos', 'inventory_products', 'profiles')."
                         },
                         columns: {
                             type: SchemaType.STRING,
@@ -95,10 +95,10 @@ export async function processWithGemini(transcript: string, pathname: string = "
 
         // --- PAGE CONTEXT MAP (Visual Awareness) ---
         const PAGE_CONTEXT_MAP: Record<string, string> = {
-            "/tecnicos": "Technician Dashboard. Shows active installations, stats, and 'New Installation' / 'Report Support' buttons.",
             "/admin/vehiculos": "Vehicle Fleet Management. Shows grid of vehicles. Filters available.",
-            "/control/spools": "Spool Management. Shows list of fiber optic spools.",
-            "/taller": "Mechanical Workshop Panel."
+            "/taller": "Mechanical Workshop Panel.",
+            "/control": "Inventory Control and Audit Dashboard.",
+            "/control/combustible": "Fuel Management Dashboard."
         }
 
         const currentContext = PAGE_CONTEXT_MAP[pathname] || "Unknown Page"
