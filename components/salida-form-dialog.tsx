@@ -59,6 +59,7 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
     // Fault Reporting State (From Remote/New Logic)
     const [faultsToAdd, setFaultsToAdd] = useState<string[]>([])
     const [newFaultText, setNewFaultText] = useState("")
+    const [usePlainText, setUsePlainText] = useState(false)
 
     // Custom Alert State
     const [conflictAlertOpen, setConflictAlertOpen] = useState(false)
@@ -124,9 +125,11 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
 
         const { data: profile } = await supabase
             .from('profiles')
-            .select('department, roles, first_name, last_name')
+            .select('department, roles, first_name, last_name, plain_text_reports')
             .eq('id', user.id)
             .single()
+
+        setUsePlainText(!!profile?.plain_text_reports)
 
         const userDept = profile?.department
         // Normalize roles to avoid case sensitivity issues
@@ -335,7 +338,8 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
 
     // Helpers
     const formatSalidaText = (data: any, vehiculoObj: Vehiculo | null) => {
-        const check = (val: boolean | number) => val ? '✅' : '❌'
+        const check = (val: boolean | number) => usePlainText ? (val ? '[SI]' : '[NO]') : (val ? '✅' : '❌')
+        const bullet = usePlainText ? '-' : '•'
         const vehiculoNombre = vehiculoObj ? vehiculoObj.modelo : 'Desconocido'
         const fecha = new Date().toLocaleDateString()
         const hora = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -384,7 +388,7 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
         // Add explicit faults to WhatsApp
         if (faultsToAdd.length > 0) {
             msg += `*Fallas Reportadas:*\n`
-            faultsToAdd.forEach(f => msg += `• ${f}\n`)
+            faultsToAdd.forEach(f => msg += `${bullet} ${f}\n`)
             msg += `\n`
         }
 

@@ -39,6 +39,7 @@ type Profile = {
     last_name?: string
     department?: string
     job_title?: string
+    plain_text_reports?: boolean
 }
 
 // DEFINING MODULE ACCESS GROUPS
@@ -215,6 +216,31 @@ export default function AdminUsersPage() {
             toast.success("Permiso actualizado")
         } catch (error) {
             toast.error("Error al actualizar permisos")
+        }
+    }
+
+    const handleTogglePlainText = async (userId: string, currentValue: boolean) => {
+        try {
+            const supabase = createClient()
+            const newValue = !currentValue
+
+            const { error } = await supabase
+                .from("profiles")
+                .update({ plain_text_reports: newValue })
+                .eq("id", userId)
+
+            if (error) throw error
+
+            const updatedProfile = { ...(permissionsUser || profiles.find(p => p.id === userId)!), plain_text_reports: newValue }
+
+            if (permissionsUser?.id === userId) {
+                setPermissionsUser(updatedProfile)
+            }
+
+            setProfiles(prev => prev.map(p => p.id === userId ? updatedProfile : p))
+            toast.success("Configuración actualizada")
+        } catch (error) {
+            toast.error("Error al actualizar configuración")
         }
     }
 
@@ -559,6 +585,34 @@ export default function AdminUsersPage() {
                                 </div>
                             </div>
                         ))}
+
+                        <div className="space-y-4">
+                            <h4 className="font-medium text-xs text-zinc-400 uppercase tracking-widest pl-1">
+                                Configuración Especial
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className={`flex items-start gap-4 p-4 rounded-xl border transition-all duration-200 ${permissionsUser?.plain_text_reports ? 'bg-zinc-50 border-zinc-300 shadow-sm' : 'bg-white border-zinc-100 hover:border-zinc-200'}`}>
+                                    <div className="h-10 w-10 rounded-lg flex items-center justify-center shrink-0 bg-orange-50 text-orange-600">
+                                        <Settings2 size={20} />
+                                    </div>
+                                    <div className="flex-1 space-y-1">
+                                        <div className="flex items-center justify-between">
+                                            <Label htmlFor="plain-text" className="font-semibold text-base text-zinc-900 cursor-pointer">
+                                                WhatsApp sin Emojis
+                                            </Label>
+                                            <Switch
+                                                id="plain-text"
+                                                checked={!!permissionsUser?.plain_text_reports}
+                                                onCheckedChange={() => permissionsUser && handleTogglePlainText(permissionsUser.id, !!permissionsUser.plain_text_reports)}
+                                            />
+                                        </div>
+                                        <p className="text-sm text-zinc-500 leading-snug pr-8">
+                                            Usa [SI]/[NO] en vez de emojis en reportes para dispositivos antiguos.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <DialogFooter>

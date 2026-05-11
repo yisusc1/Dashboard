@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
 import { crearSalida, registrarEntrada } from '@/app/transporte/actions';
 import { Sun, Moon, Wrench, Shield, Zap, MessageCircle } from 'lucide-react';
 
@@ -36,6 +37,23 @@ export default function ReporteManager({
 }) {
     const [modo, setModo] = useState<'salida' | 'entrada' | null>(null);
     const [submitting, setSubmitting] = useState(false);
+    const [usePlainText, setUsePlainText] = useState(false);
+
+    useEffect(() => {
+        const fetchUserPrefs = async () => {
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('plain_text_reports')
+                    .eq('id', user.id)
+                    .single();
+                setUsePlainText(!!profile?.plain_text_reports);
+            }
+        };
+        fetchUserPrefs();
+    }, []);
 
     // Estado para la lógica condicional en SALIDA
     const [vehiculoSeleccionado, setVehiculoSeleccionado] = useState<Vehiculo | null>(null);
@@ -57,7 +75,7 @@ export default function ReporteManager({
 
     // --- GENERADORES DE TEXTO (PLAIN TEXT) ---
     const formatSalidaText = (data: any, vehiculoObj: Vehiculo | null | undefined) => {
-        const check = (val: boolean | number) => val ? '✅' : '❌';
+        const check = (val: boolean | number) => usePlainText ? (val ? '[SI]' : '[NO]') : (val ? '✅' : '❌');
         // Only Model name, no plate
         const vehiculoNombre = vehiculoObj ? vehiculoObj.modelo : 'Desconocido';
 
@@ -101,7 +119,7 @@ export default function ReporteManager({
 
 
     const formatEntradaText = (entradaData: any, reporteOriginal: Reporte) => {
-        const check = (val: boolean | number) => val ? '✅' : '❌';
+        const check = (val: boolean | number) => usePlainText ? (val ? '[SI]' : '[NO]') : (val ? '✅' : '❌');
 
         // Calcular fechas y horas
         const fechaSalidaObj = new Date(reporteOriginal.created_at);

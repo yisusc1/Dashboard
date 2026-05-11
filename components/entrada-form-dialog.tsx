@@ -49,6 +49,7 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
     const [faultsToAdd, setFaultsToAdd] = useState<string[]>([]) // [NEW] Explicit faults
     const [activeFaults, setActiveFaults] = useState<any[]>([]) // [NEW] Existing active faults from DB
     const [newFaultText, setNewFaultText] = useState("")
+    const [usePlainText, setUsePlainText] = useState(false)
     const [step, setStep] = useState<'form' | 'success'>('form')
     const [whatsappText, setWhatsappText] = useState("")
     const router = useRouter()
@@ -112,6 +113,17 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
 
     async function loadPendingReports() {
         const supabase = createClient()
+        
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('plain_text_reports')
+                .eq('id', user.id)
+                .single()
+            setUsePlainText(!!profile?.plain_text_reports)
+        }
+
         const { data } = await supabase
             .from('reportes')
             .select(`
@@ -290,7 +302,9 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
 
     // Helpers
     const formatEntradaText = (entradaData: any, reporteOriginal: Reporte) => {
-        const check = (val: boolean | number) => val ? '✅' : '❌'
+        const check = (val: boolean | number) => usePlainText ? (val ? '[SI]' : '[NO]') : (val ? '✅' : '❌')
+        const bulletWarning = usePlainText ? '!' : '⚠️'
+        const bulletError = usePlainText ? '-' : '❌'
 
         // Calcular fechas y horas
         const fechaSalidaObj = new Date(reporteOriginal.created_at)
@@ -356,12 +370,12 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
 
         if (activeFaults.length > 0) {
             msg += `\n*Fallas Pendientes (Anteriores):*\n`
-            activeFaults.forEach(f => msg += `⚠️ ${f.descripcion.replace('[Reporte Salida] ', '').replace('[Reporte Entrada] ', '')}\n`)
+            activeFaults.forEach(f => msg += `${bulletWarning} ${f.descripcion.replace('[Reporte Salida] ', '').replace('[Reporte Entrada] ', '')}\n`)
         }
 
         if (faultsToAdd.length > 0) {
             msg += `\n*Nuevas Fallas Reportadas:*\n`
-            faultsToAdd.forEach(f => msg += `❌ ${f}\n`)
+            faultsToAdd.forEach(f => msg += `${bulletError} ${f}\n`)
         }
 
         return msg
