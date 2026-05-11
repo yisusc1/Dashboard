@@ -328,7 +328,6 @@ function NewFuelLogContent() {
                                             name="vehicle_id"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="text-zinc-500 font-bold uppercase text-[10px] tracking-wider ml-1">Vehículo</FormLabel>
                                                     <VehicleSelector
                                                         vehicles={vehicles}
                                                         selectedVehicleId={field.value}
@@ -396,7 +395,7 @@ function NewFuelLogContent() {
                                                 <FormControl>
                                                     <div className="relative">
                                                         <Fuel className="absolute left-4 top-[18px] h-5 w-5 text-emerald-500" />
-                                                        <Input type="number" step="0.01" className="pl-12 h-14 rounded-2xl border-zinc-200 bg-zinc-50/50 font-black text-xl" {...field} />
+                                                        <Input type="number" step="0.01" min="0" className="pl-12 h-14 rounded-2xl border-zinc-200 bg-zinc-50/50 font-black text-xl" {...field} />
                                                     </div>
                                                 </FormControl>
                                                 <FormMessage />
@@ -413,7 +412,7 @@ function NewFuelLogContent() {
                                                 <FormControl>
                                                     <div className="relative">
                                                         <div className="absolute left-4 top-[18px] h-5 w-5 flex items-center justify-center text-indigo-500 font-black text-xs">KM</div>
-                                                        <Input type="number" className="pl-12 h-14 rounded-2xl border-zinc-200 bg-zinc-50/50 font-black text-xl" {...field} />
+                                                        <Input type="number" min="0" className="pl-12 h-14 rounded-2xl border-zinc-200 bg-zinc-50/50 font-black text-xl" {...field} />
                                                     </div>
                                                 </FormControl>
                                                 <FormMessage />
