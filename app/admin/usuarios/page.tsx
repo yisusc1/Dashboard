@@ -44,63 +44,67 @@ type Profile = {
 // DEFINING MODULE ACCESS GROUPS
 const MODULE_ACCESS = [
     {
-        title: "Módulos de Sistema",
+        title: "Módulos de Gestión (Visibilidad)",
         items: [
             {
                 role: 'gerencia',
                 label: 'Centro de Control',
-                description: 'Dashboard ejecutivo, estadísticas y métricas en vivo.',
+                description: 'Visualización de indicadores, métricas y dashboard ejecutivo.',
                 icon: LayoutDashboard,
                 color: 'text-indigo-600 bg-indigo-50 border-indigo-200'
             },
             {
                 role: 'transporte',
-                label: 'Gestión de Transporte',
-                description: 'Control de flota, asignación de choferes y salidas.',
+                label: 'Logística de Transporte',
+                description: 'Registro de salidas, entradas y monitoreo de rutas.',
                 icon: Truck,
                 color: 'text-blue-600 bg-blue-50 border-blue-200'
             },
             {
                 role: 'taller',
                 label: 'Taller Mecánico',
-                description: 'Registro de mantenimientos, reparaciones y fallas.',
+                description: 'Gestión de reparaciones, fallas y preventivos.',
                 icon: Wrench,
                 color: 'text-amber-600 bg-amber-50 border-amber-200'
             },
             {
-                role: 'almacen',
-                label: 'Almacén e Inventario',
-                description: 'Gestión de stock, auditorías, entradas y salidas.',
-                icon: Package,
-                color: 'text-emerald-600 bg-emerald-50 border-emerald-200'
-            }
-        ]
-    },
-    {
-        title: "Supervisión y Seguridad",
-        items: [
-            {
                 role: 'supervisor',
                 label: 'Control y Auditoría',
-                description: 'Supervisión de operaciones, combustible y auditorías.',
+                description: 'Control de combustible y supervisión de operaciones.',
                 icon: ClipboardCheck,
                 color: 'text-rose-600 bg-rose-50 border-rose-200'
             },
-            {
-                role: 'admin',
-                label: 'Administrador Total',
-                description: 'Acceso irrestricto a configuración y usuarios.',
-                icon: Lock,
-                color: 'text-purple-600 bg-purple-50 border-purple-200'
-            }
         ]
     },
     {
-        title: "Roles Operativos Básicos",
+        title: "Perfiles Operativos",
         items: [
-            { role: 'tecnico', label: 'Técnico de Campo', description: 'Acceso a App Móvil de Técnicos.' },
-            { role: 'chofer', label: 'Conductor', description: 'Puede ser asignado a vehículos.' },
-            { role: 'mecanico', label: 'Mecánico', description: 'Visualización de reparaciones asignadas.' },
+            { 
+                role: 'mecanico', 
+                label: 'Personal de Taller', 
+                description: 'Habilita funciones de reparación avanzada.',
+                icon: Wrench,
+                color: 'text-zinc-600 bg-zinc-50 border-zinc-200'
+            },
+            { 
+                role: 'tecnico', 
+                label: 'Técnico Externo', 
+                description: 'Perfil para personal fuera de la sede principal.',
+                icon: UserIcon,
+                color: 'text-zinc-600 bg-zinc-50 border-zinc-200'
+            },
+        ]
+    },
+    {
+        title: "Seguridad de Sistema",
+        items: [
+            {
+                role: 'admin',
+                label: 'Administrador Total',
+                description: 'Acceso completo a usuarios, base de datos y configuración.',
+                icon: Lock,
+                color: 'text-purple-600 bg-purple-50 border-purple-200'
+            }
         ]
     }
 ]
@@ -463,10 +467,17 @@ export default function AdminUsersPage() {
             <Dialog open={!!permissionsUser} onOpenChange={(open) => !open && setPermissionsUser(null)}>
                 <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle>Gestionar Acceso a Módulos</DialogTitle>
-                        <DialogDescription>
-                            Define qué partes del sistema puede ver <span className="font-semibold text-zinc-900">{permissionsUser?.email}</span>.
-                        </DialogDescription>
+                        <div className="flex items-center gap-4 mb-2">
+                            <div className="h-12 w-12 rounded-2xl bg-zinc-900 flex items-center justify-center text-white">
+                                <Shield size={24} />
+                            </div>
+                            <div>
+                                <DialogTitle className="text-2xl">Gestionar Acceso a Módulos</DialogTitle>
+                                <DialogDescription>
+                                    Configuración de permisos para <span className="font-bold text-zinc-900">{permissionsUser?.email}</span>
+                                </DialogDescription>
+                            </div>
+                        </div>
                     </DialogHeader>
 
                     <div className="space-y-6 py-4">

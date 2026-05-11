@@ -111,12 +111,8 @@ export function VehicleDetailsDialog({ isOpen, onClose, vehicle, onUpdate, reado
             .select('id, modelo, placa, assigned_driver_id')
             .not('assigned_driver_id', 'is', null)
 
-        if (profiles) {
-            const driversList = profiles.filter((p: any) =>
-                p.roles?.includes('chofer') ||
-                p.job_title?.toLowerCase().includes('chofer') ||
-                p.job_title?.toLowerCase().includes('conductor')
-            )
+            // 1. All profiles are considered drivers now
+            const driversList = profiles || []
 
             // Map current vehicle to driver
             const driversWithStatus = driversList.map((d: any) => {
