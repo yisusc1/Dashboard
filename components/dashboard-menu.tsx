@@ -4,7 +4,7 @@ import Link from "next/link"
 import {
     Wrench, Truck, ShieldCheck, UserCog, Package, Settings,
     Headset, CalendarRange, Network, Activity, Users2, Cpu, FileText, ShoppingBag,
-    LayoutGrid
+    LayoutGrid, ClipboardCheck
 } from "lucide-react"
 import { useUser } from "@/components/providers/user-provider"
 import { useEffect, useState } from "react"
@@ -63,8 +63,8 @@ export function DashboardMenu() {
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* TRANSPORTE / CHOFER */}
-            {isModuleEnabled("module_transporte") && (canAccess("transporte", "Transporte") || hasRole("chofer")) && (
+            {/* TRANSPORTE */}
+            {isModuleEnabled("module_transporte") && (canAccess("transporte") || hasRole("chofer")) && (
                     <Link
                         href="/transporte"
                         className="group relative overflow-hidden bg-white rounded-[32px] p-8 border border-zinc-200 shadow-sm hover:shadow-xl hover:border-zinc-300 transition-all duration-300 block"
@@ -88,7 +88,7 @@ export function DashboardMenu() {
             )}
 
             {/* TALLER CARD */}
-            {isModuleEnabled("module_taller") && canAccess("taller", "Taller") && (
+            {isModuleEnabled("module_taller") && (canAccess("taller") || hasRole("mecanico")) && (
                     <Link
                         href="/taller"
                         className="group relative overflow-hidden bg-white rounded-[32px] p-8 border border-zinc-200 shadow-sm hover:shadow-xl hover:border-zinc-300 transition-all duration-300 block"
@@ -111,28 +111,25 @@ export function DashboardMenu() {
                     </Link>
             )}
 
-
-
-
-            {/* COMBUSTIBLE */}
-            {isModuleEnabled("module_combustible") && (canAccess("combustible") || (hasRole("supervisor") && dept === "Transporte")) && (
+            {/* CONTROL (Combustible y Auditorías) */}
+            {isModuleEnabled("module_combustible") && canAccess("supervisor") && (
                     <Link
                         href="/control/combustible"
                         className="group relative overflow-hidden bg-white rounded-[32px] p-8 border border-zinc-200 shadow-sm hover:shadow-xl hover:border-orange-200 transition-all duration-300 block"
                     >
                         <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
-                            <FileText size={120} />
+                            <ClipboardCheck size={120} />
                         </div>
                         <div className="relative z-10 flex flex-col h-full justify-between space-y-8">
                             <div className="w-14 h-14 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition-colors">
-                                <FileText size={28} />
+                                <ClipboardCheck size={28} />
                             </div>
                             <div>
-                                <h2 className="text-2xl font-bold text-zinc-900 mb-2">Combustible</h2>
-                                <p className="text-zinc-500 font-medium">Control de cargas de gasolina y QR.</p>
+                                <h2 className="text-2xl font-bold text-zinc-900 mb-2">Control</h2>
+                                <p className="text-zinc-500 font-medium">Control de combustible y auditorías.</p>
                             </div>
                             <div className="flex items-center text-orange-600 font-semibold group-hover:translate-x-2 transition-transform">
-                                Ver Combustible <span className="ml-2">→</span>
+                                Ver Control <span className="ml-2">→</span>
                             </div>
                         </div>
                     </Link>
@@ -163,7 +160,7 @@ export function DashboardMenu() {
             )}
 
             {/* GERENCIA */}
-            {(isAdmin || (profile?.job_title && (profile.job_title.toLowerCase().includes('gerente') || profile.job_title.toLowerCase().includes('admin')))) && (
+            {canAccess("gerencia") && (
                     <Link
                         href="/gerencia"
                         className="group relative overflow-hidden bg-white rounded-[32px] p-8 border border-zinc-200 shadow-sm hover:shadow-xl hover:border-emerald-200 transition-all duration-300 block"
