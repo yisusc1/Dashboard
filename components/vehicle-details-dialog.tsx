@@ -121,7 +121,6 @@ export function VehicleDetailsDialog({ isOpen, onClose, vehicle, onUpdate, reado
             })
 
             setDrivers(driversWithStatus)
-        }
     }
 
     async function handleAssignDriver(d: Driver | null) {
