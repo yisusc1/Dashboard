@@ -328,7 +328,7 @@ function NewFuelLogContent() {
                                             name="vehicle_id"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="text-zinc-500 font-bold uppercase text-[10px] tracking-wider ml-1">Vehículo</Label>
+                                                    <FormLabel className="text-zinc-500 font-bold uppercase text-[10px] tracking-wider ml-1">Vehículo</FormLabel>
                                                     <VehicleSelector
                                                         vehicles={vehicles}
                                                         selectedVehicleId={field.value}
