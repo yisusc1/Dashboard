@@ -84,11 +84,11 @@ export function LocalAccountSetup({ email }: LocalAccountSetupProps) {
               />
             </div>
 
-            <div className="flex items-center gap-2 pt-2">
+            <div className="flex flex-col gap-2 pt-2">
               <Button type="submit" disabled={loading} className="w-full">
                 {loading ? "Guardando..." : "Guardar Credenciales"}
               </Button>
-              <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>
+              <Button type="button" variant="ghost" onClick={() => setIsOpen(false)} className="w-full">
                 Cancelar
               </Button>
             </div>
