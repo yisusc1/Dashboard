@@ -135,3 +135,39 @@ export async function createUserAction(data: {
         return { error: error.message || "Error al crear usuario" }
     }
 }
+
+export async function adminResetPassword(userId: string, newPassword: string) {
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (!serviceRoleKey) return { error: "Falta Service Role Key" }
+
+    const supabase = await createClient()
+
+    // Check Admin Permissions
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: "No autorizado" }
+
+    const { data: requester } = await supabase.from("profiles").select("roles").eq("id", user.id).single()
+    if (!requester?.roles?.includes("admin")) return { error: "No tienes permisos de administrador" }
+
+    if (newPassword.length < 6) return { error: "La contraseña debe tener al menos 6 caracteres" }
+
+    try {
+        const adminClient = createSupabaseAdmin(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            serviceRoleKey,
+            { auth: { autoRefreshToken: false, persistSession: false } }
+        )
+
+        const { data, error } = await adminClient.auth.admin.updateUserById(userId, {
+            password: newPassword
+        })
+
+        if (error) throw error
+
+        return { success: true }
+    } catch (error: any) {
+        console.error("Admin Reset Password Error:", error)
+        return { error: error.message || "Error al restablecer la contraseña" }
+    }
+}
+

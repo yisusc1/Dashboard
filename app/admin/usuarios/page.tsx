@@ -16,9 +16,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
-import { UserCog, Mail, Calendar, Settings2, Building2, Briefcase, User as UserIcon, ArrowLeft, Pencil, Shield, LogIn, LayoutDashboard, Truck, Wrench, Package, ClipboardCheck, Lock } from "lucide-react"
+import { UserCog, Mail, Calendar, Settings2, Building2, Briefcase, User as UserIcon, ArrowLeft, Pencil, Shield, LogIn, LayoutDashboard, Truck, Wrench, Package, ClipboardCheck, Lock, Key } from "lucide-react"
 import Link from "next/link"
-import { updateProfileDetails, impersonateUserAction, createUserAction } from "./user-actions"
+import { updateProfileDetails, impersonateUserAction, createUserAction, adminResetPassword } from "./user-actions"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { DEPARTMENTS, JOB_TITLES_BY_DEPARTMENT } from "@/lib/constants"
@@ -132,6 +132,11 @@ export default function AdminUsersPage() {
     })
     const [creating, setCreating] = useState(false)
 
+    // Reset Password State
+    const [resetPasswordUser, setResetPasswordUser] = useState<Profile | null>(null)
+    const [resetPasswordValue, setResetPasswordValue] = useState("")
+    const [resettingPassword, setResettingPassword] = useState(false)
+
     useEffect(() => {
         loadProfiles()
     }, [])
@@ -209,8 +214,21 @@ export default function AdminUsersPage() {
 
             toast.success("Permiso actualizado")
         } catch (error) {
-            console.error("Error updating roles:", error)
             toast.error("Error al actualizar permisos")
+        }
+    }
+
+    const handleResetPassword = async () => {
+        if (!resetPasswordUser || !resetPasswordValue) return
+        setResettingPassword(true)
+        const result = await adminResetPassword(resetPasswordUser.id, resetPasswordValue)
+        setResettingPassword(false)
+        if (result.error) {
+            toast.error(result.error)
+        } else {
+            toast.success("Contraseña actualizada exitosamente")
+            setResetPasswordUser(null)
+            setResetPasswordValue("")
         }
     }
 
@@ -374,6 +392,16 @@ export default function AdminUsersPage() {
                                                     title="Editar Datos"
                                                 >
                                                     <Pencil size={16} className="text-zinc-500" />
+                                                </Button>
+
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-8 w-8 p-0 hover:bg-zinc-100 text-zinc-400 hover:text-amber-600"
+                                                    title="Cambiar Contraseña"
+                                                    onClick={() => setResetPasswordUser(profile)}
+                                                >
+                                                    <Key size={16} />
                                                 </Button>
 
                                                 <Button
@@ -617,6 +645,35 @@ export default function AdminUsersPage() {
                         <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancelar</Button>
                         <Button onClick={handleCreateUser} disabled={creating} className="bg-zinc-900 text-white hover:bg-zinc-800">
                             {creating ? "Creando..." : "Crear Cuenta"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* RESET PASSWORD DIALOG */}
+            <Dialog open={!!resetPasswordUser} onOpenChange={(open) => !open && setResetPasswordUser(null)}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Cambiar Contraseña</DialogTitle>
+                        <DialogDescription>
+                            Asigna una nueva contraseña a <span className="font-bold">{resetPasswordUser?.email}</span>.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label>Nueva Contraseña Temporal</Label>
+                            <Input
+                                type="text"
+                                value={resetPasswordValue}
+                                onChange={e => setResetPasswordValue(e.target.value)}
+                                placeholder="Ej: Temporal123"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setResetPasswordUser(null)}>Cancelar</Button>
+                        <Button onClick={handleResetPassword} disabled={resettingPassword} className="bg-amber-600 text-white hover:bg-amber-700">
+                            {resettingPassword ? "Guardando..." : "Guardar Clave"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
