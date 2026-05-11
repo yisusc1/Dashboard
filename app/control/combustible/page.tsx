@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
-import { ArrowLeft, Fuel, Plus, FileSpreadsheet, Search, Filter, Calendar as CalendarIcon, ExternalLink, QrCode, Truck, User as UserIcon, Gauge, X, Trash2, AlertTriangle, CheckCircle, Image as ImageIcon } from "lucide-react"
+import { ArrowLeft, Fuel, Plus, FileSpreadsheet, Filter, QrCode, Truck, User as UserIcon, X, Trash2, AlertTriangle, CheckCircle, Image as ImageIcon } from "lucide-react"
 import { DatePickerWithRange } from "@/components/ui/date-range-picker"
 import { DateRange } from "react-day-picker"
 import { DailyReportDialog } from "./daily-report-dialog"
@@ -13,14 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog"
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table"
+import { cn } from "@/lib/utils"
 import {
     Select,
     SelectContent,

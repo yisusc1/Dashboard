@@ -118,7 +118,7 @@ export async function createFuelLog(data: FuelLogData) {
                     }
                     // Continue to insert...
                 } else {
-                    return { success: false, error: "No se pudo encontrar el registro erróneo para corregirlo automticamente." }
+                    return { success: false, error: "No se pudo encontrar el registro erróneo para corregirlo automáticamente." }
                 }
 
             } else {
@@ -220,6 +220,7 @@ export async function getTodayStats() {
     const { data, error } = await supabase
         .from("fuel_logs")
         .select("liters")
+        .eq("status", "active")
         .gte("fuel_date", startDate)
         .lte("fuel_date", endDate)
 
@@ -324,6 +325,7 @@ export async function generateDailyReport(dateString: string) {
             liters,
             vehicle:vehiculos(modelo, placa)
         `)
+        .eq("status", "active")
         .gte("fuel_date", startDate)
         .lte("fuel_date", endDate)
 
