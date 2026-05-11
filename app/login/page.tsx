@@ -111,7 +111,7 @@ export default function LoginPage() {
                                     value={username}
                                     onChange={e => setUsername(e.target.value)}
                                     className="rounded-xl border-gray-200 bg-gray-50/50"
-                                    placeholder="jlima"
+                                    placeholder="usuario.ejemplo"
                                 />
                             </div>
                             <div className="space-y-1 text-left">
