@@ -165,7 +165,7 @@ export default function FuelControlPage() {
                     <div className="flex gap-2">
                          <Link href="/control/combustible/new">
                             <Button className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-10 px-4 shadow-md shadow-indigo-100">
-                                <Plus size={18} className="mr-1.5" />
+                                <Plus size={18} className="mr-[6px]" />
                                 <span className="hidden sm:inline">Nuevo Ticket</span>
                                 <span className="sm:hidden">Nuevo</span>
                             </Button>
@@ -192,7 +192,7 @@ export default function FuelControlPage() {
                                 <p className="text-[10px] font-bold text-indigo-200 uppercase tracking-wider mb-1">Actividad</p>
                                 <h3 className="text-xl font-black">En Línea</h3>
                                 <div className="flex items-center gap-1 mt-1 text-[10px] font-bold text-indigo-100">
-                                    <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" /> Supervisor Activo
+                                    <div className="w-[6px] h-[6px] bg-white rounded-full animate-pulse" /> Supervisor Activo
                                 </div>
                             </CardContent>
                         </Card>
@@ -299,11 +299,11 @@ export default function FuelControlPage() {
 
                                             <div className="grid grid-cols-2 gap-3 py-3 border-t border-zinc-100">
                                                 <div>
-                                                    <span className="text-[10px] uppercase font-bold text-zinc-400 block mb-0.5">Litros</span>
+                                                    <span className="text-[10px] uppercase font-bold text-zinc-400 block mb-[2px]">Litros</span>
                                                     <div className="text-xl font-black text-emerald-600">{log.liters} L</div>
                                                 </div>
                                                 <div>
-                                                    <span className="text-[10px] uppercase font-bold text-zinc-400 block mb-0.5">Kilometraje</span>
+                                                    <span className="text-[10px] uppercase font-bold text-zinc-400 block mb-[2px]">Kilometraje</span>
                                                     <div className="text-xl font-black text-zinc-900">{log.mileage?.toLocaleString()} <span className="text-xs font-normal">km</span></div>
                                                 </div>
                                             </div>
@@ -383,7 +383,7 @@ export default function FuelControlPage() {
                                             setAnnulDialogOpen(true)
                                         }}
                                     >
-                                        <Trash2 size={18} className="mr-1.5" /> Anular
+                                        <Trash2 size={18} className="mr-[6px]" /> Anular
                                     </Button>
                                 )}
                             </div>

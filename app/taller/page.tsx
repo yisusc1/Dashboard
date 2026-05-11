@@ -270,15 +270,15 @@ export default function TallerPage() {
                     <div className="sticky top-[73px] z-20 bg-zinc-50 pt-2 pb-4">
                         <TabsList className="grid w-full grid-cols-3 bg-white border border-zinc-200 p-1 rounded-2xl h-14 shadow-sm">
                             <TabsTrigger value="pending" className="rounded-xl text-xs sm:text-sm data-[state=active]:bg-zinc-100 data-[state=active]:text-zinc-900 data-[state=active]:font-bold transition-all">
-                                <AlertTriangle size={14} className="mr-1.5 hidden sm:inline" />
-                                Pendientes {pending.length > 0 && <span className="ml-1.5 bg-red-100 text-red-600 text-[10px] px-2 py-0.5 rounded-full">{pending.length}</span>}
+                                <AlertTriangle size={14} className="mr-[6px] hidden sm:inline" />
+                                Pendientes {pending.length > 0 && <span className="ml-[6px] bg-red-100 text-red-600 text-[10px] px-2 py-[2px] rounded-full">{pending.length}</span>}
                             </TabsTrigger>
                             <TabsTrigger value="progress" className="rounded-xl text-xs sm:text-sm data-[state=active]:bg-indigo-600 data-[state=active]:text-white font-medium transition-all">
-                                <Wrench size={14} className="mr-1.5 hidden sm:inline" />
-                                En Taller {inProgress.length > 0 && <span className="ml-1.5 bg-indigo-500 text-white text-[10px] px-2 py-0.5 rounded-full">{inProgress.length}</span>}
+                                <Wrench size={14} className="mr-[6px] hidden sm:inline" />
+                                En Taller {inProgress.length > 0 && <span className="ml-[6px] bg-indigo-500 text-white text-[10px] px-2 py-[2px] rounded-full">{inProgress.length}</span>}
                             </TabsTrigger>
                             <TabsTrigger value="history" className="rounded-xl text-xs sm:text-sm data-[state=active]:bg-zinc-100 data-[state=active]:text-zinc-900 font-medium transition-all">
-                                <ClipboardList size={14} className="mr-1.5 hidden sm:inline" />
+                                <ClipboardList size={14} className="mr-[6px] hidden sm:inline" />
                                 Historial
                             </TabsTrigger>
                         </TabsList>
@@ -287,7 +287,7 @@ export default function TallerPage() {
                     {/* Search Bar - Only for Active Tabs */}
                     {activeTab !== 'history' && (
                         <div className="relative mb-6">
-                            <Search className="absolute left-4 top-3.5 text-zinc-400" size={18} />
+                            <Search className="absolute left-4 top-[14px] text-zinc-400" size={18} />
                             <input
                                 type="text"
                                 placeholder="Buscar placa o modelo..."
@@ -433,8 +433,8 @@ function MobileFaultCard({ fault, actionText, actionColor, onAction, onSecondary
                 <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-zinc-900 text-lg leading-tight truncate">{fault.modelo}</h3>
                     <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs font-mono bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-md">{fault.placa}</span>
-                        <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md ${
+                        <span className="text-xs font-mono bg-zinc-100 text-zinc-600 px-2 py-[2px] rounded-md">{fault.placa}</span>
+                        <span className={`text-[10px] font-bold uppercase px-2 py-[2px] rounded-md ${
                             fault.prioridad === 'Crítica' ? 'bg-red-50 text-red-600' :
                             fault.prioridad === 'Alta' ? 'bg-orange-50 text-orange-600' :
                             'bg-zinc-100 text-zinc-500'

@@ -87,7 +87,7 @@ export default function CompleteProfilePage() {
                                 Cédula de Identidad
                             </label>
                             <div className="relative">
-                                <CreditCard className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
+                                <CreditCard className="absolute left-4 top-[14px] h-5 w-5 text-gray-400" />
                                 <input
                                     id="national_id"
                                     name="national_id"
@@ -104,7 +104,7 @@ export default function CompleteProfilePage() {
                                 Teléfono móvil
                             </label>
                             <div className="relative">
-                                <Phone className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
+                                <Phone className="absolute left-4 top-[14px] h-5 w-5 text-gray-400" />
                                 <input
                                     id="phone"
                                     name="phone"
