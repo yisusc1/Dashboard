@@ -47,14 +47,9 @@ export function DashboardMenu() {
 
     const dept = profile?.department
 
-    const canAccess = (roleKey: string, deptName?: string) => {
+    const canAccess = (roleKey: string) => {
         if (isAdmin) return true
-        if (hasRole(roleKey as any)) return true
-        if (deptName && dept === deptName) {
-            if (hasRole('chofer') && roleKey !== 'transporte') return false
-            return true
-        }
-        return false
+        return hasRole(roleKey as any)
     }
 
     const isModuleEnabled = (key: string) => {
