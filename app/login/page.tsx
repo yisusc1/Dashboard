@@ -16,11 +16,9 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false)
 
     const router = useRouter()
-    const [email, setEmail] = useState("")
+    const [email, setEmail] = useState("") // keep unused imports if they exist
+    const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
-    const [firstName, setFirstName] = useState("")
-    const [lastName, setLastName] = useState("")
-    const [isSignUp, setIsSignUp] = useState(false)
 
 
 
@@ -57,42 +55,26 @@ export default function LoginPage() {
         setLoading(true)
         const supabase = createClient()
 
-        if (isSignUp) {
-            const { error } = await supabase.auth.signUp({
-                email,
-                password,
-                options: {
-                    data: {
-                        first_name: firstName,
-                        last_name: lastName
-                    }
-                }
-            })
-            if (error) {
-                toast.error("Error registro: " + error.message)
-                setLoading(false)
-            } else {
-                toast.success("Cuenta creada! Revisa tu correo o intenta iniciar sesión (si el auto-confirm está activo)")
-                // Try auto login logic or just notify
-                // For dev environments without email confirm, this works immediately usually
-                // If email confirm is on, they are stuck. 
-                // Let's assume they can login or middleware handles it.
-                setLoading(false)
-            }
-        } else {
-            const { error } = await supabase.auth.signInWithPassword({
-                email,
-                password
-            })
+        // Helper to get virtual email
+        const getVirtualEmail = (user: string) => {
+            if (user.includes('@')) return user;
+            return `${user.toLowerCase().trim()}@dashboard.local`;
+        }
 
-            if (error) {
-                toast.error("Error: " + error.message)
-                setLoading(false)
-            } else {
-                toast.success("Bienvenido")
-                router.push("/")
-                router.refresh()
-            }
+        const virtualEmail = getVirtualEmail(username);
+
+        const { error } = await supabase.auth.signInWithPassword({
+            email: virtualEmail,
+            password
+        })
+
+        if (error) {
+            toast.error("Error: " + error.message)
+            setLoading(false)
+        } else {
+            toast.success("Bienvenido")
+            router.push("/")
+            router.refresh()
         }
     }
 
@@ -122,38 +104,14 @@ export default function LoginPage() {
 
                         {/* Manual Login Form */}
                         <form onSubmit={handleEmailLogin} className="space-y-3 mb-6">
-                            {isSignUp && (
-                                <div className="grid grid-cols-2 gap-3 mb-2">
-                                    <div className="space-y-1 text-left">
-                                        <Label className="text-xs text-gray-500 ml-1">Nombre</Label>
-                                        <Input
-                                            value={firstName}
-                                            onChange={e => setFirstName(e.target.value)}
-                                            className="rounded-xl border-gray-200 bg-gray-50/50"
-                                            placeholder="Juan"
-                                            required
-                                        />
-                                    </div>
-                                    <div className="space-y-1 text-left">
-                                        <Label className="text-xs text-gray-500 ml-1">Apellido</Label>
-                                        <Input
-                                            value={lastName}
-                                            onChange={e => setLastName(e.target.value)}
-                                            className="rounded-xl border-gray-200 bg-gray-50/50"
-                                            placeholder="Pérez"
-                                            required
-                                        />
-                                    </div>
-                                </div>
-                            )}
                             <div className="space-y-1 text-left">
-                                <Label className="text-xs text-gray-500 ml-1">Email</Label>
+                                <Label className="text-xs text-gray-500 ml-1">Usuario</Label>
                                 <Input
-                                    type="email"
-                                    value={email}
-                                    onChange={e => setEmail(e.target.value)}
+                                    type="text"
+                                    value={username}
+                                    onChange={e => setUsername(e.target.value)}
                                     className="rounded-xl border-gray-200 bg-gray-50/50"
-                                    placeholder="correo@ejemplo.com"
+                                    placeholder="jlima"
                                 />
                             </div>
                             <div className="space-y-1 text-left">
@@ -170,18 +128,38 @@ export default function LoginPage() {
                                 type="submit"
                                 variant="outline"
                                 className="w-full rounded-xl h-11 border-gray-200 text-gray-700 hover:bg-gray-50 mb-2"
-                                disabled={loading || !email || !password}
+                                disabled={loading || !username || !password}
                             >
-                                {loading ? "Procesando..." : (isSignUp ? "Registrar Cuenta de Prueba" : "Iniciar con Correo")}
+                                {loading ? "Procesando..." : "Iniciar Sesión"}
                             </Button>
 
                             <div className="text-center">
                                 <button
                                     type="button"
-                                    onClick={() => setIsSignUp(!isSignUp)}
+                                    onClick={async () => {
+                                        if (!username) {
+                                            toast.error("Ingresa tu Usuario primero para recuperar la contraseña");
+                                            return;
+                                        }
+                                        setLoading(true);
+                                        try {
+                                            const { recoverPassword } = await import("./actions");
+                                            const result = await recoverPassword(username);
+                                            if (result.success) {
+                                                toast.success(result.message, { duration: 8000 });
+                                            } else {
+                                                toast.error(result.message, { duration: 8000 });
+                                            }
+                                        } catch (e) {
+                                            toast.error("Error al procesar la solicitud");
+                                        } finally {
+                                            setLoading(false);
+                                        }
+                                    }}
                                     className="text-xs text-blue-600 hover:underline"
+                                    disabled={loading}
                                 >
-                                    {isSignUp ? "¿Ya tienes cuenta? Inicia Sesión" : "¿No tienes contraseña? Crea una cuenta de prueba"}
+                                    ¿Olvidaste tu contraseña?
                                 </button>
                             </div>
                         </form>

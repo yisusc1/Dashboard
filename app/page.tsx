@@ -19,9 +19,14 @@ export default async function Home() {
   // Fetch Profile
   const { data: profile } = await supabase
     .from("profiles")
-    .select("first_name, last_name, department, job_title")
+    .select("first_name, last_name, department, job_title, national_id")
     .eq("id", user.id)
     .single()
+
+  // Redirect to complete profile if necessary info is missing
+  if (!profile?.first_name || !profile?.last_name || !profile?.national_id) {
+    return redirect("/complete-profile")
+  }
 
   return (
     <main className="min-h-screen bg-zinc-50 flex flex-col items-center justify-center p-6">
