@@ -44,64 +44,64 @@ type Profile = {
 // DEFINING MODULE ACCESS GROUPS
 const MODULE_ACCESS = [
     {
-        title: "Módulos de Gestión (Visibilidad)",
+        title: "Módulos Principales",
         items: [
             {
                 role: 'gerencia',
-                label: 'Centro de Control',
-                description: 'Visualización de indicadores, métricas y dashboard ejecutivo.',
+                label: 'Gerencia',
+                description: 'Acceso al módulo de Gerencia (Dashboard y Métricas).',
                 icon: LayoutDashboard,
                 color: 'text-indigo-600 bg-indigo-50 border-indigo-200'
             },
             {
                 role: 'transporte',
-                label: 'Logística de Transporte',
-                description: 'Registro de salidas, entradas y monitoreo de rutas.',
+                label: 'Transporte',
+                description: 'Acceso al módulo de Transporte (Salidas y Vehículos).',
                 icon: Truck,
                 color: 'text-blue-600 bg-blue-50 border-blue-200'
             },
             {
                 role: 'taller',
-                label: 'Taller Mecánico',
-                description: 'Gestión de reparaciones, fallas y preventivos.',
+                label: 'Taller',
+                description: 'Acceso al módulo de Taller (Fallas y Preventivos).',
                 icon: Wrench,
                 color: 'text-amber-600 bg-amber-50 border-amber-200'
             },
             {
                 role: 'supervisor',
-                label: 'Control y Auditoría',
-                description: 'Control de combustible y supervisión de operaciones.',
+                label: 'Control',
+                description: 'Acceso al módulo de Control (Combustible y Auditorías).',
                 icon: ClipboardCheck,
                 color: 'text-rose-600 bg-rose-50 border-rose-200'
             },
         ]
     },
     {
-        title: "Perfiles Operativos",
+        title: "Roles Específicos",
         items: [
             { 
                 role: 'mecanico', 
-                label: 'Personal de Taller', 
-                description: 'Habilita funciones de reparación avanzada.',
+                label: 'Mecánico', 
+                description: 'Rol para visualizar reparaciones asignadas en Taller.',
                 icon: Wrench,
                 color: 'text-zinc-600 bg-zinc-50 border-zinc-200'
             },
             { 
                 role: 'tecnico', 
-                label: 'Técnico Externo', 
-                description: 'Perfil para personal fuera de la sede principal.',
+                label: 'Técnico', 
+                description: 'Rol para técnicos de campo (App móvil/Soporte).',
                 icon: UserIcon,
                 color: 'text-zinc-600 bg-zinc-50 border-zinc-200'
             },
         ]
     },
     {
-        title: "Seguridad de Sistema",
+        title: "Administración",
         items: [
             {
                 role: 'admin',
-                label: 'Administrador Total',
-                description: 'Acceso completo a usuarios, base de datos y configuración.',
+                label: 'Administrador',
+                description: 'Acceso total a configuración y gestión de usuarios.',
                 icon: Lock,
                 color: 'text-purple-600 bg-purple-50 border-purple-200'
             }
