@@ -10,7 +10,6 @@ import { useUser } from "@/components/providers/user-provider"
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { INITIAL_MODULES_CONFIG } from "@/lib/constants"
-import { VoiceHint } from "@/components/voice-hint"
 
 export function DashboardMenu() {
     const { hasRole, isAdmin, isLoading: isUserLoading, profile } = useUser()
@@ -66,7 +65,6 @@ export function DashboardMenu() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* TRANSPORTE / CHOFER */}
             {isModuleEnabled("module_transporte") && (canAccess("transporte", "Transporte") || hasRole("chofer")) && (
-                <VoiceHint command="Transporte" side="top">
                     <Link
                         href="/transporte"
                         className="group relative overflow-hidden bg-white rounded-[32px] p-8 border border-zinc-200 shadow-sm hover:shadow-xl hover:border-zinc-300 transition-all duration-300 block"
@@ -87,12 +85,10 @@ export function DashboardMenu() {
                             </div>
                         </div>
                     </Link>
-                </VoiceHint>
             )}
 
             {/* TALLER CARD */}
             {isModuleEnabled("module_taller") && canAccess("taller", "Taller") && (
-                <VoiceHint command="Taller" side="top">
                     <Link
                         href="/taller"
                         className="group relative overflow-hidden bg-white rounded-[32px] p-8 border border-zinc-200 shadow-sm hover:shadow-xl hover:border-zinc-300 transition-all duration-300 block"
@@ -113,7 +109,6 @@ export function DashboardMenu() {
                             </div>
                         </div>
                     </Link>
-                </VoiceHint>
             )}
 
 
@@ -121,7 +116,6 @@ export function DashboardMenu() {
 
             {/* COMBUSTIBLE */}
             {isModuleEnabled("module_combustible") && (canAccess("combustible") || (hasRole("supervisor") && dept === "Transporte")) && (
-                <VoiceHint command="Combustible" side="top">
                     <Link
                         href="/control/combustible"
                         className="group relative overflow-hidden bg-white rounded-[32px] p-8 border border-zinc-200 shadow-sm hover:shadow-xl hover:border-orange-200 transition-all duration-300 block"
@@ -142,12 +136,10 @@ export function DashboardMenu() {
                             </div>
                         </div>
                     </Link>
-                </VoiceHint>
             )}
 
             {/* ADMIN GENERAL (Only Admin) */}
             {isAdmin && (
-                <VoiceHint command="Configuración" side="top">
                     <Link
                         href="/admin"
                         className="group relative overflow-hidden bg-white rounded-[32px] p-8 border border-zinc-200 shadow-sm hover:shadow-xl hover:border-zinc-300 transition-all duration-300 block"
@@ -168,12 +160,10 @@ export function DashboardMenu() {
                             </div>
                         </div>
                     </Link>
-                </VoiceHint>
             )}
 
             {/* GERENCIA */}
             {(isAdmin || (profile?.job_title && (profile.job_title.toLowerCase().includes('gerente') || profile.job_title.toLowerCase().includes('admin')))) && (
-                <VoiceHint command="Gerencia" side="top">
                     <Link
                         href="/gerencia"
                         className="group relative overflow-hidden bg-white rounded-[32px] p-8 border border-zinc-200 shadow-sm hover:shadow-xl hover:border-emerald-200 transition-all duration-300 block"
@@ -194,14 +184,12 @@ export function DashboardMenu() {
                             </div>
                         </div>
                     </Link>
-                </VoiceHint>
             )}
 
             {/* MI PERFIL */}
-            <VoiceHint command="Mi Perfil" side="top" className="md:col-span-2">
                 <Link
                     href="/perfil"
-                    className="group relative overflow-hidden bg-zinc-900 rounded-[32px] p-8 border border-zinc-800 shadow-sm hover:shadow-xl hover:border-zinc-700 transition-all duration-300 block"
+                    className="group relative overflow-hidden bg-zinc-900 rounded-[32px] p-8 border border-zinc-800 shadow-sm hover:shadow-xl hover:border-zinc-700 transition-all duration-300 md:col-span-2 block"
                 >
                     <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity transform group-hover:scale-110 duration-500">
                         <UserCog size={120} className="text-white" />
@@ -222,7 +210,6 @@ export function DashboardMenu() {
                         </div>
                     </div>
                 </Link>
-            </VoiceHint>
         </div>
     )
 }

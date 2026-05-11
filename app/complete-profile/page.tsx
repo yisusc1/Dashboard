@@ -2,11 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { useRef, useEffect, useState } from "react"
-import { Camera } from "@capacitor/camera"
-import { Geolocation } from "@capacitor/geolocation"
-import { PushNotifications } from "@capacitor/push-notifications"
-import { VoiceRecorder } from "capacitor-voice-recorder"
-import { Filesystem } from "@capacitor/filesystem"
+
 import { updateProfile } from "./actions"
 import { User, Phone, CreditCard } from "lucide-react"
 import { toast } from "sonner"
@@ -14,29 +10,6 @@ import { toast } from "sonner"
 export default function CompleteProfilePage() {
     const [loading, setLoading] = useState(false)
 
-    // Request native permissions on mount
-    useEffect(() => {
-        const requestPermissions = async () => {
-            try {
-                // Geo
-                await Geolocation.requestPermissions()
-                // Camera & Gallery
-                await Camera.requestPermissions()
-                // Push
-                const result = await PushNotifications.requestPermissions()
-                if (result.receive === 'granted') {
-                    await PushNotifications.register()
-                }
-                // Microphone
-                await VoiceRecorder.requestAudioRecordingPermission()
-                // Files
-                await Filesystem.requestPermissions()
-            } catch (e) {
-                console.warn("Native permissions not available in browser or error:", e)
-            }
-        }
-        requestPermissions()
-    }, [])
 
     return (
         <main className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden bg-[#F2F2F7]">
@@ -57,7 +30,7 @@ export default function CompleteProfilePage() {
                             Configuración Inicial
                         </h1>
                         <p className="text-gray-500 text-sm font-medium">
-                            Registra tus datos y habilita permisos nativos para continuar
+                            Registra tus datos personales para continuar
                         </p>
                     </div>
 

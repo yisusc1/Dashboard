@@ -1,8 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">Dashboard</string>
-    <string name="title_activity_main">Dashboard</string>
-    <string name="package_name">com.dashboard.app</string>
-    <string name="custom_url_scheme">com.dashboard.app</string>
-    <string name="server_client_id">820734797192-i79t4gkvss50nq8hqr48qe5oeleb97an.apps.googleusercontent.com</string>
-</resources>

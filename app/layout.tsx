@@ -30,9 +30,7 @@ import { getSystemSettings } from "./admin/settings-actions";
 
 // ... existing imports
 
-import { VoiceAssistant } from "@/components/voice-assistant";
 
-import { VoiceProvider } from "@/components/voice-provider";
 import { PushNotificationManager } from "@/components/PushNotificationManager";
 import { GlobalPermissions } from "@/components/GlobalPermissions";
 import { InstallPrompt } from "@/components/InstallPrompt";
@@ -58,9 +56,6 @@ export default async function RootLayout({
     profile = data;
   }
 
-  // Fetch System Settings
-  const settings = await getSystemSettings()
-  const isVoiceEnabled = settings["VOICE_ENABLED"] !== false // Default true
 
   return (
     <html lang="es" suppressHydrationWarning>
@@ -68,14 +63,11 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <UserProvider initialUser={user} initialProfile={profile}>
-          <VoiceProvider>
             {children}
-            {isVoiceEnabled && <VoiceAssistant />}
             <Toaster richColors position="top-center" />
             <PushNotificationManager />
             <GlobalPermissions />
             <InstallPrompt />
-          </VoiceProvider>
         </UserProvider>
       </body>
     </html>
