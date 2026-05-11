@@ -14,7 +14,13 @@ export interface FuelLogData {
     mileage: number
     ticket_url?: string
     notes?: string
-    forceCorrection?: boolean // [NEW] Allow supervisor to force fix
+    forceCorrection?: boolean 
+    is_skipped?: boolean // [NEW] Flag if user is skipping a number
+}
+
+function cleanTicketNumber(ticket: string): string {
+    // Remove non-digits and leading zeros
+    return ticket.replace(/\D/g, '').replace(/^0+/, '');
 }
 
 export async function getVehicles() {
@@ -50,7 +56,37 @@ export async function createFuelLog(data: FuelLogData) {
         return { success: false, error: "No autenticado" }
     }
 
+    const cleanTicket = cleanTicketNumber(data.ticket_number);
+    if (!cleanTicket) return { success: false, error: "Número de ticket inválido" };
+
     try {
+        // [NEW] Validate Sequence
+        const { data: lastLog } = await supabase
+            .from("fuel_logs")
+            .select("ticket_number")
+            .eq("vehicle_id", data.vehicle_id)
+            .eq("status", "active") // Only check against non-annulled
+            .order("fuel_date", { ascending: false })
+            .limit(1)
+            .single();
+
+        if (lastLog) {
+            const lastNum = parseInt(lastLog.ticket_number);
+            const currentNum = parseInt(cleanTicket);
+
+            if (currentNum <= lastNum) {
+                return { success: false, error: `El número de ticket (${currentNum}) ya existe o es menor al último registrado (${lastNum}) para este vehículo.` };
+            }
+
+            if (currentNum > lastNum + 1 && !data.is_skipped) {
+                return { 
+                    success: false, 
+                    error: `El número de ticket (${currentNum}) no es el siguiente en la secuencia (+1 de ${lastNum}).`,
+                    requiresSequenceBypass: true,
+                    lastTicket: lastNum
+                };
+            }
+        }
         // [NEW] Validate Mileage
         const { data: vehicleMileage, error: mileageError } = await supabase
             .from("vista_ultimos_kilometrajes")
@@ -97,15 +133,16 @@ export async function createFuelLog(data: FuelLogData) {
         }
 
         const { error } = await supabase.from("fuel_logs").insert({
-            ticket_number: data.ticket_number,
-            fuel_date: new Date().toISOString(), // [SEC] Always use server time
+            ticket_number: cleanTicket,
+            fuel_date: data.fuel_date || new Date().toISOString(), // Use provided date (UI ensures current time)
             vehicle_id: data.vehicle_id,
             driver_name: data.driver_name,
             liters: data.liters,
             mileage: data.mileage,
             supervisor_id: user.id,
             ticket_url: data.ticket_url,
-            notes: data.notes
+            notes: data.notes,
+            status: 'active'
         })
 
         if (error) throw error
@@ -230,6 +267,45 @@ export async function getVehicleDetailsAction(vehicleId: string) {
         ...vehicle,
         last_fuel: lastFuel || null
     }
+}
+
+export async function getActiveDriverAction(vehicleId: string) {
+    const supabase = await createClient()
+    
+    // Find active trip (fecha_entrada is null)
+    const { data: trip, error } = await supabase
+        .from('reportes')
+        .select('conductor')
+        .eq('vehiculo_id', vehicleId)
+        .is('fecha_entrada', null)
+        .order('fecha_salida', { ascending: false })
+        .limit(1)
+        .single()
+
+    if (error || !trip) return null
+    return trip.conductor
+}
+
+export async function annulFuelLog(logId: string, reason: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { success: false, error: "No autorizado" }
+
+    const { error } = await supabase
+        .from("fuel_logs")
+        .update({ 
+            status: 'annulled', 
+            void_reason: reason,
+            voided_at: new Date().toISOString(),
+            voided_by: user.id
+        })
+        .eq("id", logId)
+
+    if (error) return { success: false, error: error.message }
+
+    revalidatePath("/control/combustible")
+    return { success: true }
 }
 
 export async function generateDailyReport(dateString: string) {
