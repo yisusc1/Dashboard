@@ -236,28 +236,28 @@ export default function TallerPage() {
     const inProgress = filteredFaults.filter(f => f.estado === 'En Revisión')
 
     return (
-        <main className="min-h-screen bg-zinc-950 pb-28 md:pb-12 font-sans selection:bg-indigo-500/30 text-zinc-100">
+        <main className="min-h-screen bg-zinc-50 pb-28 md:pb-12 font-sans text-zinc-900">
             {/* Header Mobile-First */}
-            <header className="sticky top-0 z-30 bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-800/50 px-4 py-4">
+            <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-zinc-200 px-4 py-4">
                 <div className="max-w-4xl mx-auto flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                        <div className="bg-indigo-500/20 p-2 rounded-xl text-indigo-400">
+                        <div className="bg-indigo-50 text-indigo-600 p-2 rounded-xl">
                             <Hammer size={24} />
                         </div>
                         <div>
-                            <h1 className="text-xl font-bold text-white leading-none">Taller</h1>
-                            <p className="text-xs text-zinc-400 font-medium mt-1">Gestión Activa</p>
+                            <h1 className="text-xl font-bold text-zinc-900 leading-none">Taller</h1>
+                            <p className="text-xs text-zinc-500 font-medium mt-1">Gestión Activa</p>
                         </div>
                     </div>
                     <div className="flex gap-2">
                         <Button 
                             onClick={() => { setSelectedVehicleId(undefined); setSelectedServiceType(undefined); setPendingResolveId(null); setMaintenanceOpen(true); }}
-                            className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl h-10 w-10 p-0 md:w-auto md:px-4"
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-10 w-10 p-0 md:w-auto md:px-4"
                         >
                             <PlusIcon className="md:hidden" />
                             <span className="hidden md:inline-flex items-center gap-2"><Wrench size={16}/> Nuevo Registro</span>
                         </Button>
-                        <a href="/" className="h-10 w-10 text-zinc-400 hover:text-white bg-zinc-900 rounded-xl flex items-center justify-center border border-zinc-800">
+                        <a href="/" className="h-10 w-10 text-zinc-400 hover:text-zinc-900 bg-white rounded-xl flex items-center justify-center border border-zinc-200">
                             <HomeIcon size={18} />
                         </a>
                     </div>
@@ -267,17 +267,17 @@ export default function TallerPage() {
             <div className="max-w-4xl mx-auto px-4 mt-6">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                     {/* Sticky Tabs for easy access on mobile */}
-                    <div className="sticky top-[73px] z-20 bg-zinc-950 pt-2 pb-4">
-                        <TabsList className="grid w-full grid-cols-3 bg-zinc-900/50 border border-zinc-800/50 p-1 rounded-2xl h-14">
-                            <TabsTrigger value="pending" className="rounded-xl text-xs sm:text-sm data-[state=active]:bg-zinc-800 data-[state=active]:text-white">
+                    <div className="sticky top-[73px] z-20 bg-zinc-50 pt-2 pb-4">
+                        <TabsList className="grid w-full grid-cols-3 bg-white border border-zinc-200 p-1 rounded-2xl h-14 shadow-sm">
+                            <TabsTrigger value="pending" className="rounded-xl text-xs sm:text-sm data-[state=active]:bg-zinc-100 data-[state=active]:text-zinc-900 data-[state=active]:font-bold transition-all">
                                 <AlertTriangle size={14} className="mr-1.5 hidden sm:inline" />
-                                Pendientes {pending.length > 0 && <span className="ml-1.5 bg-red-500/20 text-red-400 text-[10px] px-2 py-0.5 rounded-full">{pending.length}</span>}
+                                Pendientes {pending.length > 0 && <span className="ml-1.5 bg-red-100 text-red-600 text-[10px] px-2 py-0.5 rounded-full">{pending.length}</span>}
                             </TabsTrigger>
-                            <TabsTrigger value="progress" className="rounded-xl text-xs sm:text-sm data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+                            <TabsTrigger value="progress" className="rounded-xl text-xs sm:text-sm data-[state=active]:bg-indigo-600 data-[state=active]:text-white font-medium transition-all">
                                 <Wrench size={14} className="mr-1.5 hidden sm:inline" />
-                                En Taller {inProgress.length > 0 && <span className="ml-1.5 bg-indigo-900/50 text-indigo-200 text-[10px] px-2 py-0.5 rounded-full">{inProgress.length}</span>}
+                                En Taller {inProgress.length > 0 && <span className="ml-1.5 bg-indigo-500 text-white text-[10px] px-2 py-0.5 rounded-full">{inProgress.length}</span>}
                             </TabsTrigger>
-                            <TabsTrigger value="history" className="rounded-xl text-xs sm:text-sm data-[state=active]:bg-zinc-800 data-[state=active]:text-white">
+                            <TabsTrigger value="history" className="rounded-xl text-xs sm:text-sm data-[state=active]:bg-zinc-100 data-[state=active]:text-zinc-900 font-medium transition-all">
                                 <ClipboardList size={14} className="mr-1.5 hidden sm:inline" />
                                 Historial
                             </TabsTrigger>
@@ -287,20 +287,20 @@ export default function TallerPage() {
                     {/* Search Bar - Only for Active Tabs */}
                     {activeTab !== 'history' && (
                         <div className="relative mb-6">
-                            <Search className="absolute left-4 top-3.5 text-zinc-500" size={18} />
+                            <Search className="absolute left-4 top-3.5 text-zinc-400" size={18} />
                             <input
                                 type="text"
                                 placeholder="Buscar placa o modelo..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full h-12 pl-12 pr-4 bg-zinc-900 border border-zinc-800 rounded-2xl text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                                className="w-full h-12 pl-12 pr-4 bg-white border border-zinc-200 rounded-2xl text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all shadow-sm"
                             />
                         </div>
                     )}
 
                     {loading ? (
-                        <div className="py-20 text-center text-zinc-500 flex flex-col items-center">
-                            <div className="animate-spin w-8 h-8 border-2 border-zinc-800 border-t-indigo-500 rounded-full mb-4"></div>
+                        <div className="py-20 text-center text-zinc-400 flex flex-col items-center">
+                            <div className="animate-spin w-8 h-8 border-2 border-zinc-200 border-t-indigo-500 rounded-full mb-4"></div>
                             Cargando datos...
                         </div>
                     ) : (
@@ -310,7 +310,7 @@ export default function TallerPage() {
                                     <EmptyState message="No hay mantenimientos ni fallas pendientes." icon={CheckCircle} />
                                 ) : (
                                     pending.map(fault => (
-                                        <MobileFaultCard key={fault.id} fault={fault} actionText="Pasar a Taller" actionColor="bg-indigo-600 hover:bg-indigo-500" onAction={() => handleReview(fault)} />
+                                        <MobileFaultCard key={fault.id} fault={fault} actionText="Pasar a Taller" actionColor="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20" onAction={() => handleReview(fault)} />
                                     ))
                                 )}
                             </TabsContent>
@@ -320,7 +320,7 @@ export default function TallerPage() {
                                     <EmptyState message="El taller está vacío." icon={Wrench} />
                                 ) : (
                                     inProgress.map(fault => (
-                                        <MobileFaultCard key={fault.id} fault={fault} isReviewing actionText="Finalizar & Reportar" actionColor="bg-emerald-600 hover:bg-emerald-500" onAction={() => handleResolve(fault)} onSecondaryAction={() => updateStatus(fault.id, 'Pendiente')} secondaryActionText="Regresar a Pendiente" />
+                                        <MobileFaultCard key={fault.id} fault={fault} isReviewing actionText="Finalizar & Reportar" actionColor="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20" onAction={() => handleResolve(fault)} onSecondaryAction={() => updateStatus(fault.id, 'Pendiente')} secondaryActionText="Regresar a Pendiente" />
                                     ))
                                 )}
                             </TabsContent>
@@ -328,13 +328,13 @@ export default function TallerPage() {
                             <TabsContent value="history" className="mt-0 outline-none">
                                 <div className="mb-4">
                                     <Select value={historyFilter} onValueChange={setHistoryFilter}>
-                                        <SelectTrigger className="w-full h-12 bg-zinc-900 border-zinc-800 rounded-2xl">
-                                            <div className="flex items-center gap-2 text-zinc-300">
+                                        <SelectTrigger className="w-full h-12 bg-white border-zinc-200 rounded-2xl shadow-sm">
+                                            <div className="flex items-center gap-2 text-zinc-500">
                                                 <Search size={16} />
                                                 <SelectValue placeholder="Todos los vehículos" />
                                             </div>
                                         </SelectTrigger>
-                                        <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
+                                        <SelectContent className="bg-white border-zinc-200 text-zinc-900">
                                             <SelectItem value="all">Todos los vehículos</SelectItem>
                                             {vehicles.map((v) => (
                                                 <SelectItem key={v.id} value={v.placa}>{v.modelo} ({v.placa})</SelectItem>
@@ -345,33 +345,33 @@ export default function TallerPage() {
                                 
                                 <div className="space-y-3">
                                     {loadingHistory ? (
-                                        <div className="py-10 text-center text-zinc-500">Cargando historial...</div>
+                                        <div className="py-10 text-center text-zinc-400">Cargando historial...</div>
                                     ) : historyLogs.length === 0 ? (
                                         <EmptyState message="No hay historial registrado." icon={ClipboardList} />
                                     ) : (
                                         historyLogs.filter(log => historyFilter === "all" || log.placa === historyFilter).map((log: any) => (
-                                            <div key={log.id} className="bg-zinc-900 p-4 rounded-2xl border border-zinc-800/50 flex flex-col gap-3">
+                                            <div key={log.id} className="bg-white p-4 rounded-2xl border border-zinc-200 flex flex-col gap-3 shadow-sm">
                                                 <div className="flex justify-between items-start">
                                                     <div className="flex items-center gap-3">
-                                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${log.type === 'REPAIR' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-indigo-500/10 text-indigo-400'}`}>
+                                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${log.type === 'REPAIR' ? 'bg-emerald-50 text-emerald-600' : 'bg-indigo-50 text-indigo-600'}`}>
                                                             {log.type === 'REPAIR' ? <CheckCircle size={18} /> : <Wrench size={18} />}
                                                         </div>
                                                         <div>
-                                                            <div className="font-bold text-zinc-100">{log.vehicle}</div>
+                                                            <div className="font-bold text-zinc-900">{log.vehicle}</div>
                                                             <div className="text-xs text-zinc-500">{log.placa}</div>
                                                         </div>
                                                     </div>
-                                                    <div className="text-right text-xs text-zinc-500">
+                                                    <div className="text-right text-xs text-zinc-400">
                                                         <div>{new Date(log.date).toLocaleDateString()}</div>
                                                         <div>{new Date(log.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                                                     </div>
                                                 </div>
-                                                <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-800/50">
-                                                    <p className="text-sm text-zinc-300"><span className="font-semibold text-zinc-100">{log.category}:</span> {log.description}</p>
+                                                <div className="bg-zinc-50 p-3 rounded-xl border border-zinc-100">
+                                                    <p className="text-sm text-zinc-600"><span className="font-bold text-zinc-900">{log.category}:</span> {log.description}</p>
                                                     {(log.parts || log.cost > 0) && (
                                                         <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                                                            {log.parts && <span className="bg-zinc-800 text-zinc-300 px-2 py-1 rounded-md">Repuestos: {log.parts}</span>}
-                                                            {log.cost > 0 && <span className="bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded-md font-mono">${log.cost}</span>}
+                                                            {log.parts && <span className="bg-white text-zinc-600 border border-zinc-200 px-2 py-1 rounded-md">Repuestos: {log.parts}</span>}
+                                                            {log.cost > 0 && <span className="bg-emerald-50 text-emerald-700 px-2 py-1 rounded-md font-mono font-medium">${log.cost}</span>}
                                                         </div>
                                                     )}
                                                 </div>
@@ -414,30 +414,30 @@ function MobileFaultCard({ fault, actionText, actionColor, onAction, onSecondary
     const daysActive = Math.floor((new Date().getTime() - new Date(fault.created_at).getTime()) / (1000 * 3600 * 24))
 
     return (
-        <div className={`bg-zinc-900 border ${isMaintenance ? 'border-indigo-500/30' : 'border-zinc-800'} rounded-3xl p-4 flex flex-col gap-4 relative overflow-hidden`}>
+        <div className={`bg-white border ${isMaintenance ? 'border-indigo-100 shadow-indigo-100/50' : 'border-zinc-200 shadow-zinc-200/50'} rounded-3xl p-4 flex flex-col gap-4 relative overflow-hidden shadow-sm`}>
             {/* Top Indicator Line */}
             <div className={`absolute top-0 left-0 w-full h-1 ${isMaintenance ? 'bg-indigo-500' : 'bg-red-500'}`} />
             
             <div className="flex gap-4 items-start pt-1">
                 {/* Vehicle Image/Avatar */}
-                <div className="relative w-16 h-16 bg-zinc-950 rounded-2xl overflow-hidden shrink-0 border border-zinc-800">
+                <div className="relative w-16 h-16 bg-zinc-100 rounded-2xl overflow-hidden shrink-0 border border-zinc-100">
                     {fault.foto_url ? (
                         <Image src={fault.foto_url} alt={fault.modelo} fill className="object-cover" />
                     ) : (
-                        <div className="flex items-center justify-center h-full text-zinc-600">
+                        <div className="flex items-center justify-center h-full text-zinc-300">
                             <Wrench size={24} />
                         </div>
                     )}
                 </div>
 
                 <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-zinc-100 text-lg leading-tight truncate">{fault.modelo}</h3>
+                    <h3 className="font-bold text-zinc-900 text-lg leading-tight truncate">{fault.modelo}</h3>
                     <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs font-mono bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded-md">{fault.placa}</span>
+                        <span className="text-xs font-mono bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-md">{fault.placa}</span>
                         <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md ${
-                            fault.prioridad === 'Crítica' ? 'bg-red-500/20 text-red-400' :
-                            fault.prioridad === 'Alta' ? 'bg-orange-500/20 text-orange-400' :
-                            'bg-zinc-800 text-zinc-400'
+                            fault.prioridad === 'Crítica' ? 'bg-red-50 text-red-600' :
+                            fault.prioridad === 'Alta' ? 'bg-orange-50 text-orange-600' :
+                            'bg-zinc-100 text-zinc-500'
                         }`}>
                             {fault.prioridad}
                         </span>
@@ -445,29 +445,29 @@ function MobileFaultCard({ fault, actionText, actionColor, onAction, onSecondary
                 </div>
             </div>
 
-            <div className="bg-zinc-950 p-3 rounded-2xl border border-zinc-800">
-                <div className="flex items-center gap-2 text-xs text-zinc-500 font-medium mb-1 uppercase tracking-wider">
-                    {isMaintenance ? <Clock size={12} className="text-indigo-400"/> : <AlertTriangle size={12} className="text-red-400"/>}
+            <div className="bg-zinc-50 p-3 rounded-2xl border border-zinc-100">
+                <div className="flex items-center gap-2 text-xs text-zinc-500 font-bold mb-1 uppercase tracking-wider">
+                    {isMaintenance ? <Clock size={12} className="text-indigo-500"/> : <AlertTriangle size={12} className="text-red-500"/>}
                     {fault.tipo_falla}
                 </div>
-                <p className="text-sm text-zinc-300 font-medium">{fault.descripcion}</p>
+                <p className="text-sm text-zinc-700 font-medium">{fault.descripcion}</p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-2 mt-1">
-                <Button onClick={onAction} className={`flex-1 h-12 rounded-xl font-bold ${actionColor}`}>
+                <Button onClick={onAction} className={`flex-1 h-12 rounded-xl font-bold transition-all ${actionColor}`}>
                     {actionText}
                 </Button>
                 {onSecondaryAction && (
-                    <Button onClick={onSecondaryAction} variant="outline" className="h-12 rounded-xl bg-transparent border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-white">
+                    <Button onClick={onSecondaryAction} variant="outline" className="h-12 rounded-xl bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 font-bold shadow-sm">
                         {secondaryActionText}
                     </Button>
                 )}
             </div>
             
-            <div className="flex justify-between items-center px-1 text-[10px] text-zinc-500 font-medium uppercase tracking-wider">
+            <div className="flex justify-between items-center px-1 text-[10px] text-zinc-400 font-bold uppercase tracking-wider">
                 <span>Registrado: {new Date(fault.created_at).toLocaleDateString()}</span>
                 {daysActive > 0 ? (
-                    <span className="text-orange-400 flex items-center gap-1"><Clock3 size={10}/> {daysActive} días activo</span>
+                    <span className="text-orange-500 flex items-center gap-1"><Clock3 size={10}/> {daysActive} días activo</span>
                 ) : (
                     <span>Hoy</span>
                 )}
@@ -478,11 +478,11 @@ function MobileFaultCard({ fault, actionText, actionColor, onAction, onSecondary
 
 function EmptyState({ message, icon: Icon }: any) {
     return (
-        <div className="py-16 flex flex-col items-center justify-center text-center px-4 bg-zinc-900/50 rounded-3xl border border-zinc-800/50 border-dashed">
-            <div className="w-16 h-16 bg-zinc-800 rounded-full flex items-center justify-center text-zinc-600 mb-4">
+        <div className="py-16 flex flex-col items-center justify-center text-center px-4 bg-zinc-50 rounded-3xl border border-zinc-200 border-dashed">
+            <div className="w-16 h-16 bg-white shadow-sm rounded-full flex items-center justify-center text-zinc-400 mb-4 border border-zinc-100">
                 <Icon size={32} />
             </div>
-            <p className="text-zinc-400 font-medium">{message}</p>
+            <p className="text-zinc-500 font-medium">{message}</p>
         </div>
     )
 }
