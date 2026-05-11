@@ -1,7 +1,12 @@
 export const DEPARTMENTS = [
     "Altos Mandos",
+    "Administración",
     "Transporte",
-    "Administración"
+    "Instalación",
+    "Afectaciones",
+    "Distribución",
+    "Comercialización",
+    "Operaciones"
 ] as const
 
 export const JOB_TITLES_BY_DEPARTMENT: Record<string, string[]> = {
@@ -21,6 +26,30 @@ export const JOB_TITLES_BY_DEPARTMENT: Record<string, string[]> = {
         "Atención al Cliente",
         "Taquillero",
         "Call Center"
+    ],
+    "Instalación": [
+        "Técnico de Instalación",
+        "Ayudante",
+        "Supervisor de Zona"
+    ],
+    "Afectaciones": [
+        "Técnico de Campo",
+        "Especialista en Fibra",
+        "Liniero"
+    ],
+    "Distribución": [
+        "Logística",
+        "Despachador"
+    ],
+    "Comercialización": [
+        "Vendedor",
+        "Ejecutivo de Ventas",
+        "Asesor Comercial"
+    ],
+    "Operaciones": [
+        "Coordinador",
+        "Analista",
+        "Inspector"
     ]
 }
 

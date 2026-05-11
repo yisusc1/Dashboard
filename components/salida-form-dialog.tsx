@@ -24,6 +24,7 @@ import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { VehicleSelector, Vehicle } from "@/components/vehicle-selector"
 import { submitExitReport, updateVehicleFuel } from "@/app/transporte/actions"
+import { DEPARTMENTS } from "@/lib/constants"
 
 interface Vehiculo extends Vehicle {
     department?: string
@@ -531,13 +532,9 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
                                             <SelectValue placeholder="Seleccione el destino" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="Instalación">Instalación</SelectItem>
-                                            <SelectItem value="Afectaciones">Afectaciones</SelectItem>
-                                            <SelectItem value="Distribución">Distribución</SelectItem>
-                                            <SelectItem value="Comercialización">Comercialización</SelectItem>
-                                            <SelectItem value="Transporte">Transporte</SelectItem>
-                                            <SelectItem value="Operaciones">Operaciones</SelectItem>
-                                            <SelectItem value="Administración">Administración</SelectItem>
+                                            {DEPARTMENTS.map((d) => (
+                                                <SelectItem key={d} value={d}>{d}</SelectItem>
+                                            ))}
                                         </SelectContent>
                                     </Select>
                                 </div>
