@@ -64,164 +64,6 @@ export function DashboardMenu() {
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-            {/* TECNICOS (Instalación) */}
-            {isModuleEnabled("module_tecnicos") && canAccess("tecnico", "Instalación") && (
-                <VoiceHint command="Mis Tareas" side="top">
-                    <Link
-                        href="/tecnicos"
-                        className="group relative overflow-hidden bg-white rounded-[32px] p-8 border border-zinc-200 shadow-sm hover:shadow-xl hover:border-zinc-300 transition-all duration-300 block"
-                    >
-                        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
-                            <Wrench size={120} />
-                        </div>
-                        <div className="relative z-10 flex flex-col h-full justify-between space-y-8">
-                            <div className="w-14 h-14 rounded-2xl bg-zinc-100 flex items-center justify-center text-zinc-900 group-hover:bg-black group-hover:text-white transition-colors">
-                                <Wrench size={28} />
-                            </div>
-                            <div>
-                                <h2 className="text-2xl font-bold text-zinc-900 mb-2">Instalaciones</h2>
-                                <p className="text-zinc-500 font-medium">Gestión de instalaciones de fibra óptica.</p>
-                            </div>
-                            <div className="flex items-center text-zinc-900 font-semibold group-hover:translate-x-2 transition-transform">
-                                Acceder <span className="ml-2">→</span>
-                            </div>
-                        </div>
-                    </Link>
-                </VoiceHint>
-            )}
-
-            {/* SOPORTE TECNICO */}
-            {isModuleEnabled("module_soporte") && canAccess("soporte", "Soporte Técnico") && (
-                <VoiceHint command="Soporte" side="top">
-                    <Link
-                        href="/soporte"
-                        className="group relative overflow-hidden bg-white rounded-[32px] p-8 border border-zinc-200 shadow-sm hover:shadow-xl hover:border-indigo-200 transition-all duration-300 block"
-                    >
-                        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
-                            <Headset size={120} />
-                        </div>
-                        <div className="relative z-10 flex flex-col h-full justify-between space-y-8">
-                            <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                                <Headset size={28} />
-                            </div>
-                            <div>
-                                <h2 className="text-2xl font-bold text-zinc-900 mb-2">Soporte Técnico</h2>
-                                <p className="text-zinc-500 font-medium">Tickets y atención operativa remota.</p>
-                            </div>
-                            <div className="flex items-center text-indigo-600 font-semibold group-hover:translate-x-2 transition-transform">
-                                Acceder <span className="ml-2">→</span>
-                            </div>
-                        </div>
-                    </Link>
-                </VoiceHint>
-            )}
-
-            {/* PLANIFICACION */}
-            {isModuleEnabled("module_planificacion") && canAccess("planificacion", "Planificación") && (
-                <VoiceHint command="Planificación" side="top">
-                    <Link
-                        href="/planificacion"
-                        className="group relative overflow-hidden bg-white rounded-[32px] p-8 border border-zinc-200 shadow-sm hover:shadow-xl hover:border-pink-200 transition-all duration-300 block"
-                    >
-                        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
-                            <CalendarRange size={120} />
-                        </div>
-                        <div className="relative z-10 flex flex-col h-full justify-between space-y-8">
-                            <div className="w-14 h-14 rounded-2xl bg-pink-50 flex items-center justify-center text-pink-600 group-hover:bg-pink-600 group-hover:text-white transition-colors">
-                                <CalendarRange size={28} />
-                            </div>
-                            <div>
-                                <h2 className="text-2xl font-bold text-zinc-900 mb-2">Planificación</h2>
-                                <p className="text-zinc-500 font-medium">Agendas, citas y gestión de clientes.</p>
-                            </div>
-                            <div className="flex items-center text-pink-600 font-semibold group-hover:translate-x-2 transition-transform">
-                                Acceder <span className="ml-2">→</span>
-                            </div>
-                        </div>
-                    </Link>
-                </VoiceHint>
-            )}
-
-            {/* DISTRIBUCION */}
-            {isModuleEnabled("module_distribucion") && canAccess("distribucion", "Distribución") && (
-                <VoiceHint command="Distribución" side="top">
-                    <Link
-                        href="/distribucion"
-                        className="group relative overflow-hidden bg-white rounded-[32px] p-8 border border-zinc-200 shadow-sm hover:shadow-xl hover:border-cyan-200 transition-all duration-300 block"
-                    >
-                        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
-                            <Network size={120} />
-                        </div>
-                        <div className="relative z-10 flex flex-col h-full justify-between space-y-8">
-                            <div className="w-14 h-14 rounded-2xl bg-cyan-50 flex items-center justify-center text-cyan-600 group-hover:bg-cyan-600 group-hover:text-white transition-colors">
-                                <Network size={28} />
-                            </div>
-                            <div>
-                                <h2 className="text-2xl font-bold text-zinc-900 mb-2">Distribución</h2>
-                                <p className="text-zinc-500 font-medium">Redes, empalmes y mantenimiento.</p>
-                            </div>
-                            <div className="flex items-center text-cyan-600 font-semibold group-hover:translate-x-2 transition-transform">
-                                Acceder <span className="ml-2">→</span>
-                            </div>
-                        </div>
-                    </Link>
-                </VoiceHint>
-            )}
-
-            {/* AFECTACIONES */}
-            {isModuleEnabled("module_afectaciones") && canAccess("afectaciones", "Afectaciones") && (
-                <VoiceHint command="Afectaciones" side="top">
-                    <Link
-                        href="/afectaciones"
-                        className="group relative overflow-hidden bg-white rounded-[32px] p-8 border border-zinc-200 shadow-sm hover:shadow-xl hover:border-red-200 transition-all duration-300 block"
-                    >
-                        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
-                            <Activity size={120} />
-                        </div>
-                        <div className="relative z-10 flex flex-col h-full justify-between space-y-8">
-                            <div className="w-14 h-14 rounded-2xl bg-red-50 flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-colors">
-                                <Activity size={28} />
-                            </div>
-                            <div>
-                                <h2 className="text-2xl font-bold text-zinc-900 mb-2">Afectaciones</h2>
-                                <p className="text-zinc-500 font-medium">Gestión de fallas masivas y reportes.</p>
-                            </div>
-                            <div className="flex items-center text-red-600 font-semibold group-hover:translate-x-2 transition-transform">
-                                Acceder <span className="ml-2">→</span>
-                            </div>
-                        </div>
-                    </Link>
-                </VoiceHint>
-            )}
-
-            {/* COMERCIALIZACION */}
-            {isModuleEnabled("module_comercializacion") && canAccess("comercializacion", "Comercialización") && (
-                <VoiceHint command="Comercialización" side="top">
-                    <Link
-                        href="/comercializacion"
-                        className="group relative overflow-hidden bg-white rounded-[32px] p-8 border border-zinc-200 shadow-sm hover:shadow-xl hover:border-emerald-200 transition-all duration-300 block"
-                    >
-                        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
-                            <ShoppingBag size={120} />
-                        </div>
-                        <div className="relative z-10 flex flex-col h-full justify-between space-y-8">
-                            <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                                <ShoppingBag size={28} />
-                            </div>
-                            <div>
-                                <h2 className="text-2xl font-bold text-zinc-900 mb-2">Comercialización</h2>
-                                <p className="text-zinc-500 font-medium">Ventas y asesores comerciales.</p>
-                            </div>
-                            <div className="flex items-center text-emerald-600 font-semibold group-hover:translate-x-2 transition-transform">
-                                Acceder <span className="ml-2">→</span>
-                            </div>
-                        </div>
-                    </Link>
-                </VoiceHint>
-            )}
-
-
             {/* TRANSPORTE / CHOFER */}
             {isModuleEnabled("module_transporte") && (canAccess("transporte", "Transporte") || hasRole("chofer")) && (
                 <VoiceHint command="Transporte" side="top">
@@ -268,32 +110,6 @@ export function DashboardMenu() {
                             </div>
                             <div className="flex items-center text-zinc-900 font-semibold group-hover:translate-x-2 transition-transform">
                                 Ir al Taller <span className="ml-2">→</span>
-                            </div>
-                        </div>
-                    </Link>
-                </VoiceHint>
-            )}
-
-            {/* ALMACEN CARD */}
-            {isModuleEnabled("module_almacen") && canAccess("almacen", "Almacén") && (
-                <VoiceHint command="Inventario" side="top">
-                    <Link
-                        href="/almacen"
-                        className="group relative overflow-hidden bg-white rounded-[32px] p-8 border border-zinc-200 shadow-sm hover:shadow-xl hover:border-zinc-300 transition-all duration-300 block"
-                    >
-                        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
-                            <Package size={120} />
-                        </div>
-                        <div className="relative z-10 flex flex-col h-full justify-between space-y-8">
-                            <div className="w-14 h-14 rounded-2xl bg-zinc-100 flex items-center justify-center text-zinc-900 group-hover:bg-black group-hover:text-white transition-colors">
-                                <Package size={28} />
-                            </div>
-                            <div>
-                                <h2 className="text-2xl font-bold text-zinc-900 mb-2">Almacén</h2>
-                                <p className="text-zinc-500 font-medium">Control de inventario, productos y stock.</p>
-                            </div>
-                            <div className="flex items-center text-zinc-900 font-semibold group-hover:translate-x-2 transition-transform">
-                                Ir al Almacén <span className="ml-2">→</span>
                             </div>
                         </div>
                     </Link>
@@ -352,59 +168,6 @@ export function DashboardMenu() {
                 </VoiceHint>
             )}
 
-            {/* RRHH */}
-            {isModuleEnabled("module_rrhh") && canAccess("rrhh", "Recursos Humanos") && (
-                <VoiceHint command="RRHH" side="top">
-                    <Link
-                        href="/rrhh"
-                        className="group relative overflow-hidden bg-white rounded-[32px] p-8 border border-zinc-200 shadow-sm hover:shadow-xl hover:border-rose-200 transition-all duration-300 block"
-                    >
-                        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
-                            <Users2 size={120} />
-                        </div>
-                        <div className="relative z-10 flex flex-col h-full justify-between space-y-8">
-                            <div className="w-14 h-14 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-600 group-hover:bg-rose-600 group-hover:text-white transition-colors">
-                                <Users2 size={28} />
-                            </div>
-                            <div>
-                                <h2 className="text-2xl font-bold text-zinc-900 mb-2">RRHH</h2>
-                                <p className="text-zinc-500 font-medium">Gestión de personal y nómina.</p>
-                            </div>
-                            <div className="flex items-center text-rose-600 font-semibold group-hover:translate-x-2 transition-transform">
-                                Acceder <span className="ml-2">→</span>
-                            </div>
-                        </div>
-                    </Link>
-                </VoiceHint>
-            )}
-
-            {/* TECNOLOGICO */}
-            {isModuleEnabled("module_tecnologico") && canAccess("tecnologico", "Tecnológico") && (
-                <VoiceHint command="Tecnológico" side="top">
-                    <Link
-                        href="/tecnologico"
-                        className="group relative overflow-hidden bg-white rounded-[32px] p-8 border border-zinc-200 shadow-sm hover:shadow-xl hover:border-slate-300 transition-all duration-300 block"
-                    >
-                        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
-                            <Cpu size={120} />
-                        </div>
-                        <div className="relative z-10 flex flex-col h-full justify-between space-y-8">
-                            <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-800 group-hover:bg-slate-800 group-hover:text-white transition-colors">
-                                <Cpu size={28} />
-                            </div>
-                            <div>
-                                <h2 className="text-2xl font-bold text-zinc-900 mb-2">Tecnológico</h2>
-                                <p className="text-zinc-500 font-medium">Sistemas e integraciones.</p>
-                            </div>
-                            <div className="flex items-center text-slate-800 font-semibold group-hover:translate-x-2 transition-transform">
-                                Acceder <span className="ml-2">→</span>
-                            </div>
-                        </div>
-                    </Link>
-                </VoiceHint>
-            )}
-
-
             {/* ADMIN GENERAL (Only Admin) */}
             {isAdmin && (
                 <VoiceHint command="Configuración" side="top">
@@ -431,8 +194,7 @@ export function DashboardMenu() {
                 </VoiceHint>
             )}
 
-
-            {/* GERENCIA (New) */}
+            {/* GERENCIA */}
             {(isAdmin || (profile?.job_title && (profile.job_title.toLowerCase().includes('gerente') || profile.job_title.toLowerCase().includes('admin')))) && (
                 <VoiceHint command="Gerencia" side="top">
                     <Link
@@ -484,8 +246,6 @@ export function DashboardMenu() {
                     </div>
                 </Link>
             </VoiceHint>
-
-
         </div>
     )
 }

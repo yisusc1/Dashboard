@@ -1,15 +1,7 @@
 export const DEPARTMENTS = [
     "Altos Mandos",
-    "Instalación",
-    "Soporte Técnico",
-    "Planificación",
-    "Distribución",
-    "Afectaciones",
     "Transporte",
-    "Administración",
-    "Tecnológico",
-    "Recursos Humanos",
-    "Comercialización"
+    "Administración"
 ] as const
 
 export const JOB_TITLES_BY_DEPARTMENT: Record<string, string[]> = {
@@ -17,43 +9,6 @@ export const JOB_TITLES_BY_DEPARTMENT: Record<string, string[]> = {
         "Presidente",
         "Gerente General",
         "Gerente de Operaciones"
-    ],
-    "Instalación": [
-        "Gerente",
-        "Encargado",
-        "Coordinador",
-        "Supervisor",
-        "Técnico",
-        "Chofer"
-    ],
-    "Soporte Técnico": [
-        "Gerente",
-        "Encargado",
-        "Supervisor",
-        "Coordinador",
-        "Técnico Operacional",
-        "Técnico de Campo"
-    ],
-    "Planificación": [
-        "Coordinador",
-        "Analista",
-        "Cobrador",
-        "Atención al Cliente"
-    ],
-    "Distribución": [
-        "Gerente",
-        "Encargado",
-        "Supervisor",
-        "Empalmador",
-        "Liniero",
-        "Ayudante",
-        "Chofer"
-    ],
-    "Afectaciones": [
-        "Encargado",
-        "Empalmador",
-        "Liniero",
-        "Chofer"
     ],
     "Transporte": [
         "Encomendador",
@@ -64,23 +19,8 @@ export const JOB_TITLES_BY_DEPARTMENT: Record<string, string[]> = {
         "Encargado",
         "Supervisor",
         "Atención al Cliente",
-        "Cobranzas",
         "Taquillero",
-        "Call Center",
-        "Almacén"
-    ],
-    "Tecnológico": [
-        "Integraciones"
-    ],
-    "Recursos Humanos": [
-        "Encargado",
-        "Asistente"
-    ],
-    "Comercialización": [
-        "Gerente",
-        "Coordinador",
-        "Asesor Comercial",
-        "Promotor"
+        "Call Center"
     ]
 }
 
@@ -91,17 +31,8 @@ export const ALL_JOB_TITLES = Array.from(new Set(
 
 // Module Feature Flags (Initial State)
 export const INITIAL_MODULES_CONFIG = [
-    { key: "module_tecnicos", label: "Técnicos (Instalaciones)", path: "/tecnicos", default: true },
-    { key: "module_soporte", label: "Soporte Técnico", path: "/soporte", default: true },
-    { key: "module_planificacion", label: "Planificación", path: "/planificacion", default: true },
-    { key: "module_distribucion", label: "Distribución", path: "/distribucion", default: true },
-    { key: "module_afectaciones", label: "Afectaciones", path: "/afectaciones", default: true },
-    { key: "module_comercializacion", label: "Comercialización", path: "/comercializacion", default: true },
     { key: "module_transporte", label: "Transporte / Chofer", path: "/transporte", default: true },
-    { key: "module_taller", label: "Taller Mecánico", path: "/taller", default: true }, // Request: "varios sin construir" -> likely Taller/Almacen
-    { key: "module_almacen", label: "Almacén", path: "/almacen", default: true },
+    { key: "module_taller", label: "Taller Mecánico", path: "/taller", default: true },
     { key: "module_control", label: "Auditoría / Control", path: "/control", default: true },
     { key: "module_combustible", label: "Combustible", path: "/control/combustible", default: true },
-    { key: "module_rrhh", label: "Recursos Humanos", path: "/rrhh", default: true },
-    { key: "module_tecnologico", label: "Tecnológico", path: "/tecnologico", default: true },
 ] as const

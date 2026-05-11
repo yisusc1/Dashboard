@@ -110,22 +110,11 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL("/unauthorized", request.url))
     }
 
-    // 2.1 Almacen
-    if (path.startsWith("/almacen") && !hasRole("almacen")) {
-        return NextResponse.redirect(new URL("/unauthorized", request.url))
-    }
-
     // 3. Taller
     if (path.startsWith("/taller") && !hasRole("taller")) {
         return NextResponse.redirect(new URL("/unauthorized", request.url))
     }
 
-    // 4. Tecnicos
-    if (path.startsWith("/tecnicos") && !hasRole("tecnico")) {
-        return NextResponse.redirect(new URL("/unauthorized", request.url))
-    }
-
-    // 5. Control / Supervisor
     // 5. Control / Supervisor
     if (path.startsWith("/control") && !hasRole("supervisor")) {
         return NextResponse.redirect(new URL("/unauthorized", request.url))
