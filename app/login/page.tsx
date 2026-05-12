@@ -17,6 +17,8 @@ export default function LoginPage() {
 
     const router = useRouter()
     const [isRegistering, setIsRegistering] = useState(false)
+    const [username, setUsername] = useState("")
+    const [password, setPassword] = useState("")
 
     const handleLogin = async () => {
         setLoading(true)
