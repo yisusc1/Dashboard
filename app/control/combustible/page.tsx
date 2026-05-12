@@ -509,7 +509,17 @@ export default function FuelControlPage() {
                         </Card>
 
                         <div className="space-y-4">
-                            <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">Historial de Reportes</h4>
+                            <div className="flex justify-between items-center px-1">
+                                <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Historial de Reportes</h4>
+                                <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={() => loadInitialData()} 
+                                    className="h-6 text-[10px] font-black text-zinc-400 hover:text-zinc-900 gap-1 uppercase"
+                                >
+                                    <RotateCcw size={10} /> Refrescar
+                                </Button>
+                            </div>
                             {dailyReports.length === 0 ? (
                                 <div className="py-12 text-center bg-white rounded-[32px] border border-zinc-100 border-dashed">
                                     <p className="text-zinc-400 text-sm font-bold">No hay reportes archivados aún.</p>

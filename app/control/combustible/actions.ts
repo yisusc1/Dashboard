@@ -216,20 +216,43 @@ export async function getFuelLogs(filters?: { startDate?: string, endDate?: stri
 
 export async function getDailyReports() {
     const supabase = await createClient()
+    
+    // Simplificamos la consulta para evitar problemas de RLS con el join de perfiles inicialmente
     const { data, error } = await supabase
         .from("fuel_daily_reports")
         .select(`
-            *,
-            supervisor:profiles(first_name, last_name)
+            id,
+            report_date,
+            total_liters,
+            details,
+            supervisor_id,
+            generated_at
         `)
         .order("report_date", { ascending: false })
 
     if (error) {
-        console.error("Get Daily Reports Error:", error)
+        console.error("DEBUG - Get Daily Reports Error:", error)
         return []
     }
 
-    return data
+    if (!data || data.length === 0) {
+        console.log("DEBUG - No reports found in database")
+        return []
+    }
+
+    // Intentamos cargar los nombres de los supervisores por separado para evitar fallos de join
+    const supervisorIds = Array.from(new Set(data.map(r => r.supervisor_id)))
+    const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, first_name, last_name")
+        .in("id", supervisorIds)
+
+    const reportsWithSupervisor = data.map(report => ({
+        ...report,
+        supervisor: profiles?.find(p => p.id === report.supervisor_id) || { first_name: "Supervisor", last_name: "" }
+    }))
+
+    return reportsWithSupervisor
 }
 
 export async function getTodayStats(clientDate?: string) {
