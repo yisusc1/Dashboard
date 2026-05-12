@@ -29,6 +29,7 @@ type Reporte = {
         codigo: string
         tipo: string
         odometro_averiado?: boolean
+        kilometraje?: number
     }
 }
 
@@ -134,7 +135,7 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
                 departamento,
                 created_at,
                 created_at,
-                vehiculos ( modelo, placa, codigo, tipo, odometro_averiado )
+                vehiculos ( modelo, placa, codigo, tipo, odometro_averiado, kilometraje )
             `)
             .is('km_entrada', null)
             .order('created_at', { ascending: false })
@@ -186,8 +187,9 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
         const isOdometerBroken = (selectedReport?.vehiculos as any)?.odometro_averiado
 
         if (!isOdometerBroken) {
-            if (selectedReport && km <= selectedReport.km_salida) {
-                toast.error(`Error Crítico: El KM de entrada (${km}) NO puede ser menor o igual al de salida (${selectedReport.km_salida}). Verifique el tablero.`)
+            const minKm = Math.max(selectedReport?.km_salida || 0, (selectedReport?.vehiculos as any)?.kilometraje || 0)
+            if (km <= minKm) {
+                toast.error(`Error Crítico: El KM de entrada (${km}) NO puede ser menor o igual al último registrado (${minKm}). Verifique el tablero.`)
                 return
             }
         }
@@ -480,6 +482,11 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
                                             )}
                                             <p className="text-xs text-zinc-500 text-right">
                                                 Conductor: {selectedReport.conductor} • Salida: {selectedReport.km_salida.toLocaleString()} km
+                                                {selectedReport.vehiculos?.kilometraje && selectedReport.vehiculos.kilometraje > selectedReport.km_salida && (
+                                                    <span className="text-indigo-600 font-bold block mt-1">
+                                                        📍 Posición Actual: {selectedReport.vehiculos.kilometraje.toLocaleString()} km
+                                                    </span>
+                                                )}
                                             </p>
                                         </div>
                                     )}
@@ -492,7 +499,7 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
                                         value={kmEntrada}
                                         onChange={e => setKmEntrada(e.target.value)}
                                         className="h-12 rounded-xl bg-white"
-                                        placeholder={selectedReport ? `> ${selectedReport.km_salida}` : "0"}
+                                        placeholder={selectedReport ? `> ${Math.max(selectedReport.km_salida, selectedReport.vehiculos?.kilometraje || 0)}` : "0"}
                                     />
                                 </div>
 
