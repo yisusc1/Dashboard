@@ -55,7 +55,7 @@ export default function FuelControlPage() {
             const [vehData, logData, statsData] = await Promise.all([
                 getVehicles(),
                 getFuelLogs(),
-                getTodayStats()
+                getTodayStats(format(new Date(), "yyyy-MM-dd"))
             ])
             setVehicles(vehData || [])
             setLogs(logData || [])

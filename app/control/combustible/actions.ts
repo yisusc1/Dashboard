@@ -183,11 +183,14 @@ export async function getFuelLogs(filters?: { startDate?: string, endDate?: stri
         .order("fuel_date", { ascending: false })
 
     if (filters?.startDate) {
-        query = query.gte("fuel_date", filters.startDate)
+        // Use local start of day adjusted to UTC (assuming VET -04:00)
+        const start = new Date(`${filters.startDate}T00:00:00-04:00`).toISOString()
+        query = query.gte("fuel_date", start)
     }
     if (filters?.endDate) {
-        // Append end of day time to ensure we include records from that day
-        query = query.lte("fuel_date", `${filters.endDate} 23:59:59`)
+        // Use local end of day adjusted to UTC (assuming VET -04:00)
+        const end = new Date(`${filters.endDate}T23:59:59-04:00`).toISOString()
+        query = query.lte("fuel_date", end)
     }
     if (filters?.vehicleId && filters.vehicleId !== "all") {
         query = query.eq("vehicle_id", filters.vehicleId)
@@ -211,11 +214,15 @@ export async function getFuelLogs(filters?: { startDate?: string, endDate?: stri
     return data
 }
 
-export async function getTodayStats() {
+export async function getTodayStats(clientDate?: string) {
     const supabase = await createClient()
-    const today = new Date()
-    const startDate = format(today, "yyyy-MM-dd") + " 00:00:00"
-    const endDate = format(today, "yyyy-MM-dd") + " 23:59:59"
+    
+    // Use provided client date or fallback to today
+    const dateString = clientDate || format(new Date(), "yyyy-MM-dd")
+    
+    // Adjust range to GMT-4 (Venezuela)
+    const startDate = new Date(`${dateString}T00:00:00-04:00`).toISOString()
+    const endDate = new Date(`${dateString}T23:59:59-04:00`).toISOString()
 
     const { data, error } = await supabase
         .from("fuel_logs")
@@ -229,7 +236,7 @@ export async function getTodayStats() {
         return { totalLiters: 0, count: 0 }
     }
 
-    const totalLiters = data.reduce((sum, log) => sum + (log.liters || 0), 0)
+    const totalLiters = data.reduce((sum, log) => sum + (Number(log.liters) || 0), 0)
 
     return {
         totalLiters,
@@ -315,9 +322,9 @@ export async function generateDailyReport(dateString: string) {
 
     if (!user) return { success: false, error: "Usuario no autenticado" }
 
-    // 1. Fetch Logs for DATE
-    const startDate = `${dateString} 00:00:00`
-    const endDate = `${dateString} 23:59:59`
+    // 1. Fetch Logs for DATE (Adjusted to GMT-4)
+    const startDate = new Date(`${dateString}T00:00:00-04:00`).toISOString()
+    const endDate = new Date(`${dateString}T23:59:59-04:00`).toISOString()
 
     const { data: logs, error: lError } = await supabase
         .from("fuel_logs")
