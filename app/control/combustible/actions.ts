@@ -348,6 +348,7 @@ export async function generateDailyReport(dateString: string) {
         .from("fuel_logs")
         .select(`
             liters,
+            mileage,
             vehicle:vehiculos(modelo, placa)
         `)
         .eq("status", "active")
