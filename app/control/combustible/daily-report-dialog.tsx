@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { generateDailyReport } from "./actions"
 
-export function DailyReportDialog() {
+export function DailyReportDialog({ onSuccess }: { onSuccess?: () => void }) {
     const [open, setOpen] = useState(false)
     const [date, setDate] = useState<Date>()
     const [loading, setLoading] = useState(false)
@@ -53,6 +53,7 @@ export function DailyReportDialog() {
                     date: dateStr,
                     supervisor: res.supervisorName
                 })
+                if (onSuccess) onSuccess()
             } else {
                 toast.error(res.error || "Error al generar reporte")
             }
@@ -68,18 +69,10 @@ export function DailyReportDialog() {
         if (!successData) return
 
         const vehiclesList = successData.details?.map((v: any, index: number) =>
-            `${index + 1}. ${v.model} / ${v.liters.toFixed(2)} L`
+            `${index + 1}. ${v.model} / ${v.liters.toFixed(2)} L (${v.startKm}-${v.endKm} km)`
         ).join("\n")
 
-        const message = `*Reporte de Combustible Diario*
-
-*Fecha:* ${successData.date}
-*Supervisor:* ${successData.supervisor || "N/A"}
-
-*Vehículos:*
-${vehiclesList}
-
-*Total:* ${successData.total.toFixed(2)} L`
+        const message = `*Reporte de Combustible Diario*\n\n*Fecha:* ${successData.date}\n*Supervisor:* ${successData.supervisor || "N/A"}\n\n*Vehículos:*\n${vehiclesList}\n\n*Total:* ${successData.total.toFixed(2)} L`
 
         const url = `https://wa.me/?text=${encodeURIComponent(message)}`
         window.open(url, '_blank')

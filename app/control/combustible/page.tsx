@@ -19,7 +19,7 @@ import { toast } from "sonner"
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerClose } from "@/components/ui/drawer"
 import { Calendar } from "@/components/ui/calendar"
 
-import { getFuelLogs, getVehicles, getTodayStats, annulFuelLog } from "./actions"
+import { getFuelLogs, getVehicles, getTodayStats, annulFuelLog, getDailyReports } from "./actions"
 
 export default function FuelControlPage() {
     const [logs, setLogs] = useState<any[]>([])
@@ -34,6 +34,10 @@ export default function FuelControlPage() {
     const [todayStats, setTodayStats] = useState({ totalLiters: 0, count: 0 })
     const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
     const [activePreset, setActivePreset] = useState<string | null>(null)
+    
+    // Reports State
+    const [dailyReports, setDailyReports] = useState<any[]>([])
+    const [selectedDailyReport, setSelectedDailyReport] = useState<any | null>(null)
     
     // Annulment State
     const [annulDialogOpen, setAnnulDialogOpen] = useState(false)
@@ -52,14 +56,16 @@ export default function FuelControlPage() {
     async function loadInitialData() {
         setLoading(true)
         try {
-            const [vehData, logData, statsData] = await Promise.all([
+            const [vehData, logData, statsData, reportData] = await Promise.all([
                 getVehicles(),
                 getFuelLogs(),
-                getTodayStats(format(new Date(), "yyyy-MM-dd"))
+                getTodayStats(format(new Date(), "yyyy-MM-dd")),
+                getDailyReports()
             ])
             setVehicles(vehData || [])
             setLogs(logData || [])
             setTodayStats(statsData || { totalLiters: 0, count: 0 })
+            setDailyReports(reportData || [])
         } catch (error) {
             toast.error("Error cargando datos")
         } finally {
@@ -492,15 +498,64 @@ export default function FuelControlPage() {
                         )}
                     </TabsContent>
 
-                    <TabsContent value="reports" className="mt-0 outline-none">
+                    <TabsContent value="reports" className="mt-0 outline-none space-y-6">
                         <Card className="rounded-[32px] border-zinc-200 shadow-sm bg-white overflow-hidden p-6 text-center">
-                            <div className="max-w-md mx-auto py-10">
-                                <FileSpreadsheet size={64} className="mx-auto text-indigo-100 mb-6" />
-                                <h2 className="text-2xl font-black text-zinc-900 mb-2">Reporte Diario de Combustible</h2>
-                                <p className="text-zinc-500 font-medium mb-8">Genera un resumen oficial de todos los consumos por vehículo para el cierre del día.</p>
-                                <DailyReportDialog />
+                            <div className="max-w-md mx-auto py-6">
+                                <FileSpreadsheet size={48} className="mx-auto text-indigo-100 mb-4" />
+                                <h2 className="text-xl font-black text-zinc-900 mb-2">Nuevo Cierre Diario</h2>
+                                <p className="text-zinc-500 text-xs font-medium mb-6">Genera o actualiza el resumen oficial de consumos para la fecha seleccionada.</p>
+                                <DailyReportDialog onSuccess={() => loadInitialData()} />
                             </div>
                         </Card>
+
+                        <div className="space-y-4">
+                            <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">Historial de Reportes</h4>
+                            {dailyReports.length === 0 ? (
+                                <div className="py-12 text-center bg-white rounded-[32px] border border-zinc-100 border-dashed">
+                                    <p className="text-zinc-400 text-sm font-bold">No hay reportes archivados aún.</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    {dailyReports.map((report) => (
+                                        <Card 
+                                            key={report.id} 
+                                            className="border-zinc-200 shadow-sm rounded-[28px] bg-white overflow-hidden hover:shadow-md transition-all cursor-pointer"
+                                            onClick={() => setSelectedDailyReport(report)}
+                                        >
+                                            <CardContent className="p-5">
+                                                <div className="flex justify-between items-center mb-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="h-10 w-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
+                                                            <FileSpreadsheet size={20} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[10px] font-black text-zinc-400 uppercase tracking-tighter" suppressHydrationWarning>
+                                                                {format(new Date(report.report_date + 'T12:00:00'), "MMMM yyyy", { locale: es })}
+                                                            </p>
+                                                            <h3 className="font-black text-zinc-900 text-lg leading-none" suppressHydrationWarning>
+                                                                {format(new Date(report.report_date + 'T12:00:00'), "EEEE dd", { locale: es })}
+                                                            </h3>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="text-[10px] font-black text-zinc-400 uppercase">Total Litros</p>
+                                                        <p className="text-xl font-black text-emerald-600">{Number(report.total_liters).toFixed(1)} L</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center justify-between pt-3 border-t border-zinc-100">
+                                                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-400">
+                                                        <Truck size={10} /> {report.details?.length || 0} Vehículos
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-400">
+                                                        <UserIcon size={10} /> {report.supervisor?.first_name}
+                                                    </div>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </TabsContent>
                 </Tabs>
             </div>
@@ -615,8 +670,70 @@ export default function FuelControlPage() {
                 </AlertDialogContent>
             </AlertDialog>
 
-            {/* ANNUL DIALOG */}
-            <AlertDialog open={annulDialogOpen} onOpenChange={setAnnulDialogOpen}>
+            {/* DAILY REPORT DETAIL DIALOG */}
+            <AlertDialog open={!!selectedDailyReport} onOpenChange={(val) => !val && setSelectedDailyReport(null)}>
+                <AlertDialogContent className="max-w-md p-0 overflow-hidden bg-white border-none shadow-2xl rounded-[32px]">
+                    <div className="p-6 border-b border-zinc-100">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <h2 className="text-2xl font-black text-zinc-900 leading-none">Resumen Diario</h2>
+                                <p className="text-zinc-500 font-bold mt-2 uppercase text-[10px] tracking-widest" suppressHydrationWarning>
+                                    {selectedDailyReport && format(new Date(selectedDailyReport.report_date + 'T12:00:00'), "PPPP", { locale: es })}
+                                </p>
+                            </div>
+                            <Button size="icon" variant="ghost" onClick={() => setSelectedDailyReport(null)} className="rounded-full">
+                                <X size={20} />
+                            </Button>
+                        </div>
+                    </div>
+                    <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                        <div className="bg-emerald-600 rounded-3xl p-5 text-white shadow-lg shadow-emerald-100 flex justify-between items-center">
+                            <div>
+                                <p className="text-[10px] font-bold uppercase opacity-80 mb-1">Consumo Total</p>
+                                <p className="text-3xl font-black">{Number(selectedDailyReport?.total_liters).toFixed(1)} L</p>
+                            </div>
+                            <FileSpreadsheet size={40} className="opacity-20" />
+                        </div>
+
+                        <div className="space-y-3">
+                            <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">Desglose por Vehículo</h4>
+                            {selectedDailyReport?.details?.map((item: any, idx: number) => (
+                                <div key={idx} className="bg-zinc-50 p-4 rounded-2xl border border-zinc-100">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <h5 className="font-black text-zinc-900 text-sm leading-tight">{item.model}</h5>
+                                        <Badge variant="outline" className="bg-white border-zinc-200 text-emerald-600 font-black">
+                                            {item.liters.toFixed(1)} L
+                                        </Badge>
+                                    </div>
+                                    <div className="flex items-center gap-4 text-[10px] font-bold text-zinc-400">
+                                        <span className="flex items-center gap-1"><RotateCcw size={10} /> {item.count} cargas</span>
+                                        <span className="flex items-center gap-1"><Truck size={10} /> {item.startKm?.toLocaleString()} - {item.endKm?.toLocaleString()} km</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="p-6 border-t border-zinc-100 flex flex-col gap-3">
+                        <Button 
+                            className="w-full h-14 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-bold shadow-lg shadow-green-100"
+                            onClick={() => {
+                                // Re-use WhatsApp formatting from Success Data if possible, 
+                                // but for simplicity here we just trigger the generic one
+                                const vehiclesList = selectedDailyReport.details?.map((v: any, index: number) =>
+                                    `${index + 1}. ${v.model} / ${v.liters.toFixed(2)} L (${v.startKm}-${v.endKm} km)`
+                                ).join("\n")
+                        
+                                const message = `*Reporte de Combustible Diario*\n\n*Fecha:* ${selectedDailyReport.report_date}\n*Supervisor:* ${selectedDailyReport.supervisor?.first_name || "N/A"}\n\n*Vehículos:*\n${vehiclesList}\n\n*Total:* ${Number(selectedDailyReport.total_liters).toFixed(2)} L`
+                        
+                                window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank')
+                            }}
+                        >
+                            <Send size={20} className="mr-2" />
+                            Compartir Resumen
+                        </Button>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialog>
                 <AlertDialogContent className="rounded-[32px] border-none shadow-2xl bg-white p-8">
                     <AlertDialogHeader>
                         <div className="mx-auto bg-red-100 w-20 h-20 rounded-full flex items-center justify-center mb-6 text-red-600">

@@ -214,6 +214,24 @@ export async function getFuelLogs(filters?: { startDate?: string, endDate?: stri
     return data
 }
 
+export async function getDailyReports() {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+        .from("fuel_daily_reports")
+        .select(`
+            *,
+            supervisor:profiles(first_name, last_name)
+        `)
+        .order("report_date", { ascending: false })
+
+    if (error) {
+        console.error("Get Daily Reports Error:", error)
+        return []
+    }
+
+    return data
+}
+
 export async function getTodayStats(clientDate?: string) {
     const supabase = await createClient()
     
@@ -340,29 +358,63 @@ export async function generateDailyReport(dateString: string) {
     if (!logs || logs.length === 0) return { success: false, error: "No hay cargas registradas en esta fecha." }
 
     // 2. Aggregate Data
-    // We list every transaction or aggregate? User asked for list of vehicles.
-    // Let's aggregate by Vehicle ID (Model + Placa)
-    const vehicleMap = new Map<string, { model: string, liters: number }>()
+    // We aggregate by Vehicle ID (Model + Placa)
+    const vehicleMap = new Map<string, { model: string, liters: number, count: number, startKm: number, endKm: number }>()
 
     logs.forEach((log: any) => {
         const key = `${log.vehicle?.modelo} (${log.vehicle?.placa})`
-        const current = vehicleMap.get(key) || { model: key, liters: 0 }
-        current.liters += (log.liters || 0)
+        const current = vehicleMap.get(key) || { 
+            model: key, 
+            liters: 0, 
+            count: 0, 
+            startKm: log.mileage, 
+            endKm: log.mileage 
+        }
+        
+        current.liters += (Number(log.liters) || 0)
+        current.count += 1
+        current.startKm = Math.min(current.startKm, log.mileage)
+        current.endKm = Math.max(current.endKm, log.mileage)
+        
         vehicleMap.set(key, current)
     })
 
     const details = Array.from(vehicleMap.values())
-    const totalLiters = logs.reduce((sum, l) => sum + (l.liters || 0), 0)
+    const totalLiters = logs.reduce((sum, l) => sum + (Number(l.liters) || 0), 0)
 
-    // 3. Save Report
-    const { error } = await supabase.from("fuel_daily_reports").insert({
-        report_date: dateString,
-        supervisor_id: user.id,
-        total_liters: totalLiters,
-        details: details
-    })
+    // 3. Save Report (UPSERT logic manually or via filter)
+    // Check if report for this date exists
+    const { data: existingReport } = await supabase
+        .from("fuel_daily_reports")
+        .select("id")
+        .eq("report_date", dateString)
+        .maybeSingle()
 
-    if (error) return { success: false, error: "Error guardando reporte: " + error.message }
+    let saveError;
+    if (existingReport) {
+        // Update existing
+        const { error } = await supabase
+            .from("fuel_daily_reports")
+            .update({
+                supervisor_id: user.id,
+                total_liters: totalLiters,
+                details: details,
+                generated_at: new Date().toISOString()
+            })
+            .eq("id", existingReport.id)
+        saveError = error
+    } else {
+        // Insert new
+        const { error } = await supabase.from("fuel_daily_reports").insert({
+            report_date: dateString,
+            supervisor_id: user.id,
+            total_liters: totalLiters,
+            details: details
+        })
+        saveError = error
+    }
+
+    if (saveError) return { success: false, error: "Error guardando reporte: " + saveError.message }
 
     // Fetch supervisor profile name
     const { data: profile } = await supabase
