@@ -734,6 +734,9 @@ export default function FuelControlPage() {
                     </div>
                 </AlertDialogContent>
             </AlertDialog>
+            
+            {/* ANNUL DIALOG */}
+            <AlertDialog open={annulDialogOpen} onOpenChange={setAnnulDialogOpen}>
                 <AlertDialogContent className="rounded-[32px] border-none shadow-2xl bg-white p-8">
                     <AlertDialogHeader>
                         <div className="mx-auto bg-red-100 w-20 h-20 rounded-full flex items-center justify-center mb-6 text-red-600">
