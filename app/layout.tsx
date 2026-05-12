@@ -32,7 +32,7 @@ import { getSystemSettings } from "./admin/settings-actions";
 
 
 
-import { InstallPrompt } from "@/components/InstallPrompt";
+
 
 export default async function RootLayout({
   children,
@@ -65,7 +65,7 @@ export default async function RootLayout({
             {children}
             <Toaster richColors position="top-center" />
 
-            <InstallPrompt />
+
         </UserProvider>
       </body>
     </html>
