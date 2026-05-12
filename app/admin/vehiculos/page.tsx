@@ -564,6 +564,13 @@ function VehiculosContent() {
                                         })
                                         .eq('id', tripToClose.id)
                                     if (error) throw error
+
+                                    // [NEW] Update Vehicle Master Record to match forced entry
+                                    await supabase
+                                        .from('vehiculos')
+                                        .update({ kilometraje: parseInt(forceCloseKm) })
+                                        .eq('id', tripToClose.vehiculo_id)
+
                                     toast.success('Viaje cerrado administrativamente')
                                     setForceCloseDialog(false)
                                     setTripToClose(null)

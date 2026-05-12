@@ -93,6 +93,7 @@ export async function crearSalida(formData: FormData) {
 
     const { error: updateError } = await supabase.from('vehiculos').update({
         current_fuel_level: fuelLevel,
+        kilometraje: Number(rawData.km_salida),
         last_fuel_update: new Date().toISOString()
     }).eq('id', rawData.vehiculo_id);
 
@@ -161,6 +162,7 @@ export async function registrarEntrada(formData: FormData) {
         if (data && data.vehiculo_id) {
             await supabase.from('vehiculos').update({
                 current_fuel_level: fuelLevel,
+                kilometraje: updateData.km_entrada,
                 last_fuel_update: new Date().toISOString()
             }).eq('id', data.vehiculo_id);
         }
@@ -326,6 +328,7 @@ export async function submitExitReport(reportData: any) {
     const fuelLevel = parseFuelLevel(rawData.gasolina_salida);
     await supabase.from('vehiculos').update({
         current_fuel_level: fuelLevel,
+        kilometraje: Number(rawData.km_salida),
         last_fuel_update: new Date().toISOString()
     }).eq('id', rawData.vehiculo_id);
 
