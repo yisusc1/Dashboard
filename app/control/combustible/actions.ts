@@ -95,6 +95,7 @@ export async function createFuelLog(data: FuelLogData) {
                 };
             }
         }
+        }
         // [NEW] Validate Mileage
         const { data: vehicleMileage, error: mileageError } = await supabase
             .from("vista_ultimos_kilometrajes")
