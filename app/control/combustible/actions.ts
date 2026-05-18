@@ -19,8 +19,10 @@ export interface FuelLogData {
 }
 
 function cleanTicketNumber(ticket: string): string {
-    // Remove non-digits and leading zeros
-    return ticket.replace(/\D/g, '').replace(/^0+/, '');
+    // Remove non-digits and parse as integer to handle leading zeros safely
+    const digits = ticket.replace(/\D/g, '');
+    if (!digits) return '';
+    return parseInt(digits, 10).toString();
 }
 
 export async function getVehicles() {
@@ -60,18 +62,24 @@ export async function createFuelLog(data: FuelLogData) {
     if (!cleanTicket) return { success: false, error: "Número de ticket inválido" };
 
     try {
-        // [NEW] Validate Sequence
-        const { data: lastLog } = await supabase
+        // [NEW] Validate Sequence (Per vehicle, by numerically highest ticket)
+        const { data: allLogs } = await supabase
             .from("fuel_logs")
             .select("ticket_number")
             .eq("vehicle_id", data.vehicle_id)
-            .eq("status", "active") // Only check against non-annulled
-            .order("fuel_date", { ascending: false })
-            .limit(1)
-            .single();
+            .eq("status", "active");
 
-        if (lastLog) {
-            const lastNum = parseInt(lastLog.ticket_number);
+        if (allLogs && allLogs.length > 0) {
+            let maxNum = -1;
+            for (const log of allLogs) {
+                const num = parseInt(log.ticket_number.replace(/\D/g, ''), 10);
+                if (!isNaN(num) && num > maxNum) {
+                    maxNum = num;
+                }
+            }
+
+            if (maxNum !== -1) {
+                const lastNum = maxNum;
             const currentNum = parseInt(cleanTicket);
 
             if (currentNum <= lastNum) {
@@ -303,14 +311,24 @@ export async function getVehicleDetailsAction(vehicleId: string) {
         return null
     }
 
-    // 2. Get Last Fuel Log
-    const { data: lastFuel } = await supabase
+    // 2. Get Last Fuel Log (based on highest ticket number)
+    const { data: logs } = await supabase
         .from("fuel_logs")
-        .select("fuel_date, liters, mileage")
+        .select("ticket_number, fuel_date, liters, mileage")
         .eq("vehicle_id", vehicleId)
-        .order("fuel_date", { ascending: false })
-        .limit(1)
-        .single()
+        .eq("status", "active");
+
+    let lastFuel = null;
+    if (logs && logs.length > 0) {
+        let maxNum = -1;
+        for (const log of logs) {
+            const num = parseInt(log.ticket_number.replace(/\D/g, ''), 10);
+            if (!isNaN(num) && num > maxNum) {
+                maxNum = num;
+                lastFuel = log;
+            }
+        }
+    }
 
     return {
         ...vehicle,

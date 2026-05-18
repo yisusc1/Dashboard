@@ -115,6 +115,14 @@ function NewFuelLogContent() {
                     setScannedVehicle(details)
                     form.setValue("vehicle_id", details.id)
                     
+                    if (details.last_fuel?.ticket_number) {
+                        const nextTicket = parseInt(details.last_fuel.ticket_number, 10) + 1;
+                        if (!isNaN(nextTicket)) {
+                            const nextTicketStr = nextTicket.toString().padStart(details.last_fuel.ticket_number.length, '0');
+                            form.setValue("ticket_number", nextTicketStr);
+                        }
+                    }
+                    
                     // Attempt to auto-fill driver from active trip
                     const activeDriver = await getActiveDriverAction(id)
                     if (activeDriver) {
@@ -338,11 +346,23 @@ function NewFuelLogContent() {
                                                             }
                                                             field.onChange(v.id)
                                                             
+                                                            const details = await getVehicleDetailsAction(v.id)
+                                                            if (details && details.last_fuel?.ticket_number) {
+                                                                const nextTicket = parseInt(details.last_fuel.ticket_number, 10) + 1;
+                                                                if (!isNaN(nextTicket)) {
+                                                                    const nextTicketStr = nextTicket.toString().padStart(details.last_fuel.ticket_number.length, '0');
+                                                                    form.setValue("ticket_number", nextTicketStr);
+                                                                    toast.info(`Siguiente ticket sugerido: #${nextTicketStr}`);
+                                                                }
+                                                            }
+
                                                             // Auto-detect driver
                                                             const activeDriver = await getActiveDriverAction(v.id)
                                                             if (activeDriver) {
                                                                 form.setValue("driver_name", activeDriver)
                                                                 toast.info(`Chofer detectado: ${activeDriver}`)
+                                                            } else if (details?.driver) {
+                                                                form.setValue("driver_name", `${details.driver.first_name} ${details.driver.last_name}`)
                                                             }
                                                         }}
                                                         className="h-14 rounded-2xl"
