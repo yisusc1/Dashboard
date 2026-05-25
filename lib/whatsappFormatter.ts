@@ -1,11 +1,11 @@
 export const generateWhatsAppMessage = (reportData: any, supervisorName: string, reportDate: string) => {
-  let message = `📋 *REPORTE DIARIO DE OPERACIONES*\n`;
-  message += `👤 *Supervisor:* ${supervisorName}\n`;
-  message += `📅 *Fecha:* ${reportDate}\n\n`;
+  let message = `*REPORTE DIARIO DE OPERACIONES*\n`;
+  message += `*Supervisor:* ${supervisorName}\n`;
+  message += `*Fecha:* ${reportDate}\n\n`;
 
   const formatLocation = (item: any) => {
     const parts = [item.estado, item.municipio, item.sector].filter(Boolean);
-    return parts.length > 0 ? `📍 _${parts.join(' - ')}_\n` : '';
+    return parts.length > 0 ? `Ubicación: ${parts.join(' - ')}\n` : '';
   };
 
   const hasData = (item: any, requiredKeys: string[]) => {
@@ -16,7 +16,7 @@ export const generateWhatsAppMessage = (reportData: any, supervisorName: string,
   if (reportData.instalaciones && reportData.instalaciones.length > 0) {
     const validItems = reportData.instalaciones.filter((i: any) => hasData(i, ['cedula', 'tecnicos', 'metrajeReal', 'serial']));
     if (validItems.length > 0) {
-      message += `*🔷 INSPECCIÓN DE INSTALACIÓN (${validItems.length})*\n`;
+      message += `*INSPECCIÓN DE INSTALACIÓN (${validItems.length})*\n`;
       validItems.forEach((item: any) => {
         message += formatLocation(item);
         if (item.cedula) message += `• Cédula/Ticket: ${item.cedula}\n`;
@@ -34,7 +34,7 @@ export const generateWhatsAppMessage = (reportData: any, supervisorName: string,
   if (reportData.soportes && reportData.soportes.length > 0) {
     const validItems = reportData.soportes.filter((i: any) => hasData(i, ['ticket', 'tecnicos', 'diagnostico']));
     if (validItems.length > 0) {
-      message += `*🛠️ APOYO EN SOPORTE TÉCNICO (${validItems.length})*\n`;
+      message += `*APOYO EN SOPORTE TÉCNICO (${validItems.length})*\n`;
       validItems.forEach((item: any) => {
         message += formatLocation(item);
         if (item.ticket) message += `• Ticket: ${item.ticket}\n`;
@@ -51,7 +51,7 @@ export const generateWhatsAppMessage = (reportData: any, supervisorName: string,
   if (reportData.materiales && reportData.materiales.length > 0) {
     const validItems = reportData.materiales.filter((i: any) => hasData(i, ['carrete', 'tecnicos']));
     if (validItems.length > 0) {
-      message += `*📦 CONTROL DE MATERIALES (${validItems.length})*\n`;
+      message += `*CONTROL DE MATERIALES (${validItems.length})*\n`;
       validItems.forEach((item: any) => {
         message += formatLocation(item);
         if (item.carrete) message += `• Carrete: ${item.carrete}\n`;
@@ -70,7 +70,7 @@ export const generateWhatsAppMessage = (reportData: any, supervisorName: string,
   if (reportData.combustibles && reportData.combustibles.length > 0) {
     const validItems = reportData.combustibles.filter((i: any) => hasData(i, ['placa', 'conductor']));
     if (validItems.length > 0) {
-      message += `*🚗 COMBUSTIBLE Y FLOTA (${validItems.length})*\n`;
+      message += `*COMBUSTIBLE Y FLOTA (${validItems.length})*\n`;
       validItems.forEach((item: any) => {
         message += formatLocation(item);
         if (item.placa) message += `• Placa: ${item.placa}\n`;
@@ -87,7 +87,7 @@ export const generateWhatsAppMessage = (reportData: any, supervisorName: string,
   if (reportData.ssts && reportData.ssts.length > 0) {
     const validItems = reportData.ssts.filter((i: any) => hasData(i, ['tecnicos', 'epp']));
     if (validItems.length > 0) {
-      message += `*🦺 AUDITORÍA SST (${validItems.length})*\n`;
+      message += `*AUDITORÍA SST (${validItems.length})*\n`;
       validItems.forEach((item: any) => {
         message += formatLocation(item);
         if (item.tecnicos) message += `• Técnicos: ${item.tecnicos}\n`;
@@ -103,7 +103,7 @@ export const generateWhatsAppMessage = (reportData: any, supervisorName: string,
   if (reportData.factibilidades && reportData.factibilidades.length > 0) {
     const validItems = reportData.factibilidades.filter((i: any) => hasData(i, ['coordenadas', 'distancia', 'abonados']));
     if (validItems.length > 0) {
-      message += `*📡 LEVANTAMIENTO DE FACTIBILIDAD (${validItems.length})*\n`;
+      message += `*LEVANTAMIENTO DE FACTIBILIDAD (${validItems.length})*\n`;
       validItems.forEach((item: any) => {
         message += formatLocation(item);
         if (item.coordenadas) message += `• Coordenadas: ${item.coordenadas}\n`;
@@ -115,7 +115,7 @@ export const generateWhatsAppMessage = (reportData: any, supervisorName: string,
     }
   }
 
-  message += `✅ _Generado desde Dashboard_`;
+  message += `Generado desde Dashboard`;
   
   return encodeURIComponent(message);
 };
