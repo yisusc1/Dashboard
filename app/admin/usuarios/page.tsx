@@ -16,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
-import { UserCog, Mail, Calendar, Settings2, Building2, Briefcase, User as UserIcon, ArrowLeft, Pencil, Shield, LogIn, LayoutDashboard, Truck, Wrench, Package, ClipboardCheck, Lock, Key } from "lucide-react"
+import { UserCog, Mail, Calendar, Settings2, Building2, Briefcase, User as UserIcon, ArrowLeft, Pencil, Shield, LogIn, LayoutDashboard, Truck, Wrench, Package, ClipboardCheck, Lock, Key, FileText, MapPin } from "lucide-react"
 import Link from "next/link"
 import { updateProfileDetails, impersonateUserAction, createUserAction, adminResetPassword } from "./user-actions"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
@@ -75,6 +75,13 @@ const MODULE_ACCESS = [
                 icon: ClipboardCheck,
                 color: 'text-rose-600 bg-rose-50 border-rose-200'
             },
+            {
+                role: 'reportes',
+                label: 'Reportes Diarios',
+                description: 'Acceso al panel de llenado de reportes modulares diarios.',
+                icon: FileText,
+                color: 'text-emerald-600 bg-emerald-50 border-emerald-200'
+            },
         ]
     },
     {
@@ -105,6 +112,13 @@ const MODULE_ACCESS = [
                 description: 'Acceso total a configuración y gestión de usuarios.',
                 icon: Lock,
                 color: 'text-purple-600 bg-purple-50 border-purple-200'
+            },
+            {
+                role: 'geodata',
+                label: 'Zonas Operativas',
+                description: 'Gestión global de ubicaciones (Geodata) para los selectores.',
+                icon: MapPin,
+                color: 'text-teal-600 bg-teal-50 border-teal-200'
             }
         ]
     }
@@ -277,8 +291,9 @@ export default function AdminUsersPage() {
     const getRoleBadgeColor = (role: string) => {
         if (role === "admin") return "bg-purple-100 text-purple-700 hover:bg-purple-200"
         if (role === "gerencia") return "bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
-        if (["tecnico", "chofer", "supervisor", "mecanico"].includes(role)) return "bg-green-100 text-green-700"
+        if (["tecnico", "chofer", "supervisor", "mecanico", "reportes"].includes(role)) return "bg-green-100 text-green-700"
         if (["auditoria", "combustible"].includes(role)) return "bg-red-100 text-red-700"
+        if (role === "geodata") return "bg-teal-100 text-teal-700 hover:bg-teal-200"
         return "bg-zinc-100 text-zinc-700"
     }
 
@@ -689,7 +704,9 @@ export default function AdminUsersPage() {
                                     <SelectItem value="admin">Administrador</SelectItem>
                                     <SelectItem value="gerencia">Gerencia</SelectItem>
                                     <SelectItem value="supervisor">Supervisor</SelectItem>
+                                    <SelectItem value="reportes">Reportes Diarios</SelectItem>
                                     <SelectItem value="chofer">Chofer</SelectItem>
+                                    <SelectItem value="geodata">Zonas Operativas</SelectItem>
                                     <SelectItem value="invitado">Invitado</SelectItem>
                                 </SelectContent>
                             </Select>
