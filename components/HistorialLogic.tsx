@@ -95,7 +95,9 @@ export default function HistorialLogic({ usuarioActual }: { usuarioActual: { id:
 
                 {isSelected && (
                   <div className="mt-6 pt-6 border-t border-gray-100 animate-in slide-in-from-top-2">
-                    <p className="text-sm text-gray-600 mb-4"><strong>Resumen:</strong> {report.selected_activities?.length} actividades registradas.</p>
+                    <div className="text-[13px] text-gray-700 whitespace-pre-wrap bg-gray-50 p-4 rounded-xl mb-4 border border-gray-100 max-h-64 overflow-y-auto leading-relaxed">
+                      {decodeURIComponent(generateWhatsAppMessage(report.report_data, usuarioActual.nombre, report.date))}
+                    </div>
                     
                     <button 
                       onClick={(e) => handleWhatsApp(report, e)}
