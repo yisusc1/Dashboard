@@ -3,9 +3,11 @@
 import React, { useState, useEffect } from "react";
 import { useForm, useFieldArray, useWatch, Controller } from "react-hook-form";
 import { createClient } from "@/lib/supabase/client";
-import { CheckCircle2, UploadCloud, Loader2, Plus, Trash2 } from "lucide-react";
+import { CheckCircle2, UploadCloud, Loader2, Plus, Trash2, MessageCircle } from "lucide-react";
 import { toast } from "sonner"; 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { generateWhatsAppMessage } from "@/lib/whatsappFormatter";
+import Link from "next/link";
 
 export type ActivityKey = 'instalacion' | 'soporte' | 'materiales' | 'combustible' | 'sst' | 'factibilidad';
 
@@ -105,6 +107,8 @@ export default function SupervisionFormLogic({ usuarioActual }: SupervisionFormP
   const [selectedActivities, setSelectedActivities] = useState<ActivityKey[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingInitial, setLoadingInitial] = useState(true);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [finalReportData, setFinalReportData] = useState<any>(null);
   
   const supabase = createClient();
 
@@ -201,6 +205,8 @@ export default function SupervisionFormLogic({ usuarioActual }: SupervisionFormP
         await supabase.from('daily_activities_reports').update({ status: 'COMPLETED', report_data: data }).eq('id', existing.id);
       }
       toast.success("¡Reporte enviado exitosamente!", { id: 'submit' });
+      setFinalReportData(data);
+      setIsSuccess(true);
     } catch (error) {
       toast.error("Hubo un error al enviar el reporte", { id: 'submit' });
     } finally {
@@ -216,6 +222,40 @@ export default function SupervisionFormLogic({ usuarioActual }: SupervisionFormP
   };
 
   if (loadingInitial) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>;
+
+  if (isSuccess && finalReportData) {
+    const today = new Date().toISOString().split('T')[0];
+    const waUrl = `https://wa.me/?text=${generateWhatsAppMessage(finalReportData, usuarioActual.nombre, today)}`;
+    
+    return (
+      <div className="w-full max-w-3xl mx-auto py-16 px-6 text-center space-y-6">
+        <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+          <CheckCircle2 className="w-12 h-12" />
+        </div>
+        <h2 className="text-3xl font-bold text-gray-900">¡Reporte Enviado!</h2>
+        <p className="text-gray-500">Tu reporte de operaciones ha sido guardado exitosamente.</p>
+        
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8 pt-6">
+          <a 
+            href={waUrl} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 h-14 px-8 rounded-[14px] bg-[#25D366] hover:bg-[#20bd5a] text-white font-semibold shadow-lg shadow-[#25D366]/30 transition-all w-full sm:w-auto hover:scale-[1.02]"
+          >
+            <MessageCircle className="w-5 h-5" />
+            Enviar a WhatsApp
+          </a>
+          
+          <Link 
+            href="/historial-reportes"
+            className="flex items-center justify-center gap-2 h-14 px-8 rounded-[14px] bg-white hover:bg-gray-50 text-gray-900 border border-gray-200 font-semibold shadow-sm transition-all w-full sm:w-auto"
+          >
+            Ver Historial
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-5xl mx-auto pb-12">
