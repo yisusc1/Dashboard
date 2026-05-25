@@ -143,7 +143,8 @@ export default function SupervisionFormLogic({ usuarioActual }: SupervisionFormP
         .select('*')
         .eq('supervisor_id', usuarioActual.id)
         .eq('date', today)
-        .single();
+        .eq('status', 'DRAFT')
+        .maybeSingle();
         
       if (draft) {
         setSelectedActivities(draft.selected_activities as ActivityKey[]);
@@ -178,7 +179,7 @@ export default function SupervisionFormLogic({ usuarioActual }: SupervisionFormP
   const autoSave = async (activities: string[], formData: any) => {
     try {
       const today = new Date().toISOString().split('T')[0];
-      const { data: existing } = await supabase.from('daily_activities_reports').select('id').eq('supervisor_id', usuarioActual.id).eq('date', today).single();
+      const { data: existing } = await supabase.from('daily_activities_reports').select('id').eq('supervisor_id', usuarioActual.id).eq('date', today).eq('status', 'DRAFT').maybeSingle();
       if (existing) {
         await supabase.from('daily_activities_reports').update({ selected_activities: activities, report_data: formData }).eq('id', existing.id);
       } else {
@@ -200,7 +201,7 @@ export default function SupervisionFormLogic({ usuarioActual }: SupervisionFormP
     
     try {
       const today = new Date().toISOString().split('T')[0];
-      const { data: existing } = await supabase.from('daily_activities_reports').select('id').eq('supervisor_id', usuarioActual.id).eq('date', today).single();
+      const { data: existing } = await supabase.from('daily_activities_reports').select('id').eq('supervisor_id', usuarioActual.id).eq('date', today).eq('status', 'DRAFT').maybeSingle();
       if (existing) {
         await supabase.from('daily_activities_reports').update({ status: 'COMPLETED', report_data: data }).eq('id', existing.id);
       }
