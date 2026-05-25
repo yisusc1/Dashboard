@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useForm, useFieldArray, useWatch } from "react-hook-form";
+import { useForm, useFieldArray, useWatch, Controller } from "react-hook-form";
 import { createClient } from "@/lib/supabase/client";
 import { CheckCircle2, UploadCloud, Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner"; 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export type ActivityKey = 'instalacion' | 'soporte' | 'materiales' | 'combustible' | 'sst' | 'factibilidad';
 
@@ -30,7 +31,7 @@ const labelClass = "text-[15px] font-semibold text-gray-900 mb-2 block";
 const sectionClass = "bg-white rounded-[24px] p-5 md:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.04)] mb-6 relative border border-gray-100";
 const cardClass = "bg-[#F9F9FB] border border-gray-100 rounded-[20px] p-5 mb-4 relative";
 
-// --- SUBCOMPONENTE DE CASCADA ---
+// --- SUBCOMPONENTE DE CASCADA (Usando Shadcn Select para look iOS) ---
 const LocationSelector = ({ control, register, setValue, index, namespace, zonas }: any) => {
   const estadoPath = `${namespace}.${index}.estado`;
   const municipioPath = `${namespace}.${index}.municipio`;
@@ -52,37 +53,52 @@ const LocationSelector = ({ control, register, setValue, index, namespace, zonas
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <div>
           <label className={labelClass}>Estado *</label>
-          <select {...register(estadoPath)} className={`${inputClass} bg-white`} onChange={(e) => { setValue(estadoPath, e.target.value); setValue(municipioPath, ''); setValue(parroquiaPath, ''); setValue(sectorPath, ''); }}>
-            <option value="">Seleccione...</option>
-            {estados.map((e: any) => <option key={e} value={e}>{e}</option>)}
-          </select>
+          <Select value={estado || ""} onValueChange={(val) => { setValue(estadoPath, val); setValue(municipioPath, ''); setValue(parroquiaPath, ''); setValue(sectorPath, ''); }}>
+            <SelectTrigger className={`${inputClass} bg-white`}>
+              <SelectValue placeholder="Seleccione..." />
+            </SelectTrigger>
+            <SelectContent>
+              {estados.map((e: any) => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <label className={labelClass}>Municipio *</label>
-          <select {...register(municipioPath)} className={`${inputClass} bg-white`} disabled={!estado} onChange={(e) => { setValue(municipioPath, e.target.value); setValue(parroquiaPath, ''); setValue(sectorPath, ''); }}>
-            <option value="">Seleccione...</option>
-            {municipios.map((m: any) => <option key={m} value={m}>{m}</option>)}
-          </select>
+          <Select disabled={!estado} value={municipio || ""} onValueChange={(val) => { setValue(municipioPath, val); setValue(parroquiaPath, ''); setValue(sectorPath, ''); }}>
+            <SelectTrigger className={`${inputClass} bg-white`}>
+              <SelectValue placeholder="Seleccione..." />
+            </SelectTrigger>
+            <SelectContent>
+              {municipios.map((m: any) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <label className={labelClass}>Parroquia *</label>
-          <select {...register(parroquiaPath)} className={`${inputClass} bg-white`} disabled={!municipio} onChange={(e) => { setValue(parroquiaPath, e.target.value); setValue(sectorPath, ''); }}>
-            <option value="">Seleccione...</option>
-            {parroquias.map((p: any) => <option key={p} value={p}>{p}</option>)}
-          </select>
+          <Select disabled={!municipio} value={parroquia || ""} onValueChange={(val) => { setValue(parroquiaPath, val); setValue(sectorPath, ''); }}>
+            <SelectTrigger className={`${inputClass} bg-white`}>
+              <SelectValue placeholder="Seleccione..." />
+            </SelectTrigger>
+            <SelectContent>
+              {parroquias.map((p: any) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <label className={labelClass}>Sector *</label>
-          <select {...register(sectorPath)} className={`${inputClass} bg-white`} disabled={!parroquia}>
-            <option value="">Seleccione...</option>
-            {sectores.map((s: any) => <option key={s} value={s}>{s}</option>)}
-          </select>
+          <Select disabled={!parroquia} value={useWatch({ control, name: sectorPath }) || ""} onValueChange={(val) => setValue(sectorPath, val)}>
+            <SelectTrigger className={`${inputClass} bg-white`}>
+              <SelectValue placeholder="Seleccione..." />
+            </SelectTrigger>
+            <SelectContent>
+              {sectores.map((s: any) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </div>
   )
 }
-
 
 export default function SupervisionFormLogic({ usuarioActual }: SupervisionFormProps) {
   const [zonas, setZonas] = useState<any[]>([]);
@@ -192,13 +208,11 @@ export default function SupervisionFormLogic({ usuarioActual }: SupervisionFormP
     }
   };
 
-  // Helper para validar si el último elemento de un array está "completo" (al menos tiene el sector de la ubicación)
-  // Esto evita que añadan 50 registros en blanco sin haber llenado el anterior.
   const isLastRecordFilled = (arrayName: string) => {
     const items = watch(arrayName);
     if (!items || items.length === 0) return true;
     const last = items[items.length - 1];
-    return last && last.estado && last.sector; // Consideramos "guardado" si al menos seleccionó la ubicación final
+    return last && last.estado && last.sector; 
   };
 
   if (loadingInitial) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>;
@@ -231,9 +245,7 @@ export default function SupervisionFormLogic({ usuarioActual }: SupervisionFormP
           </div>
         </div>
 
-        {/* ===================================== */}
         {/* 1: INSTALACIÓN */}
-        {/* ===================================== */}
         {selectedActivities.includes('instalacion') && (
           <div className={sectionClass}>
             <div className="flex items-center justify-between mb-4">
@@ -272,9 +284,7 @@ export default function SupervisionFormLogic({ usuarioActual }: SupervisionFormP
           </div>
         )}
 
-        {/* ===================================== */}
         {/* 2: SOPORTE */}
-        {/* ===================================== */}
         {selectedActivities.includes('soporte') && (
           <div className={sectionClass}>
             <h3 className="text-xl font-bold text-orange-900 mb-4 flex items-center gap-2">Inspección en Soporte Técnico</h3>
@@ -309,9 +319,7 @@ export default function SupervisionFormLogic({ usuarioActual }: SupervisionFormP
           </div>
         )}
 
-        {/* ===================================== */}
         {/* 3: MATERIALES */}
-        {/* ===================================== */}
         {selectedActivities.includes('materiales') && (
           <div className={sectionClass}>
             <h3 className="text-xl font-bold text-purple-900 mb-4 flex items-center gap-2">Control de Materiales (Retorno)</h3>
@@ -360,9 +368,7 @@ export default function SupervisionFormLogic({ usuarioActual }: SupervisionFormP
           </div>
         )}
 
-        {/* ===================================== */}
         {/* 4: COMBUSTIBLE */}
-        {/* ===================================== */}
         {selectedActivities.includes('combustible') && (
           <div className={sectionClass}>
             <h3 className="text-xl font-bold text-red-900 mb-4 flex items-center gap-2">Control de Combustible y Flota</h3>
@@ -399,9 +405,7 @@ export default function SupervisionFormLogic({ usuarioActual }: SupervisionFormP
           </div>
         )}
 
-        {/* ===================================== */}
         {/* 5: SST */}
-        {/* ===================================== */}
         {selectedActivities.includes('sst') && (
           <div className={sectionClass}>
             <h3 className="text-xl font-bold text-emerald-900 mb-4 flex items-center gap-2">Auditoría SST en Campo</h3>
@@ -417,8 +421,30 @@ export default function SupervisionFormLogic({ usuarioActual }: SupervisionFormP
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <LocationSelector control={control} register={register} setValue={setValue} index={index} namespace="ssts" zonas={zonas} />
                   <div className="md:col-span-2"><label className={labelClass}>Técnicos Auditados *</label><input type="text" {...register(`ssts.${index}.tecnicos`)} className={inputClass} /></div>
-                  <div><label className={labelClass}>Estado de EPP</label><select {...register(`ssts.${index}.epp`)} className={inputClass}><option value="">Seleccione...</option><option value="Conforme">Conforme</option><option value="No Conforme">No Conforme</option></select></div>
-                  <div><label className={labelClass}>Señalización (Conos)</label><select {...register(`ssts.${index}.senalizacion`)} className={inputClass}><option value="">Seleccione...</option><option value="Conforme">Conforme</option><option value="No Conforme">No Conforme</option></select></div>
+                  <div>
+                    <label className={labelClass}>Estado de EPP</label>
+                    <Controller control={control} name={`ssts.${index}.epp`} render={({ field }) => (
+                      <Select value={field.value || ""} onValueChange={field.onChange}>
+                        <SelectTrigger className={inputClass}><SelectValue placeholder="Seleccione..." /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Conforme">Conforme</SelectItem>
+                          <SelectItem value="No Conforme">No Conforme</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Señalización (Conos)</label>
+                    <Controller control={control} name={`ssts.${index}.senalizacion`} render={({ field }) => (
+                      <Select value={field.value || ""} onValueChange={field.onChange}>
+                        <SelectTrigger className={inputClass}><SelectValue placeholder="Seleccione..." /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Conforme">Conforme</SelectItem>
+                          <SelectItem value="No Conforme">No Conforme</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )} />
+                  </div>
                   <div className="md:col-span-2"><label className={labelClass}>Observaciones Aval</label><input type="text" {...register(`ssts.${index}.observaciones`)} className={inputClass} /></div>
                 </div>
               </div>
@@ -435,9 +461,7 @@ export default function SupervisionFormLogic({ usuarioActual }: SupervisionFormP
           </div>
         )}
 
-        {/* ===================================== */}
         {/* 6: FACTIBILIDAD */}
-        {/* ===================================== */}
         {selectedActivities.includes('factibilidad') && (
           <div className={sectionClass}>
             <h3 className="text-xl font-bold text-indigo-900 mb-4 flex items-center gap-2">Levantamiento de Factibilidad</h3>
