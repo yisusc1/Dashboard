@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import { createClient } from "@/lib/supabase/client";
-import { CheckCircle2, UploadCloud, Loader2 } from "lucide-react";
+import { CheckCircle2, UploadCloud, Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner"; 
 
 export type ActivityKey = 'instalacion' | 'soporte' | 'materiales' | 'combustible' | 'sst' | 'factibilidad';
@@ -24,12 +24,65 @@ const ACTIVITIES = [
   { id: 'factibilidad', title: 'Factibilidad (Nuevas Rutas)', desc: 'Coordenadas, distancia y potencial' }
 ];
 
-const CIUDADES_ESTRICTAS = ["Guaicaipuro", "Los Salias", "Santos Michelena"];
-
 // --- ESTILOS COMPARTIDOS ---
 const inputClass = "w-full h-12 px-4 rounded-2xl bg-white/50 border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none text-gray-900 placeholder:text-gray-400 disabled:opacity-50";
 const labelClass = "text-xs font-semibold text-gray-500 uppercase tracking-wider ml-1 mb-1 block";
-const sectionClass = "backdrop-blur-xl bg-white/70 border border-white/40 rounded-[2.5rem] p-6 shadow-xl shadow-black/5 ring-1 ring-white/60 mb-6";
+const sectionClass = "backdrop-blur-xl bg-white/70 border border-white/40 rounded-[2.5rem] p-6 shadow-xl shadow-black/5 ring-1 ring-white/60 mb-6 relative";
+const cardClass = "bg-white/40 border border-white/50 rounded-3xl p-5 mb-4 shadow-sm relative";
+
+// --- SUBCOMPONENTE DE CASCADA ---
+const LocationSelector = ({ control, register, setValue, index, namespace, zonas }: any) => {
+  const estadoPath = `${namespace}.${index}.estado`;
+  const municipioPath = `${namespace}.${index}.municipio`;
+  const parroquiaPath = `${namespace}.${index}.parroquia`;
+  const sectorPath = `${namespace}.${index}.sector`;
+
+  const estado = useWatch({ control, name: estadoPath });
+  const municipio = useWatch({ control, name: municipioPath });
+  const parroquia = useWatch({ control, name: parroquiaPath });
+
+  const estados = Array.from(new Set(zonas.map((z: any) => z.estado)));
+  const municipios = Array.from(new Set(zonas.filter((z: any) => z.estado === estado).map((z: any) => z.municipio)));
+  const parroquias = Array.from(new Set(zonas.filter((z: any) => z.estado === estado && z.municipio === municipio).map((z: any) => z.parroquia)));
+  const sectores = Array.from(new Set(zonas.filter((z: any) => z.estado === estado && z.municipio === municipio && z.parroquia === parroquia).map((z: any) => z.sector)));
+
+  return (
+    <div className="md:col-span-2 bg-blue-50/50 p-4 rounded-2xl border border-blue-100/50 space-y-3">
+      <p className="text-xs font-bold text-blue-800 uppercase tracking-wider">Ubicación Operativa</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div>
+          <label className={labelClass}>Estado *</label>
+          <select {...register(estadoPath)} className={`${inputClass} bg-white`} onChange={(e) => { setValue(estadoPath, e.target.value); setValue(municipioPath, ''); setValue(parroquiaPath, ''); setValue(sectorPath, ''); }}>
+            <option value="">Seleccione...</option>
+            {estados.map((e: any) => <option key={e} value={e}>{e}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Municipio *</label>
+          <select {...register(municipioPath)} className={`${inputClass} bg-white`} disabled={!estado} onChange={(e) => { setValue(municipioPath, e.target.value); setValue(parroquiaPath, ''); setValue(sectorPath, ''); }}>
+            <option value="">Seleccione...</option>
+            {municipios.map((m: any) => <option key={m} value={m}>{m}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Parroquia *</label>
+          <select {...register(parroquiaPath)} className={`${inputClass} bg-white`} disabled={!municipio} onChange={(e) => { setValue(parroquiaPath, e.target.value); setValue(sectorPath, ''); }}>
+            <option value="">Seleccione...</option>
+            {parroquias.map((p: any) => <option key={p} value={p}>{p}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Sector *</label>
+          <select {...register(sectorPath)} className={`${inputClass} bg-white`} disabled={!parroquia}>
+            <option value="">Seleccione...</option>
+            {sectores.map((s: any) => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 
 export default function SupervisionFormLogic({ usuarioActual }: SupervisionFormProps) {
   const [zonas, setZonas] = useState<any[]>([]);
@@ -39,11 +92,25 @@ export default function SupervisionFormLogic({ usuarioActual }: SupervisionFormP
   
   const supabase = createClient();
 
-  const { register, handleSubmit, setValue, watch } = useForm({
+  const { register, control, handleSubmit, setValue, watch, reset } = useForm({
     defaultValues: {
       actividades: [] as string[],
+      instalaciones: [],
+      soportes: [],
+      materiales: [],
+      combustibles: [],
+      ssts: [],
+      factibilidades: []
     } as Record<string, any>
   });
+
+  // Arreglos dinámicos para cada actividad
+  const instArr = useFieldArray({ control, name: "instalaciones" });
+  const sopArr = useFieldArray({ control, name: "soportes" });
+  const matArr = useFieldArray({ control, name: "materiales" });
+  const comArr = useFieldArray({ control, name: "combustibles" });
+  const sstArr = useFieldArray({ control, name: "ssts" });
+  const facArr = useFieldArray({ control, name: "factibilidades" });
 
   useEffect(() => {
     const initData = async () => {
@@ -61,20 +128,28 @@ export default function SupervisionFormLogic({ usuarioActual }: SupervisionFormP
       if (draft) {
         setSelectedActivities(draft.selected_activities as ActivityKey[]);
         if (draft.report_data) {
-          Object.keys(draft.report_data).forEach(key => {
-            setValue(key, draft.report_data[key]);
-          });
+          reset(draft.report_data);
         }
       }
       setLoadingInitial(false);
     };
     initData();
-  }, [usuarioActual.id, supabase, setValue]);
+  }, [usuarioActual.id, supabase, reset]);
 
   const toggleActivity = (id: ActivityKey) => {
     setSelectedActivities(prev => {
       const newActivities = prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id];
       setValue('actividades', newActivities);
+      
+      if (!prev.includes(id)) {
+        if (id === 'instalacion' && instArr.fields.length === 0) instArr.append({});
+        if (id === 'soporte' && sopArr.fields.length === 0) sopArr.append({});
+        if (id === 'materiales' && matArr.fields.length === 0) matArr.append({});
+        if (id === 'combustible' && comArr.fields.length === 0) comArr.append({});
+        if (id === 'sst' && sstArr.fields.length === 0) sstArr.append({});
+        if (id === 'factibilidad' && facArr.fields.length === 0) facArr.append({});
+      }
+
       autoSave(newActivities, watch());
       return newActivities;
     });
@@ -83,27 +158,11 @@ export default function SupervisionFormLogic({ usuarioActual }: SupervisionFormP
   const autoSave = async (activities: string[], formData: any) => {
     try {
       const today = new Date().toISOString().split('T')[0];
-      
-      const { data: existing } = await supabase
-        .from('daily_activities_reports')
-        .select('id')
-        .eq('supervisor_id', usuarioActual.id)
-        .eq('date', today)
-        .single();
-
+      const { data: existing } = await supabase.from('daily_activities_reports').select('id').eq('supervisor_id', usuarioActual.id).eq('date', today).single();
       if (existing) {
-        await supabase.from('daily_activities_reports').update({
-          selected_activities: activities,
-          report_data: formData
-        }).eq('id', existing.id);
+        await supabase.from('daily_activities_reports').update({ selected_activities: activities, report_data: formData }).eq('id', existing.id);
       } else {
-        await supabase.from('daily_activities_reports').insert({
-          supervisor_id: usuarioActual.id,
-          date: today,
-          status: 'DRAFT',
-          selected_activities: activities,
-          report_data: formData
-        });
+        await supabase.from('daily_activities_reports').insert({ supervisor_id: usuarioActual.id, date: today, status: 'DRAFT', selected_activities: activities, report_data: formData });
       }
     } catch (error) {
       console.error("Autosave error", error);
@@ -121,18 +180,9 @@ export default function SupervisionFormLogic({ usuarioActual }: SupervisionFormP
     
     try {
       const today = new Date().toISOString().split('T')[0];
-      const { data: existing } = await supabase
-        .from('daily_activities_reports')
-        .select('id')
-        .eq('supervisor_id', usuarioActual.id)
-        .eq('date', today)
-        .single();
-
+      const { data: existing } = await supabase.from('daily_activities_reports').select('id').eq('supervisor_id', usuarioActual.id).eq('date', today).single();
       if (existing) {
-        await supabase.from('daily_activities_reports').update({
-          status: 'COMPLETED',
-          report_data: data
-        }).eq('id', existing.id);
+        await supabase.from('daily_activities_reports').update({ status: 'COMPLETED', report_data: data }).eq('id', existing.id);
       }
       toast.success("¡Reporte enviado exitosamente!", { id: 'submit' });
     } catch (error) {
@@ -142,13 +192,19 @@ export default function SupervisionFormLogic({ usuarioActual }: SupervisionFormP
     }
   };
 
-  if (loadingInitial) {
-    return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>;
-  }
+  // Helper para validar si el último elemento de un array está "completo" (al menos tiene el sector de la ubicación)
+  // Esto evita que añadan 50 registros en blanco sin haber llenado el anterior.
+  const isLastRecordFilled = (arrayName: string) => {
+    const items = watch(arrayName);
+    if (!items || items.length === 0) return true;
+    const last = items[items.length - 1];
+    return last && last.estado && last.sector; // Consideramos "guardado" si al menos seleccionó la ubicación final
+  };
+
+  if (loadingInitial) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>;
 
   return (
-    <div className="w-full max-w-4xl mx-auto pb-12">
-      
+    <div className="w-full max-w-5xl mx-auto pb-12">
       <div className="mb-8 text-center space-y-2">
         <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Reporte de Operaciones</h2>
         <p className="text-gray-500">Supervisor: <span className="font-semibold text-gray-800">{usuarioActual.nombre}</span></p>
@@ -158,16 +214,12 @@ export default function SupervisionFormLogic({ usuarioActual }: SupervisionFormP
         
         {/* SELECTOR DE ACTIVIDADES */}
         <div className={sectionClass}>
-          <h3 className="text-lg font-bold text-gray-900 mb-4">1. ¿Qué actividades realizaste hoy?</h3>
+          <h3 className="text-lg font-bold text-gray-900 mb-4">1. ¿Qué tipo de actividades realizaste hoy?</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {ACTIVITIES.map((act) => {
               const isSelected = selectedActivities.includes(act.id as ActivityKey);
               return (
-                <div 
-                  key={act.id} 
-                  onClick={() => toggleActivity(act.id as ActivityKey)}
-                  className={`p-4 rounded-2xl cursor-pointer transition-all border ${isSelected ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/30' : 'bg-white/50 border-gray-200 hover:border-blue-300 hover:bg-white text-gray-800'}`}
-                >
+                <div key={act.id} onClick={() => toggleActivity(act.id as ActivityKey)} className={`p-4 rounded-2xl cursor-pointer transition-all border ${isSelected ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/30' : 'bg-white/50 border-gray-200 hover:border-blue-300 hover:bg-white text-gray-800'}`}>
                   <div className="flex items-start justify-between">
                     <h4 className="font-semibold text-sm leading-tight">{act.title}</h4>
                     {isSelected && <CheckCircle2 className="w-5 h-5 text-white shrink-0" />}
@@ -179,234 +231,243 @@ export default function SupervisionFormLogic({ usuarioActual }: SupervisionFormP
           </div>
         </div>
 
+        {/* ===================================== */}
         {/* 1: INSTALACIÓN */}
+        {/* ===================================== */}
         {selectedActivities.includes('instalacion') && (
           <div className={sectionClass}>
-            <h3 className="text-lg font-bold text-blue-900 mb-4 flex items-center gap-2">Inspección de Instalación / Alta Nueva</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
-                <label className={labelClass}>Ciudad Operativa (Dirección Exacta)</label>
-                <select {...register("inst_ciudad")} className={inputClass}>
-                  <option value="">Seleccione...</option>
-                  {zonas.map(z => <option key={z.id} value={`${z.estado} - ${z.municipio} - ${z.sector}`}>{z.municipio} - {z.sector}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className={labelClass}>Cédula / ID del Cliente</label>
-                <input type="text" {...register("inst_cedula")} className={inputClass} placeholder="V-12345678" />
-              </div>
-              <div>
-                <label className={labelClass}>Nombres de Cuadrilla</label>
-                <input type="text" {...register("inst_tecnicos")} className={inputClass} placeholder="Técnicos involucrados" />
-              </div>
-              <div>
-                <label className={labelClass}>Metraje Consumo Reportado</label>
-                <input type="number" {...register("inst_metrajeReportado")} className={inputClass} placeholder="Metros" />
-              </div>
-              <div>
-                <label className={labelClass}>Metraje Consumo Real (Físico)</label>
-                <input type="number" {...register("inst_metrajeReal")} className={inputClass} placeholder="Metros" />
-              </div>
-              <div>
-                <label className={labelClass}>Atenuación Final (dBm)</label>
-                <input type="number" step="0.01" {...register("inst_atenuacion")} className={inputClass} placeholder="-22.5" />
-              </div>
-              <div>
-                <label className={labelClass}>Serial / MAC Equipo ONT</label>
-                <input type="text" {...register("inst_serial")} className={inputClass} placeholder="SN: 485754..." />
-              </div>
-              <div className="md:col-span-2">
-                <label className={labelClass}>Observaciones del Aval / Prueba</label>
-                <input type="text" {...register("inst_observaciones_aval")} className={inputClass} placeholder="Ej: Se validó potenciómetro y fachada correctamente" />
-              </div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-blue-900 flex items-center gap-2">Inspección de Instalación / Alta Nueva</h3>
             </div>
+            
+            {instArr.fields.map((field, index) => (
+              <div key={field.id} className={cardClass}>
+                {instArr.fields.length > 1 && (
+                  <div className="absolute top-4 right-4 cursor-pointer text-gray-400 hover:text-red-500 transition-colors" onClick={() => instArr.remove(index)}>
+                    <Trash2 className="w-5 h-5" />
+                  </div>
+                )}
+                <h4 className="text-sm font-bold text-gray-800 mb-4">Registro #{index + 1}</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <LocationSelector control={control} register={register} setValue={setValue} index={index} namespace="instalaciones" zonas={zonas} />
+                  <div><label className={labelClass}>Cédula / ID Cliente *</label><input type="text" {...register(`instalaciones.${index}.cedula`)} className={inputClass} placeholder="V-12345678" /></div>
+                  <div><label className={labelClass}>Nombres Cuadrilla</label><input type="text" {...register(`instalaciones.${index}.tecnicos`)} className={inputClass} /></div>
+                  <div><label className={labelClass}>Metraje Reportado</label><input type="number" {...register(`instalaciones.${index}.metrajeReportado`)} className={inputClass} /></div>
+                  <div><label className={labelClass}>Metraje Físico Real</label><input type="number" {...register(`instalaciones.${index}.metrajeReal`)} className={inputClass} /></div>
+                  <div><label className={labelClass}>Atenuación Final (dBm)</label><input type="number" step="0.01" {...register(`instalaciones.${index}.atenuacion`)} className={inputClass} /></div>
+                  <div><label className={labelClass}>Serial / MAC ONT</label><input type="text" {...register(`instalaciones.${index}.serial`)} className={inputClass} /></div>
+                  <div className="md:col-span-2"><label className={labelClass}>Observaciones Aval / Prueba</label><input type="text" {...register(`instalaciones.${index}.observaciones`)} className={inputClass} /></div>
+                </div>
+              </div>
+            ))}
+            <button 
+              type="button" 
+              disabled={!isLastRecordFilled('instalaciones')}
+              onClick={() => instArr.append({})} 
+              className="flex items-center text-sm font-semibold text-blue-600 bg-blue-50 px-4 py-2 rounded-full hover:bg-blue-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Plus className="w-4 h-4 mr-1" /> Añadir otro registro
+              {!isLastRecordFilled('instalaciones') && <span className="ml-2 text-xs font-normal">(Completa la ubicación del anterior)</span>}
+            </button>
           </div>
         )}
 
+        {/* ===================================== */}
         {/* 2: SOPORTE */}
+        {/* ===================================== */}
         {selectedActivities.includes('soporte') && (
           <div className={sectionClass}>
-            <h3 className="text-lg font-bold text-orange-900 mb-4 flex items-center gap-2">Inspección en Soporte Técnico</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className={labelClass}>Ciudad Operativa</label>
-                <select {...register("sop_ciudad")} className={inputClass}>
-                  <option value="">Seleccione...</option>
-                  {CIUDADES_ESTRICTAS.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
+            <h3 className="text-xl font-bold text-orange-900 mb-4 flex items-center gap-2">Inspección en Soporte Técnico</h3>
+            
+            {sopArr.fields.map((field, index) => (
+              <div key={field.id} className={cardClass}>
+                {sopArr.fields.length > 1 && (
+                  <div className="absolute top-4 right-4 cursor-pointer text-gray-400 hover:text-red-500 transition-colors" onClick={() => sopArr.remove(index)}>
+                    <Trash2 className="w-5 h-5" />
+                  </div>
+                )}
+                <h4 className="text-sm font-bold text-gray-800 mb-4">Soporte #{index + 1}</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <LocationSelector control={control} register={register} setValue={setValue} index={index} namespace="soportes" zonas={zonas} />
+                  <div><label className={labelClass}>N° Ticket / Cédula *</label><input type="text" {...register(`soportes.${index}.ticket`)} className={inputClass} /></div>
+                  <div className="md:col-span-2"><label className={labelClass}>Nombres de Técnicos</label><input type="text" {...register(`soportes.${index}.tecnicos`)} className={inputClass} /></div>
+                  <div className="md:col-span-2"><label className={labelClass}>Diagnóstico Encontrado</label><input type="text" {...register(`soportes.${index}.diagnostico`)} className={inputClass} /></div>
+                  <div className="md:col-span-2"><label className={labelClass}>Acción Correctiva</label><input type="text" {...register(`soportes.${index}.accion`)} className={inputClass} /></div>
+                  <div className="md:col-span-2"><label className={labelClass}>Observaciones Aval / Prueba</label><input type="text" {...register(`soportes.${index}.observaciones`)} className={inputClass} /></div>
+                </div>
               </div>
-              <div>
-                <label className={labelClass}>N° Ticket / Cédula Cliente</label>
-                <input type="text" {...register("sop_ticket")} className={inputClass} />
-              </div>
-              <div className="md:col-span-2">
-                <label className={labelClass}>Nombres de Técnicos de Soporte</label>
-                <input type="text" {...register("sop_tecnicos")} className={inputClass} />
-              </div>
-              <div className="md:col-span-2">
-                <label className={labelClass}>Diagnóstico Encontrado</label>
-                <input type="text" {...register("sop_diagnostico")} className={inputClass} placeholder="Ej. Corte de drop..." />
-              </div>
-              <div className="md:col-span-2">
-                <label className={labelClass}>Acción Correctiva Realizada</label>
-                <input type="text" {...register("sop_accion")} className={inputClass} placeholder="Ej. Re-empalme..." />
-              </div>
-              <div className="md:col-span-2">
-                <label className={labelClass}>Observaciones del Aval / Prueba</label>
-                <input type="text" {...register("sop_observaciones_aval")} className={inputClass} placeholder="Ej: Se comprobó parámetros normalizados de ONT" />
-              </div>
-            </div>
+            ))}
+            <button 
+              type="button" 
+              disabled={!isLastRecordFilled('soportes')}
+              onClick={() => sopArr.append({})} 
+              className="flex items-center text-sm font-semibold text-orange-600 bg-orange-50 px-4 py-2 rounded-full hover:bg-orange-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Plus className="w-4 h-4 mr-1" /> Añadir otro soporte
+              {!isLastRecordFilled('soportes') && <span className="ml-2 text-xs font-normal">(Completa la ubicación del anterior)</span>}
+            </button>
           </div>
         )}
 
+        {/* ===================================== */}
         {/* 3: MATERIALES */}
+        {/* ===================================== */}
         {selectedActivities.includes('materiales') && (
           <div className={sectionClass}>
-            <h3 className="text-lg font-bold text-purple-900 mb-4 flex items-center gap-2">Control de Materiales (Retorno)</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className={labelClass}>Nombres de Técnicos</label>
-                <input type="text" {...register("mat_tecnicos")} className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>ID / Código del Carrete</label>
-                <input type="text" {...register("mat_carrete")} className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>Metraje de Despacho (AM)</label>
-                <input type="number" {...register("mat_despacho")} className={inputClass} placeholder="Metros iniciales" />
-              </div>
-              <div>
-                <label className={labelClass}>Metraje de Retorno (PM)</label>
-                <input type="number" {...register("mat_retorno")} className={inputClass} placeholder="Metros devueltos" />
-              </div>
-            </div>
+            <h3 className="text-xl font-bold text-purple-900 mb-4 flex items-center gap-2">Control de Materiales (Retorno)</h3>
             
-            {(watch("mat_despacho") && watch("mat_retorno")) && (
-               <div className="mt-4 p-4 bg-purple-50 rounded-xl text-sm font-semibold text-purple-800">
-                 Diferencia / Consumo Neto: {(watch("mat_despacho") || 0) - (watch("mat_retorno") || 0)} Metros
-               </div>
-            )}
-            
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className={labelClass}>Firma de Conformidad del Técnico</label>
-                <input type="text" {...register("mat_firma")} className={inputClass} placeholder="Nombre y Cédula del Técnico" />
+            {matArr.fields.map((field, index) => {
+              const dep = watch(`materiales.${index}.despacho`) || 0;
+              const ret = watch(`materiales.${index}.retorno`) || 0;
+              
+              return (
+              <div key={field.id} className={cardClass}>
+                {matArr.fields.length > 1 && (
+                  <div className="absolute top-4 right-4 cursor-pointer text-gray-400 hover:text-red-500 transition-colors" onClick={() => matArr.remove(index)}>
+                    <Trash2 className="w-5 h-5" />
+                  </div>
+                )}
+                <h4 className="text-sm font-bold text-gray-800 mb-4">Retorno #{index + 1}</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <LocationSelector control={control} register={register} setValue={setValue} index={index} namespace="materiales" zonas={zonas} />
+                  <div><label className={labelClass}>Técnicos Responsables</label><input type="text" {...register(`materiales.${index}.tecnicos`)} className={inputClass} /></div>
+                  <div><label className={labelClass}>ID / Código Carrete *</label><input type="text" {...register(`materiales.${index}.carrete`)} className={inputClass} /></div>
+                  <div><label className={labelClass}>Despacho (AM)</label><input type="number" {...register(`materiales.${index}.despacho`)} className={inputClass} /></div>
+                  <div><label className={labelClass}>Retorno (PM)</label><input type="number" {...register(`materiales.${index}.retorno`)} className={inputClass} /></div>
+                </div>
+                
+                {(dep > 0 || ret > 0) && (
+                   <div className="mt-4 p-4 bg-purple-50 rounded-xl text-sm font-semibold text-purple-800">
+                     Diferencia / Consumo Neto: {dep - ret} Metros
+                   </div>
+                )}
+                
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div><label className={labelClass}>Firma Conformidad</label><input type="text" {...register(`materiales.${index}.firma`)} className={inputClass} /></div>
+                  <div><label className={labelClass}>Observaciones Aval</label><input type="text" {...register(`materiales.${index}.observaciones`)} className={inputClass} /></div>
+                </div>
               </div>
-              <div>
-                <label className={labelClass}>Observaciones del Aval / Prueba</label>
-                <input type="text" {...register("mat_observaciones_aval")} className={inputClass} placeholder="Ej: Se validó metraje impreso en chaqueta" />
-              </div>
-            </div>
+            )})}
+            <button 
+              type="button" 
+              disabled={!isLastRecordFilled('materiales')}
+              onClick={() => matArr.append({})} 
+              className="flex items-center text-sm font-semibold text-purple-600 bg-purple-50 px-4 py-2 rounded-full hover:bg-purple-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Plus className="w-4 h-4 mr-1" /> Añadir otro carrete
+              {!isLastRecordFilled('materiales') && <span className="ml-2 text-xs font-normal">(Completa la ubicación del anterior)</span>}
+            </button>
           </div>
         )}
 
+        {/* ===================================== */}
         {/* 4: COMBUSTIBLE */}
+        {/* ===================================== */}
         {selectedActivities.includes('combustible') && (
           <div className={sectionClass}>
-            <h3 className="text-lg font-bold text-red-900 mb-4 flex items-center gap-2">Control de Combustible y Flota</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className={labelClass}>Placa / Unidad</label>
-                <input type="text" {...register("com_placa")} className={inputClass} />
+            <h3 className="text-xl font-bold text-red-900 mb-4 flex items-center gap-2">Control de Combustible y Flota</h3>
+            
+            {comArr.fields.map((field, index) => (
+              <div key={field.id} className={cardClass}>
+                {comArr.fields.length > 1 && (
+                  <div className="absolute top-4 right-4 cursor-pointer text-gray-400 hover:text-red-500 transition-colors" onClick={() => comArr.remove(index)}>
+                    <Trash2 className="w-5 h-5" />
+                  </div>
+                )}
+                <h4 className="text-sm font-bold text-gray-800 mb-4">Vehículo #{index + 1}</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <LocationSelector control={control} register={register} setValue={setValue} index={index} namespace="combustibles" zonas={zonas} />
+                  <div><label className={labelClass}>Placa / Unidad *</label><input type="text" {...register(`combustibles.${index}.placa`)} className={inputClass} /></div>
+                  <div><label className={labelClass}>Conductor</label><input type="text" {...register(`combustibles.${index}.conductor`)} className={inputClass} /></div>
+                  <div><label className={labelClass}>KM Salida</label><input type="number" {...register(`combustibles.${index}.kmSalida`)} className={inputClass} /></div>
+                  <div><label className={labelClass}>KM Llegada</label><input type="number" {...register(`combustibles.${index}.kmLlegada`)} className={inputClass} /></div>
+                  <div><label className={labelClass}>Litros Surtidos / N° Ticket</label><input type="text" {...register(`combustibles.${index}.litros`)} className={inputClass} /></div>
+                  <div className="md:col-span-2"><label className={labelClass}>Novedades del Vehículo</label><input type="text" {...register(`combustibles.${index}.novedades`)} className={inputClass} /></div>
+                  <div className="md:col-span-2"><label className={labelClass}>Observaciones Aval</label><input type="text" {...register(`combustibles.${index}.observaciones`)} className={inputClass} /></div>
+                </div>
               </div>
-              <div>
-                <label className={labelClass}>Conductor</label>
-                <input type="text" {...register("com_conductor")} className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>Kilometraje de Salida</label>
-                <input type="number" {...register("com_kmSalida")} className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>Kilometraje de Llegada</label>
-                <input type="number" {...register("com_kmLlegada")} className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>Litros Surtidos / N° Ticket</label>
-                <input type="text" {...register("com_litros")} className={inputClass} />
-              </div>
-              <div className="md:col-span-2">
-                <label className={labelClass}>Novedades del Vehículo</label>
-                <input type="text" {...register("com_novedades")} className={inputClass} placeholder="Luces, cauchos, fluidos..." />
-              </div>
-              <div className="md:col-span-2">
-                <label className={labelClass}>Observaciones del Aval / Prueba</label>
-                <input type="text" {...register("com_observaciones_aval")} className={inputClass} placeholder="Ej: Se validó odómetro y ticket de bomba" />
-              </div>
-            </div>
+            ))}
+            <button 
+              type="button" 
+              disabled={!isLastRecordFilled('combustibles')}
+              onClick={() => comArr.append({})} 
+              className="flex items-center text-sm font-semibold text-red-600 bg-red-50 px-4 py-2 rounded-full hover:bg-red-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Plus className="w-4 h-4 mr-1" /> Añadir otro vehículo
+              {!isLastRecordFilled('combustibles') && <span className="ml-2 text-xs font-normal">(Completa la ubicación del anterior)</span>}
+            </button>
           </div>
         )}
 
+        {/* ===================================== */}
         {/* 5: SST */}
+        {/* ===================================== */}
         {selectedActivities.includes('sst') && (
           <div className={sectionClass}>
-            <h3 className="text-lg font-bold text-emerald-900 mb-4 flex items-center gap-2">Auditoría SST en Campo</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className={labelClass}>Ciudad Operativa</label>
-                <select {...register("sst_ciudad")} className={inputClass}>
-                  <option value="">Seleccione...</option>
-                  {CIUDADES_ESTRICTAS.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
+            <h3 className="text-xl font-bold text-emerald-900 mb-4 flex items-center gap-2">Auditoría SST en Campo</h3>
+            
+            {sstArr.fields.map((field, index) => (
+              <div key={field.id} className={cardClass}>
+                {sstArr.fields.length > 1 && (
+                  <div className="absolute top-4 right-4 cursor-pointer text-gray-400 hover:text-red-500 transition-colors" onClick={() => sstArr.remove(index)}>
+                    <Trash2 className="w-5 h-5" />
+                  </div>
+                )}
+                <h4 className="text-sm font-bold text-gray-800 mb-4">Auditoría #{index + 1}</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <LocationSelector control={control} register={register} setValue={setValue} index={index} namespace="ssts" zonas={zonas} />
+                  <div className="md:col-span-2"><label className={labelClass}>Técnicos Auditados *</label><input type="text" {...register(`ssts.${index}.tecnicos`)} className={inputClass} /></div>
+                  <div><label className={labelClass}>Estado de EPP</label><select {...register(`ssts.${index}.epp`)} className={inputClass}><option value="">Seleccione...</option><option value="Conforme">Conforme</option><option value="No Conforme">No Conforme</option></select></div>
+                  <div><label className={labelClass}>Señalización (Conos)</label><select {...register(`ssts.${index}.senalizacion`)} className={inputClass}><option value="">Seleccione...</option><option value="Conforme">Conforme</option><option value="No Conforme">No Conforme</option></select></div>
+                  <div className="md:col-span-2"><label className={labelClass}>Observaciones Aval</label><input type="text" {...register(`ssts.${index}.observaciones`)} className={inputClass} /></div>
+                </div>
               </div>
-              <div>
-                <label className={labelClass}>Técnicos Auditados</label>
-                <input type="text" {...register("sst_tecnicos")} className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>Estado de EPP</label>
-                <select {...register("sst_epp")} className={inputClass}>
-                  <option value="">Seleccione...</option>
-                  <option value="Conforme">Conforme (Arnés, Eslinga, Casco...)</option>
-                  <option value="No Conforme">No Conforme</option>
-                </select>
-              </div>
-              <div>
-                <label className={labelClass}>Señalización (Conos)</label>
-                <select {...register("sst_senalizacion")} className={inputClass}>
-                  <option value="">Seleccione...</option>
-                  <option value="Conforme">Conforme</option>
-                  <option value="No Conforme">No Conforme</option>
-                </select>
-              </div>
-              <div className="md:col-span-2">
-                <label className={labelClass}>Observaciones del Aval / Prueba</label>
-                <input type="text" {...register("sst_observaciones_aval")} className={inputClass} placeholder="Ej: Cuadrilla correctamente anclada y señalizada" />
-              </div>
-            </div>
+            ))}
+            <button 
+              type="button" 
+              disabled={!isLastRecordFilled('ssts')}
+              onClick={() => sstArr.append({})} 
+              className="flex items-center text-sm font-semibold text-emerald-600 bg-emerald-50 px-4 py-2 rounded-full hover:bg-emerald-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Plus className="w-4 h-4 mr-1" /> Añadir otra auditoría SST
+              {!isLastRecordFilled('ssts') && <span className="ml-2 text-xs font-normal">(Completa la ubicación del anterior)</span>}
+            </button>
           </div>
         )}
 
+        {/* ===================================== */}
         {/* 6: FACTIBILIDAD */}
+        {/* ===================================== */}
         {selectedActivities.includes('factibilidad') && (
           <div className={sectionClass}>
-            <h3 className="text-lg font-bold text-indigo-900 mb-4 flex items-center gap-2">Levantamiento de Factibilidad</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className={labelClass}>Ciudad Operativa</label>
-                <select {...register("fac_ciudad")} className={inputClass}>
-                  <option value="">Seleccione...</option>
-                  {CIUDADES_ESTRICTAS.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
+            <h3 className="text-xl font-bold text-indigo-900 mb-4 flex items-center gap-2">Levantamiento de Factibilidad</h3>
+            
+            {facArr.fields.map((field, index) => (
+              <div key={field.id} className={cardClass}>
+                {facArr.fields.length > 1 && (
+                  <div className="absolute top-4 right-4 cursor-pointer text-gray-400 hover:text-red-500 transition-colors" onClick={() => facArr.remove(index)}>
+                    <Trash2 className="w-5 h-5" />
+                  </div>
+                )}
+                <h4 className="text-sm font-bold text-gray-800 mb-4">Factibilidad #{index + 1}</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <LocationSelector control={control} register={register} setValue={setValue} index={index} namespace="factibilidades" zonas={zonas} />
+                  <div><label className={labelClass}>Coordenadas GPS</label><input type="text" {...register(`factibilidades.${index}.coordenadas`)} className={inputClass} /></div>
+                  <div><label className={labelClass}>Distancia Enlace</label><input type="number" {...register(`factibilidades.${index}.distancia`)} className={inputClass} /></div>
+                  <div><label className={labelClass}>Estimación Abonados</label><input type="number" {...register(`factibilidades.${index}.abonados`)} className={inputClass} /></div>
+                  <div className="md:col-span-2"><label className={labelClass}>Observaciones Aval</label><input type="text" {...register(`factibilidades.${index}.observaciones`)} className={inputClass} /></div>
+                </div>
               </div>
-              <div>
-                <label className={labelClass}>Coordenadas GPS</label>
-                <input type="text" {...register("fac_coordenadas")} className={inputClass} placeholder="10.1234, -66.1234" />
-              </div>
-              <div>
-                <label className={labelClass}>Distancia de Enlace</label>
-                <input type="number" {...register("fac_distancia")} className={inputClass} placeholder="Metros a OLT/NAP" />
-              </div>
-              <div>
-                <label className={labelClass}>Estimación de Abonados</label>
-                <input type="number" {...register("fac_abonados")} className={inputClass} placeholder="Cantidad potencial" />
-              </div>
-              <div className="md:col-span-2">
-                <label className={labelClass}>Observaciones del Aval / Prueba</label>
-                <input type="text" {...register("fac_observaciones_aval")} className={inputClass} placeholder="Ej: Se validó postería y pines en el mapa" />
-              </div>
-            </div>
+            ))}
+            <button 
+              type="button" 
+              disabled={!isLastRecordFilled('factibilidades')}
+              onClick={() => facArr.append({})} 
+              className="flex items-center text-sm font-semibold text-indigo-600 bg-indigo-50 px-4 py-2 rounded-full hover:bg-indigo-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Plus className="w-4 h-4 mr-1" /> Añadir otro levantamiento
+              {!isLastRecordFilled('factibilidades') && <span className="ml-2 text-xs font-normal">(Completa la ubicación del anterior)</span>}
+            </button>
           </div>
         )}
 
