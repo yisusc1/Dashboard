@@ -24,11 +24,11 @@ const ACTIVITIES = [
   { id: 'factibilidad', title: 'Factibilidad (Nuevas Rutas)', desc: 'Coordenadas, distancia y potencial' }
 ];
 
-// --- ESTILOS COMPARTIDOS ---
-const inputClass = "w-full h-12 px-4 rounded-2xl bg-white/50 border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none text-gray-900 placeholder:text-gray-400 disabled:opacity-50";
-const labelClass = "text-xs font-semibold text-gray-500 uppercase tracking-wider ml-1 mb-1 block";
-const sectionClass = "backdrop-blur-xl bg-white/70 border border-white/40 rounded-[2.5rem] p-6 shadow-xl shadow-black/5 ring-1 ring-white/60 mb-6 relative";
-const cardClass = "bg-white/40 border border-white/50 rounded-3xl p-5 mb-4 shadow-sm relative";
+// --- ESTILOS COMPARTIDOS (iOS Premium Aesthetic) ---
+const inputClass = "w-full h-12 px-4 rounded-[14px] bg-[#F2F2F7] focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all outline-none text-[15px] text-gray-900 placeholder:text-gray-400 disabled:opacity-50 border border-transparent";
+const labelClass = "text-[15px] font-semibold text-gray-900 mb-2 block";
+const sectionClass = "bg-white rounded-[24px] p-5 md:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.04)] mb-6 relative border border-gray-100";
+const cardClass = "bg-[#F9F9FB] border border-gray-100 rounded-[20px] p-5 mb-4 relative";
 
 // --- SUBCOMPONENTE DE CASCADA ---
 const LocationSelector = ({ control, register, setValue, index, namespace, zonas }: any) => {
@@ -47,8 +47,8 @@ const LocationSelector = ({ control, register, setValue, index, namespace, zonas
   const sectores = Array.from(new Set(zonas.filter((z: any) => z.estado === estado && z.municipio === municipio && z.parroquia === parroquia).map((z: any) => z.sector)));
 
   return (
-    <div className="md:col-span-2 bg-blue-50/50 p-4 rounded-2xl border border-blue-100/50 space-y-3">
-      <p className="text-xs font-bold text-blue-800 uppercase tracking-wider">Ubicación Operativa</p>
+    <div className="md:col-span-2 bg-[#F9F9FB] p-5 rounded-[20px] border border-gray-100 space-y-3">
+      <p className="text-[15px] font-bold text-gray-900">Ubicación Operativa</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <div>
           <label className={labelClass}>Estado *</label>
