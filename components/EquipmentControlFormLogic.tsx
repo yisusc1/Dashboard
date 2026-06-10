@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { createClient } from "@/lib/supabase/client";
-import { CheckCircle2, UploadCloud, Loader2, MessageCircle, Download } from "lucide-react";
+import { CheckCircle2, UploadCloud, Loader2, MessageCircle, Download, History } from "lucide-react";
+import Link from "next/link";
 import { toast } from "sonner"; 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { generateEquipmentWhatsAppMessage } from "@/lib/whatsappFormatter";
@@ -270,13 +271,21 @@ export default function EquipmentControlFormLogic({ usuarioActual }: EquipmentFo
           <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Control de Equipamiento</h2>
           <p className="text-gray-500">Auditor: <span className="font-semibold text-gray-800">{usuarioActual.nombre}</span></p>
         </div>
-        <button 
-          type="button"
-          onClick={handleExportExcel}
-          className="flex items-center gap-2 px-5 py-2.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl font-bold transition-colors shadow-sm"
-        >
-          <Download className="w-4 h-4" /> Exportar a Excel
-        </button>
+        <div className="flex items-center gap-3">
+          <Link 
+            href="/supervision/control-equipamiento/historial"
+            className="flex items-center gap-2 px-5 py-2.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-xl font-bold transition-colors shadow-sm"
+          >
+            <History className="w-4 h-4" /> Ver Historial
+          </Link>
+          <button 
+            type="button"
+            onClick={handleExportExcel}
+            className="flex items-center gap-2 px-5 py-2.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl font-bold transition-colors shadow-sm"
+          >
+            <Download className="w-4 h-4" /> Exportar a Excel
+          </button>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
