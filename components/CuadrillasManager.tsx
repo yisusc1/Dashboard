@@ -15,14 +15,14 @@ export default function CuadrillasManager() {
   // State for adding new
   const [isAdding, setIsAdding] = useState(false)
   const [newNombre, setNewNombre] = useState("")
-  const [newLider, setNewLider] = useState<string>("")
-  const [newAuxiliar, setNewAuxiliar] = useState<string>("")
+  const [newLider, setNewLider] = useState<string>("none")
+  const [newAuxiliar, setNewAuxiliar] = useState<string>("none")
 
   // State for editing
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editNombre, setEditNombre] = useState("")
-  const [editLider, setEditLider] = useState<string>("")
-  const [editAuxiliar, setEditAuxiliar] = useState<string>("")
+  const [editLider, setEditLider] = useState<string>("none")
+  const [editAuxiliar, setEditAuxiliar] = useState<string>("none")
 
   useEffect(() => {
     loadData()
@@ -60,15 +60,15 @@ export default function CuadrillasManager() {
     try {
         const { error } = await supabase.from('cuadrillas').insert({
             nombre: newNombre.trim(),
-            lider_id: newLider || null,
-            auxiliar_id: newAuxiliar || null
+            lider_id: newLider && newLider !== "none" ? newLider : null,
+            auxiliar_id: newAuxiliar && newAuxiliar !== "none" ? newAuxiliar : null
         })
 
         if (error) throw error
         toast.success("Cuadrilla creada")
         setNewNombre("")
-        setNewLider("")
-        setNewAuxiliar("")
+        setNewLider("none")
+        setNewAuxiliar("none")
         setIsAdding(false)
         loadData()
     } catch (err) {
@@ -92,8 +92,8 @@ export default function CuadrillasManager() {
   const startEditing = (c: any) => {
       setEditingId(c.id)
       setEditNombre(c.nombre)
-      setEditLider(c.lider_id || "")
-      setEditAuxiliar(c.auxiliar_id || "")
+      setEditLider(c.lider_id || "none")
+      setEditAuxiliar(c.auxiliar_id || "none")
   }
 
   const handleSaveEdit = async () => {
@@ -105,8 +105,8 @@ export default function CuadrillasManager() {
       try {
           const { error } = await supabase.from('cuadrillas').update({
               nombre: editNombre.trim(),
-              lider_id: editLider || null,
-              auxiliar_id: editAuxiliar || null
+              lider_id: editLider && editLider !== "none" ? editLider : null,
+              auxiliar_id: editAuxiliar && editAuxiliar !== "none" ? editAuxiliar : null
           }).eq('id', editingId)
 
           if (error) throw error
@@ -161,7 +161,7 @@ export default function CuadrillasManager() {
                     <Select value={newLider} onValueChange={setNewLider}>
                         <SelectTrigger className="h-10 bg-white rounded-xl border-violet-200"><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="">Sin Asignar</SelectItem>
+                            <SelectItem value="none">Sin Asignar</SelectItem>
                             {profiles.map(p => <SelectItem key={`lid-${p.id}`} value={p.id}>{p.fullName}</SelectItem>)}
                         </SelectContent>
                     </Select>
@@ -171,7 +171,7 @@ export default function CuadrillasManager() {
                     <Select value={newAuxiliar} onValueChange={setNewAuxiliar}>
                         <SelectTrigger className="h-10 bg-white rounded-xl border-violet-200"><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="">Sin Asignar</SelectItem>
+                            <SelectItem value="none">Sin Asignar</SelectItem>
                             {profiles.map(p => <SelectItem key={`aux-${p.id}`} value={p.id}>{p.fullName}</SelectItem>)}
                         </SelectContent>
                     </Select>
@@ -208,7 +208,7 @@ export default function CuadrillasManager() {
                                 <Select value={editLider} onValueChange={setEditLider}>
                                     <SelectTrigger className="h-10 bg-white rounded-xl"><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">Sin Asignar</SelectItem>
+                                        <SelectItem value="none">Sin Asignar</SelectItem>
                                         {profiles.map(p => <SelectItem key={`elid-${p.id}`} value={p.id}>{p.fullName}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
@@ -218,7 +218,7 @@ export default function CuadrillasManager() {
                                 <Select value={editAuxiliar} onValueChange={setEditAuxiliar}>
                                     <SelectTrigger className="h-10 bg-white rounded-xl"><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">Sin Asignar</SelectItem>
+                                        <SelectItem value="none">Sin Asignar</SelectItem>
                                         {profiles.map(p => <SelectItem key={`eaux-${p.id}`} value={p.id}>{p.fullName}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
