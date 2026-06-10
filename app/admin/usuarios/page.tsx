@@ -77,8 +77,8 @@ const MODULE_ACCESS = [
             },
             {
                 role: 'reportes',
-                label: 'Reportes Diarios',
-                description: 'Acceso al panel de llenado de reportes modulares diarios.',
+                label: 'Supervisión',
+                description: 'Acceso al módulo de Supervisión (Reportes Diarios y Equipamiento).',
                 icon: FileText,
                 color: 'text-emerald-600 bg-emerald-50 border-emerald-200'
             },
@@ -704,7 +704,7 @@ export default function AdminUsersPage() {
                                     <SelectItem value="admin">Administrador</SelectItem>
                                     <SelectItem value="gerencia">Gerencia</SelectItem>
                                     <SelectItem value="supervisor">Supervisor</SelectItem>
-                                    <SelectItem value="reportes">Reportes Diarios</SelectItem>
+                                    <SelectItem value="reportes">Supervisión</SelectItem>
                                     <SelectItem value="chofer">Chofer</SelectItem>
                                     <SelectItem value="geodata">Zonas Operativas</SelectItem>
                                     <SelectItem value="invitado">Invitado</SelectItem>
