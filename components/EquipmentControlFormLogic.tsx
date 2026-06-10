@@ -72,7 +72,7 @@ export default function EquipmentControlFormLogic({ usuarioActual }: EquipmentFo
   const [finalReportData, setFinalReportData] = useState<any>(null);
   
   const [cuadrillas, setCuadrillas] = useState<any[]>([]);
-  const [profiles, setProfiles] = useState<any[]>([]);
+  const [tecnicos, setTecnicos] = useState<any[]>([]);
   
   const supabase = createClient();
 
@@ -94,9 +94,9 @@ export default function EquipmentControlFormLogic({ usuarioActual }: EquipmentFo
 
   useEffect(() => {
     const fetchMasterData = async () => {
-        // Fetch profiles
-        const { data: profData } = await supabase.from('profiles').select('id, first_name, last_name');
-        if (profData) setProfiles(profData);
+        // Fetch tecnicos
+        const { data: tecData } = await supabase.from('tecnicos').select('id, nombre_completo');
+        if (tecData) setTecnicos(tecData);
 
         // Fetch cuadrillas
         const { data: cuadData } = await supabase.from('cuadrillas').select('*');
@@ -107,19 +107,19 @@ export default function EquipmentControlFormLogic({ usuarioActual }: EquipmentFo
   }, [supabase]);
 
   useEffect(() => {
-    if (selectedEquipoId && cuadrillas.length > 0 && profiles.length > 0) {
+    if (selectedEquipoId && cuadrillas.length > 0 && tecnicos.length > 0) {
         const c = cuadrillas.find(x => x.id === selectedEquipoId);
         if (c) {
             setValue("equipo_nombre", c.nombre);
             
-            const lider = profiles.find(p => p.id === c.lider_id);
-            setValue("tecnico_lider", lider ? `${lider.first_name || ''} ${lider.last_name || ''}`.trim() : "Sin asignar");
+            const lider = tecnicos.find(t => t.id === c.lider_id);
+            setValue("tecnico_lider", lider ? lider.nombre_completo : "Sin asignar");
 
-            const auxiliar = profiles.find(p => p.id === c.auxiliar_id);
-            setValue("tecnico_auxiliar", auxiliar ? `${auxiliar.first_name || ''} ${auxiliar.last_name || ''}`.trim() : "Sin asignar");
+            const auxiliar = tecnicos.find(t => t.id === c.auxiliar_id);
+            setValue("tecnico_auxiliar", auxiliar ? auxiliar.nombre_completo : "Sin asignar");
         }
     }
-  }, [selectedEquipoId, cuadrillas, profiles, setValue]);
+  }, [selectedEquipoId, cuadrillas, tecnicos, setValue]);
 
   useEffect(() => {
     // Check for draft

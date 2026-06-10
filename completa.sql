@@ -197,12 +197,20 @@ CREATE TABLE public.equipment_control_reports (
   CONSTRAINT equipment_control_reports_pkey PRIMARY KEY (id),
   CONSTRAINT equipment_control_reports_supervisor_id_fkey FOREIGN KEY (supervisor_id) REFERENCES auth.users(id)
 );
+-- Catálogo de Técnicos (Provisional)
+CREATE TABLE public.tecnicos (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  nombre_completo text NOT NULL,
+  activo boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT tecnicos_pkey PRIMARY KEY (id)
+);
 
 CREATE TABLE public.cuadrillas (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   nombre text NOT NULL,
-  lider_id uuid REFERENCES auth.users(id),
-  auxiliar_id uuid REFERENCES auth.users(id),
+  lider_id uuid REFERENCES public.tecnicos(id) ON DELETE SET NULL,
+  auxiliar_id uuid REFERENCES public.tecnicos(id) ON DELETE SET NULL,
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT cuadrillas_pkey PRIMARY KEY (id)
 );
