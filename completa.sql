@@ -184,3 +184,16 @@ CREATE TABLE public.daily_activities_reports (
   CONSTRAINT daily_activities_reports_pkey PRIMARY KEY (id),
   CONSTRAINT daily_activities_reports_supervisor_id_fkey FOREIGN KEY (supervisor_id) REFERENCES auth.users(id)
 );
+
+CREATE TABLE public.equipment_control_reports (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  supervisor_id uuid NOT NULL,
+  date date NOT NULL DEFAULT CURRENT_DATE,
+  equipo_nombre text,
+  tecnico_lider text,
+  tecnico_auxiliar text,
+  report_data jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT equipment_control_reports_pkey PRIMARY KEY (id),
+  CONSTRAINT equipment_control_reports_supervisor_id_fkey FOREIGN KEY (supervisor_id) REFERENCES auth.users(id)
+);
