@@ -197,3 +197,12 @@ CREATE TABLE public.equipment_control_reports (
   CONSTRAINT equipment_control_reports_pkey PRIMARY KEY (id),
   CONSTRAINT equipment_control_reports_supervisor_id_fkey FOREIGN KEY (supervisor_id) REFERENCES auth.users(id)
 );
+
+CREATE TABLE public.cuadrillas (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  nombre text NOT NULL,
+  lider_id uuid REFERENCES auth.users(id),
+  auxiliar_id uuid REFERENCES auth.users(id),
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT cuadrillas_pkey PRIMARY KEY (id)
+);

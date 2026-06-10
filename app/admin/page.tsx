@@ -1,7 +1,7 @@
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
-import { ArrowLeft, UserCog, ShieldCheck, LayoutGrid, ArrowRight, Database, Map } from "lucide-react"
+import { ArrowLeft, UserCog, ShieldCheck, LayoutGrid, ArrowRight, Database, Map, Users2 } from "lucide-react"
 import Link from "next/link"
 
 export default function AdminDashboard() {
@@ -88,6 +88,24 @@ export default function AdminDashboard() {
                                     <div className="space-y-1">
                                         <h3 className="font-bold text-slate-900">Zonas Operativas</h3>
                                         <p className="text-sm text-slate-500">Gestión de estados, municipios y sectores.</p>
+                                    </div>
+                                </div>
+                                <ArrowLeft className="rotate-180 text-slate-300" />
+                            </CardContent>
+                        </Card>
+                    </Link>
+
+                    {/* CUADRILLAS */}
+                    <Link href="/admin/cuadrillas" className="block">
+                        <Card className="rounded-xl hover:shadow-md transition-shadow cursor-pointer border-slate-200">
+                            <CardContent className="p-6 flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-zinc-100 rounded-lg text-zinc-600">
+                                        <Users2 size={24} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h3 className="font-bold text-slate-900">Gestión de Cuadrillas</h3>
+                                        <p className="text-sm text-slate-500">Equipos de trabajo, líderes y auxiliares.</p>
                                     </div>
                                 </div>
                                 <ArrowLeft className="rotate-180 text-slate-300" />
