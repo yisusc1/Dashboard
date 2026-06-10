@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client"
 import { VehicleFormDialog } from "@/components/vehicle-form-dialog"
 import { VehicleDetailsDialog } from "@/components/vehicle-details-dialog"
 import { MileageCorrectionDialog } from "@/components/mileage-correction-dialog"
-import { Plus, Search, Car, Bike, Truck, MoreVertical, Pencil, Trash2, Home as HomeIcon, MapPin, Zap, Wrench, AlertTriangle, CheckCircle, Fuel, Clock, User as UserIcon, XCircle } from "lucide-react"
+import { Plus, Search, Car, Bike, Truck, MoreVertical, Pencil, Trash2, Home as HomeIcon, MapPin, Zap, Wrench, AlertTriangle, CheckCircle, Fuel, Clock, User as UserIcon, XCircle, Download } from "lucide-react"
 
 
 import { LogoutButton } from "@/components/ui/logout-button"
@@ -78,6 +78,106 @@ function VehiculosContent() {
     const [forceCloseKm, setForceCloseKm] = useState("")
     const [forceCloseNote, setForceCloseNote] = useState("")
     const [closingTrip, setClosingTrip] = useState(false)
+    const [exporting, setExporting] = useState(false)
+
+    async function exportToExcel() {
+        setExporting(true)
+        try {
+            const supabase = createClient()
+            
+            // 1. Obtener todos los vehículos
+            const { data: vehiculosData, error: vehError } = await supabase
+                .from('vehiculos')
+                .select('*')
+
+            if (vehError) throw vehError
+
+            // 2. Fallas activas
+            const { data: fallasData, error: fallasError } = await supabase
+                .from('fallas')
+                .select('*')
+                .neq('estado', 'Reparado')
+                .neq('estado', 'Descartado')
+            
+            if (fallasError) throw fallasError
+
+            // Formatear booleano a texto
+            const formatCheck = (val: boolean | undefined | null) => val ? 'Sí' : 'No'
+
+            const excelDataPromises = vehiculosData.map(async (v) => {
+                // Obtener el último reporte de cada vehículo
+                const { data: lr } = await supabase
+                    .from('reportes')
+                    .select('*')
+                    .eq('vehiculo_id', v.id)
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .single()
+                
+                const fallas = fallasData.filter(f => f.vehiculo_id === v.id).map(f => `[${f.prioridad}] ${f.tipo_falla}: ${f.descripcion}`).join(' | ')
+                
+                const isSalida = lr && !lr.km_entrada;
+                const status = isSalida ? 'En Ruta' : 'Disponible / En Base';
+                const driver = isSalida ? lr.conductor : (lr?.conductor || 'Ninguno');
+                const isMoto = v.tipo?.toLowerCase().includes('moto') || v.modelo?.toLowerCase().includes('moto')
+
+                return {
+                    "Código": v.codigo,
+                    "Placa": v.placa,
+                    "Modelo": v.modelo,
+                    "Tipo": v.tipo || 'Desconocido',
+                    "Color": v.color || 'Desconocido',
+                    "Estado Actual": status,
+                    "Último Conductor": driver,
+                    "Kilometraje Actual": v.kilometraje || lr?.km_entrada || lr?.km_salida || 0,
+                    "Nivel Gasolina (%)": v.current_fuel_level || 0,
+                    "Fallas Activas": fallas || 'Ninguna',
+                    
+                    // Chequeo Técnico
+                    "Aceite (Últ. Reporte)": formatCheck(isSalida ? lr?.aceite_salida : lr?.aceite_entrada),
+                    "Iluminación": formatCheck(isSalida ? lr?.luces_salida : lr?.luces_entrada),
+                    "Frenos": formatCheck(isSalida ? lr?.frenos_salida : lr?.frenos_entrada),
+                    "Cauchos": isSalida ? (lr?.estado_cauchos_salida || 'N/A') : (lr?.estado_cauchos_entrada || 'N/A'),
+                    "Corneta": formatCheck(isSalida ? lr?.corneta_salida : lr?.corneta_entrada),
+                    "Agua/Refrigerante": isMoto ? 'N/A' : formatCheck(isSalida ? lr?.agua_salida : lr?.agua_entrada),
+
+                    // Seguridad y Herramientas
+                    "Cinturones": isMoto ? 'N/A' : formatCheck(isSalida ? lr?.cinturones_salida : lr?.cinturones_entrada),
+                    "Conos": isMoto ? 'N/A' : formatCheck(isSalida ? lr?.conos_salida : lr?.conos_entrada),
+                    "Extintor": isMoto ? 'N/A' : formatCheck(isSalida ? lr?.extintor_salida : lr?.extintor_entrada),
+                    "Botiquín": isMoto ? 'N/A' : formatCheck(isSalida ? lr?.botiquin_salida : lr?.botiquin_entrada),
+                    "Gato": isMoto ? 'N/A' : formatCheck(isSalida ? lr?.gato_salida : lr?.gato_entrada),
+                    "Llave Cruz": isMoto ? 'N/A' : formatCheck(isSalida ? lr?.cruz_salida : lr?.cruz_entrada),
+                    "Triángulo": isMoto ? 'N/A' : formatCheck(isSalida ? lr?.triangulo_salida : lr?.triangulo_entrada),
+                    "Caucho Repuesto": isMoto ? 'N/A' : formatCheck(isSalida ? lr?.caucho_salida : lr?.caucho_entrada),
+                    "Carpeta de Permisos": isMoto ? 'N/A' : formatCheck(isSalida ? lr?.carpeta_salida : lr?.carpeta_entrada),
+                    
+                    // Moto Specific
+                    "Casco (Moto)": isMoto ? formatCheck(isSalida ? lr?.casco_salida : lr?.casco_entrada) : 'N/A',
+                    "Herramientas Moto": isMoto ? formatCheck(isSalida ? lr?.herramientas_salida : lr?.herramientas_entrada) : 'N/A',
+                    
+                    "Departamento (Últ. Viaje)": lr?.departamento || 'N/A',
+                    "Último Reporte ID": lr?.id || 'N/A',
+                    "Fecha Último Reporte": lr ? new Date(lr.created_at).toLocaleString() : 'N/A'
+                }
+            })
+
+            const excelData = await Promise.all(excelDataPromises)
+
+            const XLSX = await import('xlsx')
+            const worksheet = XLSX.utils.json_to_sheet(excelData)
+            const workbook = XLSX.utils.book_new()
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Flota")
+            
+            XLSX.writeFile(workbook, `Reporte_Flota_${new Date().toISOString().split('T')[0]}.xlsx`)
+            toast.success("Excel generado con éxito")
+        } catch (error) {
+            console.error("Error exporting to Excel:", error)
+            toast.error("Error al exportar a Excel")
+        } finally {
+            setExporting(false)
+        }
+    }
 
     // Calculate filteredVehicles based on manual search
     const filteredVehicles = vehicles.filter(v =>
@@ -287,6 +387,18 @@ function VehiculosContent() {
                             suppressHydrationWarning
                         />
                     </div>
+                    <button
+                        onClick={exportToExcel}
+                        disabled={exporting}
+                        className="h-14 px-6 bg-emerald-600 text-white font-semibold rounded-2xl flex items-center justify-center gap-2 hover:bg-emerald-700 transition-all active:scale-[0.98] shadow-sm disabled:opacity-50"
+                    >
+                        {exporting ? (
+                            <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
+                        ) : (
+                            <Download size={20} />
+                        )}
+                        Exportar
+                    </button>
                     <button
                         onClick={() => {
                             setEditingVehicle(null)
