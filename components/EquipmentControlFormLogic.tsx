@@ -76,6 +76,8 @@ export default function EquipmentControlFormLogic({ usuarioActual }: EquipmentFo
   });
 
   const selectedEquipoId = watch("equipo_id");
+  const liderName = watch("tecnico_lider");
+  const auxiliarName = watch("tecnico_auxiliar");
 
   useEffect(() => {
     const fetchMasterData = async () => {
@@ -318,7 +320,12 @@ export default function EquipmentControlFormLogic({ usuarioActual }: EquipmentFo
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* LIDER */}
           <div className={sectionClass}>
-            <h3 className="text-xl font-bold text-blue-900 mb-6 pb-2 border-b border-blue-100">Técnico Líder</h3>
+            <div className="mb-6 pb-4 border-b border-gray-100">
+              <h3 className="text-xl font-bold text-gray-900">Técnico Líder</h3>
+              {liderName && liderName !== "Sin asignar" && (
+                <p className="text-[15px] font-medium text-orange-600 mt-1">{liderName}</p>
+              )}
+            </div>
             
             <h4 className="font-bold text-sm text-gray-400 mb-3 uppercase tracking-wider">Kit FTTH</h4>
             {KIT_FTTH.map(item => (
@@ -333,7 +340,12 @@ export default function EquipmentControlFormLogic({ usuarioActual }: EquipmentFo
 
           {/* AUXILIAR */}
           <div className={sectionClass}>
-            <h3 className="text-xl font-bold text-orange-900 mb-6 pb-2 border-b border-orange-100">Técnico Auxiliar</h3>
+            <div className="mb-6 pb-4 border-b border-gray-100">
+              <h3 className="text-xl font-bold text-gray-900">Técnico Auxiliar</h3>
+              {auxiliarName && auxiliarName !== "Sin asignar" && (
+                <p className="text-[15px] font-medium text-orange-600 mt-1">{auxiliarName}</p>
+              )}
+            </div>
             
             <h4 className="font-bold text-sm text-gray-400 mb-3 uppercase tracking-wider">Kit FTTH</h4>
             {KIT_FTTH.map(item => (
@@ -349,7 +361,9 @@ export default function EquipmentControlFormLogic({ usuarioActual }: EquipmentFo
 
         {/* HERRAMIENTAS DE EQUIPO */}
         <div className={sectionClass}>
-          <h3 className="text-xl font-bold text-purple-900 mb-6 pb-2 border-b border-purple-100">Herramientas Compartidas (Equipo)</h3>
+          <div className="mb-6 pb-4 border-b border-gray-100">
+            <h3 className="text-xl font-bold text-gray-900">Herramientas Compartidas (Equipo)</h3>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2">
             {HERRAMIENTAS.map(item => (
               <ItemRow key={`herramienta-${item}`} title={item} namePrefix={`herramientas.${item}`} control={control} />
