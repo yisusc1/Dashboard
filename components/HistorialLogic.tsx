@@ -45,7 +45,7 @@ export default function HistorialLogic({ usuarioActual }: { usuarioActual: { id:
       <div className="mb-8 flex items-center justify-between">
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-            <Link href="/reporte-diario" className="hover:text-blue-600 transition-colors flex items-center"><ArrowLeft className="w-4 h-4 mr-1" /> Volver al formulario</Link>
+            <Link href="/supervision/reporte-diario" className="hover:text-blue-600 transition-colors flex items-center"><ArrowLeft className="w-4 h-4 mr-1" /> Volver al formulario</Link>
           </div>
           <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Historial de Reportes</h2>
           <p className="text-gray-500">Supervisor: <span className="font-semibold text-gray-800">{usuarioActual.nombre}</span></p>

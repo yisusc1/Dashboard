@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server"
 import SupervisionFormLogic from "@/components/SupervisionFormLogic"
 
 import Link from "next/link"
+import { ArrowLeft } from "lucide-react"
 
 export default async function ReporteDiarioPage() {
   const supabase = await createClient()
@@ -40,13 +41,21 @@ export default async function ReporteDiarioPage() {
       {/* Background Gradients */}
       <div className="absolute top-0 left-0 w-full h-96 bg-blue-600/5 blur-[120px] pointer-events-none" />
       
-      {/* Navegación Pestañas */}
-      <div className="flex justify-center mb-8 relative z-10">
+      {/* Navegación Pestañas y Volver */}
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-8 relative z-10 max-w-5xl mx-auto gap-4">
+        <Link 
+          href="/supervision"
+          className="flex items-center px-4 py-2 bg-white rounded-xl text-sm font-semibold text-gray-700 hover:text-gray-900 shadow-sm border border-gray-200 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Volver a Supervisión
+        </Link>
+
         <div className="bg-gray-200/60 p-1 rounded-xl flex items-center">
-          <Link href="/reporte-diario" className="px-6 py-2 rounded-lg bg-white shadow-sm text-sm font-semibold text-gray-900">
+          <Link href="/supervision/reporte-diario" className="px-6 py-2 rounded-lg bg-white shadow-sm text-sm font-semibold text-gray-900">
             Nuevo Reporte
           </Link>
-          <Link href="/historial-reportes" className="px-6 py-2 rounded-lg text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors">
+          <Link href="/supervision/historial-reportes" className="px-6 py-2 rounded-lg text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors">
             Mi Historial
           </Link>
         </div>

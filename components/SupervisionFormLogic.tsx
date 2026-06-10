@@ -246,7 +246,7 @@ export default function SupervisionFormLogic({ usuarioActual }: SupervisionFormP
           </a>
           
           <Link 
-            href="/historial-reportes"
+            href="/supervision/historial-reportes"
             className="flex items-center justify-center gap-2 h-14 px-8 rounded-[14px] bg-white hover:bg-gray-50 text-gray-900 border border-gray-200 font-semibold shadow-sm transition-all w-full sm:w-auto"
           >
             Ver Historial

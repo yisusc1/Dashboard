@@ -178,10 +178,10 @@ export function DashboardMenu() {
                     </Link>
             )}
 
-            {/* REPORTE DIARIO */}
-            {isModuleEnabled("module_reporte_diario") && canAccess("reportes") && (
+            {/* SUPERVISIÓN */}
+            {isModuleEnabled("module_supervision") && canAccess("reportes") && (
                 <Link
-                    href="/reporte-diario"
+                    href="/supervision"
                     className="group relative overflow-hidden bg-white rounded-[32px] p-8 border border-zinc-200 shadow-sm hover:shadow-xl hover:border-blue-200 transition-all duration-300 block"
                 >
                     <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
@@ -192,11 +192,11 @@ export function DashboardMenu() {
                             <FileText size={28} />
                         </div>
                         <div>
-                            <h2 className="text-2xl font-bold text-zinc-900 mb-2">Reporte Diario</h2>
-                            <p className="text-zinc-500 font-medium">Reporte de supervisión para Calle y Almacén.</p>
+                            <h2 className="text-2xl font-bold text-zinc-900 mb-2">Supervisión</h2>
+                            <p className="text-zinc-500 font-medium">Módulo de control para operaciones en calle y almacén.</p>
                         </div>
                         <div className="flex items-center text-blue-600 font-semibold group-hover:translate-x-2 transition-transform">
-                            Llenar Reporte <span className="ml-2">→</span>
+                            Acceder <span className="ml-2">→</span>
                         </div>
                     </div>
                 </Link>
