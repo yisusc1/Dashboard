@@ -679,7 +679,6 @@ export function VehicleDetailsDialog({ isOpen, onClose, vehicle, onUpdate, reado
             </AlertDialog>
         </>
     )
-    )
 }
 
 function CheckItem({ label, checked }: { label: string, checked: boolean }) {
