@@ -6,7 +6,6 @@ import { createClient } from "@/lib/supabase/client";
 import { CheckCircle2, UploadCloud, Loader2, MessageCircle, Download } from "lucide-react";
 import { toast } from "sonner"; 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { generateEquipmentWhatsAppMessage } from "@/lib/whatsappFormatter";
 import * as XLSX from "xlsx";
 
@@ -26,36 +25,22 @@ const inputClass = "w-full h-12 px-4 rounded-[14px] bg-[#F2F2F7] focus:bg-white 
 const labelClass = "text-[15px] font-semibold text-gray-900 mb-2 block";
 const sectionClass = "bg-white rounded-[24px] p-5 md:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.04)] mb-6 relative border border-gray-100";
 
-const ItemRow = ({ title, namePrefix, control, register }: any) => {
+const ItemRow = ({ title, namePrefix, control }: any) => {
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 p-4 bg-[#F9F9FB] rounded-2xl border border-gray-100 mb-3 hover:border-gray-300 transition-colors">
-      <div className="w-full sm:w-1/2 flex items-center gap-3">
-        <Controller
-          name={`${namePrefix}.check`}
-          control={control}
-          defaultValue={false}
-          render={({ field }) => (
-            <Checkbox 
-              checked={field.value} 
-              onCheckedChange={field.onChange}
-              className="w-5 h-5 rounded-md border-gray-300 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500" 
-            />
-          )}
-        />
-        <label className="text-sm font-semibold text-gray-800 cursor-pointer">{title}</label>
-      </div>
-      <div className="w-full sm:w-1/2">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-[#F9F9FB] rounded-2xl border border-gray-100 mb-3 hover:border-gray-300 transition-colors gap-3">
+      <label className="text-[15px] font-semibold text-gray-800 w-full sm:w-1/2 flex-shrink-0">{title}</label>
+      <div className="w-full sm:w-1/2 flex-grow">
         <Controller 
           control={control} 
-          name={`${namePrefix}.estado`} 
-          defaultValue=""
+          name={namePrefix} 
+          defaultValue="No Aplica"
           render={({ field }) => (
-            <Select value={field.value || ""} onValueChange={field.onChange}>
-              <SelectTrigger className="h-11 bg-white border-gray-200 rounded-xl w-full">
+            <Select value={field.value || "No Aplica"} onValueChange={field.onChange}>
+              <SelectTrigger className="h-12 bg-white border-gray-200 rounded-xl w-full text-[15px] font-medium text-gray-700">
                 <SelectValue placeholder="Estado..." />
               </SelectTrigger>
               <SelectContent className="rounded-xl">
-                {ESTADOS.map(e => <SelectItem key={e} value={e} className="rounded-lg">{e}</SelectItem>)}
+                {ESTADOS.map(e => <SelectItem key={e} value={e} className="rounded-lg text-[15px]">{e}</SelectItem>)}
               </SelectContent>
             </Select>
           )} 
@@ -76,7 +61,7 @@ export default function EquipmentControlFormLogic({ usuarioActual }: EquipmentFo
   
   const supabase = createClient();
 
-  const { register, control, handleSubmit, reset, watch, setValue } = useForm({
+  const { control, handleSubmit, reset, watch, setValue, register } = useForm({
     defaultValues: {
       equipo_id: "",
       equipo_nombre: "",
@@ -199,18 +184,21 @@ export default function EquipmentControlFormLogic({ usuarioActual }: EquipmentFo
 
         const processGroup = (group: any, tipo: string, responsable: string) => {
             if (!group) return;
-            Object.entries(group).forEach(([item, values]: [string, any]) => {
-                rows.push({
-                    "Fecha": date,
-                    "Equipo": equipo_nombre,
-                    "Técnico Líder": tecnico_lider,
-                    "Técnico Auxiliar": tecnico_auxiliar,
-                    "Responsable": responsable,
-                    "Categoría": tipo,
-                    "Ítem": item,
-                    "Lo Tiene": values?.check ? 'SÍ' : 'NO',
-                    "Estado": values?.estado || 'No definido'
-                });
+            Object.entries(group).forEach(([item, estadoValue]: [string, any]) => {
+                // Compatibility layer: Handle old `{ check: boolean, estado: string }` objects or new simple string state
+                const estado = typeof estadoValue === 'object' ? estadoValue.estado || "No definido" : estadoValue || "No definido";
+                if (estado !== "No Aplica") {
+                  rows.push({
+                      "Fecha": date,
+                      "Equipo": equipo_nombre,
+                      "Técnico Líder": tecnico_lider,
+                      "Técnico Auxiliar": tecnico_auxiliar,
+                      "Responsable": responsable,
+                      "Categoría": tipo,
+                      "Ítem": item,
+                      "Estado": estado
+                  });
+                }
             });
         };
 
@@ -261,6 +249,7 @@ export default function EquipmentControlFormLogic({ usuarioActual }: EquipmentFo
           </a>
           
           <button 
+            type="button"
             onClick={handleExportExcel}
             className="flex items-center justify-center gap-2 h-14 px-8 rounded-[14px] bg-white hover:bg-gray-50 text-gray-900 border border-gray-200 font-semibold shadow-sm transition-all w-full sm:w-auto"
           >
@@ -299,7 +288,7 @@ export default function EquipmentControlFormLogic({ usuarioActual }: EquipmentFo
                 name="equipo_id"
                 render={({ field }) => (
                     <Select value={field.value} onValueChange={field.onChange}>
-                        <SelectTrigger className="w-full h-12 bg-[#F2F2F7] rounded-[14px] border-transparent focus:ring-2 focus:ring-orange-500 text-[15px]">
+                        <SelectTrigger className="w-full h-12 bg-[#F2F2F7] rounded-[14px] border-transparent focus:ring-2 focus:ring-orange-500 text-[15px] text-gray-800 font-medium">
                             <SelectValue placeholder="Elige un equipo..." />
                         </SelectTrigger>
                         <SelectContent className="rounded-xl">
@@ -316,12 +305,12 @@ export default function EquipmentControlFormLogic({ usuarioActual }: EquipmentFo
               <input type="text" value={new Date().toLocaleDateString()} disabled className={inputClass} />
             </div>
             <div>
-              <label className={labelClass}>Técnico Líder (Autocompletado)</label>
-              <input type="text" {...register("tecnico_lider")} disabled className={inputClass} placeholder="Se llena solo..." />
+              <label className={labelClass}>Técnico Líder</label>
+              <input type="text" {...register("tecnico_lider")} disabled className={inputClass} placeholder="Se autocompleta..." />
             </div>
             <div>
-              <label className={labelClass}>Técnico Auxiliar (Autocompletado)</label>
-              <input type="text" {...register("tecnico_auxiliar")} disabled className={inputClass} placeholder="Se llena solo..." />
+              <label className={labelClass}>Técnico Auxiliar</label>
+              <input type="text" {...register("tecnico_auxiliar")} disabled className={inputClass} placeholder="Se autocompleta..." />
             </div>
           </div>
         </div>
@@ -331,14 +320,14 @@ export default function EquipmentControlFormLogic({ usuarioActual }: EquipmentFo
           <div className={sectionClass}>
             <h3 className="text-xl font-bold text-blue-900 mb-6 pb-2 border-b border-blue-100">Técnico Líder</h3>
             
-            <h4 className="font-bold text-sm text-gray-500 mb-3 uppercase tracking-wider">Kit FTTH Líder</h4>
+            <h4 className="font-bold text-sm text-gray-400 mb-3 uppercase tracking-wider">Kit FTTH</h4>
             {KIT_FTTH.map(item => (
-              <ItemRow key={`lider-kit-${item}`} title={item} namePrefix={`kit_lider.${item}`} control={control} register={register} />
+              <ItemRow key={`lider-kit-${item}`} title={item} namePrefix={`kit_lider.${item}`} control={control} />
             ))}
 
-            <h4 className="font-bold text-sm text-gray-500 mt-8 mb-3 uppercase tracking-wider">EPP Líder</h4>
+            <h4 className="font-bold text-sm text-gray-400 mt-8 mb-3 uppercase tracking-wider">Equipos de Protección (EPP)</h4>
             {EPP.map(item => (
-              <ItemRow key={`lider-epp-${item}`} title={item} namePrefix={`epp_lider.${item}`} control={control} register={register} />
+              <ItemRow key={`lider-epp-${item}`} title={item} namePrefix={`epp_lider.${item}`} control={control} />
             ))}
           </div>
 
@@ -346,24 +335,24 @@ export default function EquipmentControlFormLogic({ usuarioActual }: EquipmentFo
           <div className={sectionClass}>
             <h3 className="text-xl font-bold text-orange-900 mb-6 pb-2 border-b border-orange-100">Técnico Auxiliar</h3>
             
-            <h4 className="font-bold text-sm text-gray-500 mb-3 uppercase tracking-wider">Kit FTTH Auxiliar</h4>
+            <h4 className="font-bold text-sm text-gray-400 mb-3 uppercase tracking-wider">Kit FTTH</h4>
             {KIT_FTTH.map(item => (
-              <ItemRow key={`aux-kit-${item}`} title={item} namePrefix={`kit_auxiliar.${item}`} control={control} register={register} />
+              <ItemRow key={`aux-kit-${item}`} title={item} namePrefix={`kit_auxiliar.${item}`} control={control} />
             ))}
 
-            <h4 className="font-bold text-sm text-gray-500 mt-8 mb-3 uppercase tracking-wider">EPP Auxiliar</h4>
+            <h4 className="font-bold text-sm text-gray-400 mt-8 mb-3 uppercase tracking-wider">Equipos de Protección (EPP)</h4>
             {EPP.map(item => (
-              <ItemRow key={`aux-epp-${item}`} title={item} namePrefix={`epp_auxiliar.${item}`} control={control} register={register} />
+              <ItemRow key={`aux-epp-${item}`} title={item} namePrefix={`epp_auxiliar.${item}`} control={control} />
             ))}
           </div>
         </div>
 
         {/* HERRAMIENTAS DE EQUIPO */}
         <div className={sectionClass}>
-          <h3 className="text-xl font-bold text-purple-900 mb-6 pb-2 border-b border-purple-100">Herramientas del Equipo (Compartidas)</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <h3 className="text-xl font-bold text-purple-900 mb-6 pb-2 border-b border-purple-100">Herramientas Compartidas (Equipo)</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2">
             {HERRAMIENTAS.map(item => (
-              <ItemRow key={`herramienta-${item}`} title={item} namePrefix={`herramientas.${item}`} control={control} register={register} />
+              <ItemRow key={`herramienta-${item}`} title={item} namePrefix={`herramientas.${item}`} control={control} />
             ))}
           </div>
         </div>

@@ -121,34 +121,47 @@ export const generateWhatsAppMessage = (reportData: any, supervisorName: string,
 };
 
 export function generateEquipmentWhatsAppMessage(data: any, supervisorName: string, date: string): string {
-  let message = `*CONTROL DE EQUIPAMIENTO*\\n`;
-  message += `*Fecha:* ${date}\\n`;
-  message += `*Auditor:* ${supervisorName}\\n`;
-  message += `*Equipo/Cuadrilla:* ${data.equipo_nombre}\\n\\n`;
+  let message = `*CONTROL DE EQUIPAMIENTO*\n`;
+  message += `*Fecha:* ${date}\n`;
+  message += `*Auditor:* ${supervisorName}\n`;
+  message += `*Equipo/Cuadrilla:* ${data.equipo_nombre}\n\n`;
+
+  const getEmoji = (estado: string) => {
+    switch (estado) {
+      case "Operativo": return "✅";
+      case "Dañado": return "⚠️";
+      case "En Reparación": return "🔧";
+      case "Extraviado": return "❌";
+      default: return "➖";
+    }
+  };
 
   const processGroup = (group: any, title: string) => {
     if (!group || Object.keys(group).length === 0) return "";
-    let str = `*${title}:*\\n`;
+    let str = `*${title}:*\n`;
     let hasItems = false;
-    Object.entries(group).forEach(([item, values]: [string, any]) => {
-      const icon = values.check ? "✅" : "❌";
-      const estado = values.estado ? ` - ${values.estado}` : "";
-      if (values.estado === "Extraviado") {
-        str += `${icon} ${item}${estado} ⚠️ (DESCONTAR)\\n`;
-      } else {
-        str += `${icon} ${item}${estado}\\n`;
+    Object.entries(group).forEach(([item, estadoValue]: [string, any]) => {
+      const estado = typeof estadoValue === 'object' ? estadoValue.estado || "No definido" : estadoValue || "No definido";
+      
+      if (estado !== "No Aplica") {
+        const icon = getEmoji(estado);
+        if (estado === "Extraviado") {
+          str += `${icon} ${item} - ${estado} (DESCONTAR)\n`;
+        } else {
+          str += `${icon} ${item} - ${estado}\n`;
+        }
+        hasItems = true;
       }
-      hasItems = true;
     });
-    return hasItems ? str + "\\n" : "";
+    return hasItems ? str + "\n" : "";
   };
 
-  message += `*Técnico Líder:* ${data.tecnico_lider}\\n`;
+  message += `*Técnico Líder:* ${data.tecnico_lider}\n`;
   message += processGroup(data.kit_lider, "Kit FTTH");
   message += processGroup(data.epp_lider, "EPP");
 
   if (data.tecnico_auxiliar) {
-    message += `*Técnico Auxiliar:* ${data.tecnico_auxiliar}\\n`;
+    message += `*Técnico Auxiliar:* ${data.tecnico_auxiliar}\n`;
     message += processGroup(data.kit_auxiliar, "Kit FTTH");
     message += processGroup(data.epp_auxiliar, "EPP");
   }
