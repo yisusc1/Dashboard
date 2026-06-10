@@ -393,11 +393,9 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
         if (isMoto) {
             msg += `*Seguridad (Moto):*\n`
             msg += `Casco: ${check(data.casco_salida)}\n`
-            msg += `Luces: ${check(data.luces_salida)}\n`
             msg += `Herramientas: ${check(data.herramientas_salida)}\n`
         } else {
             msg += `*Seguridad:*\n`
-            msg += `Luces: ${check(data.luces_salida)}\n`
             msg += `Cinturones de seguridad: ${check(data.cinturones_salida)}\n`
             msg += `Conos de tráfico: ${check(data.conos_salida)}\n`
             msg += `Extintor de incendios: ${check(data.extintor_salida)}\n`
