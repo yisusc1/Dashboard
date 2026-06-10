@@ -5,7 +5,7 @@ import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 
 export default async function EquipmentHistoryPage() {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { data: { session } } = await supabase.auth.getSession()
 
