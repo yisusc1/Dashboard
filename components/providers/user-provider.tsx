@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client"
 import { User } from "@supabase/supabase-js"
 import { toast } from "sonner" // Import at top level
 
-type UserRole = "admin" | "transporte" | "taller" | "tecnico" | "invitado" | "almacen" | "chofer" | "supervisor" | "soporte" | "planificacion" | "distribucion" | "afectaciones" | "rrhh" | "tecnologico" | "comercializacion" | "auditoria" | "combustible"
+type UserRole = "admin" | "transporte" | "taller" | "tecnico" | "invitado" | "almacen" | "chofer" | "supervisor" | "soporte" | "planificacion" | "distribucion" | "afectaciones" | "rrhh" | "tecnologico" | "comercializacion" | "auditoria" | "combustible" | "reportes"
 
 interface UserProfile {
     id: string

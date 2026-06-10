@@ -101,6 +101,11 @@ export async function proxy(request: NextRequest) {
         return NextResponse.redirect(new URL("/unauthorized", request.url))
     }
 
+    // 7. Reportes Diarios
+    if ((path.startsWith("/reporte-diario") || path.startsWith("/historial-reportes")) && !hasRole("reportes")) {
+        return NextResponse.redirect(new URL("/unauthorized", request.url))
+    }
+
     return response
 }
 

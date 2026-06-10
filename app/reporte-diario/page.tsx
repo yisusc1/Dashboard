@@ -19,9 +19,16 @@ export default async function ReporteDiarioPage() {
   // 2. Obtener Perfil del Usuario
   const { data: profile } = await supabase
     .from("profiles")
-    .select("first_name, last_name")
+    .select("first_name, last_name, roles")
     .eq("id", user.id)
     .single()
+
+  const roles = (profile?.roles || []).map((r: string) => r.toLowerCase())
+  const hasAccess = roles.includes("admin") || roles.includes("reportes")
+
+  if (!hasAccess) {
+    return redirect("/unauthorized")
+  }
 
   const usuarioActual = {
     id: user.id,
