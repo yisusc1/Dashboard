@@ -351,6 +351,10 @@ export function VehicleDetailsDialog({ isOpen, onClose, vehicle, onUpdate, reado
                                                 {/* CAR SPECIFIC (Agua, Safety) */}
                                                 {!vehicle.tipo?.toLowerCase().includes('moto') && !vehicle.modelo?.toLowerCase().includes('moto') && (
                                                     <>
+                                                        <CheckItem label="Luces" checked={vehicle.activeReport.luces_salida} />
+                                                        <CheckItem label="Cinturones" checked={vehicle.activeReport.cinturones_salida} />
+                                                        <CheckItem label="Conos" checked={vehicle.activeReport.conos_salida} />
+                                                        <CheckItem label="Extintor" checked={vehicle.activeReport.extintor_salida} />
                                                         <CheckItem label="Agua / Refr." checked={vehicle.activeReport.agua_salida} />
                                                         <CheckItem label="Caucho" checked={vehicle.activeReport.caucho_salida} />
                                                         <CheckItem label="Gato" checked={vehicle.activeReport.gato_salida} />

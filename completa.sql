@@ -7,6 +7,46 @@ CREATE TABLE public.app_settings (
   label text,
   CONSTRAINT app_settings_pkey PRIMARY KEY (key)
 );
+CREATE TABLE public.profiles (
+  id uuid NOT NULL,
+  email text,
+  created_at timestamp with time zone DEFAULT now(),
+  roles ARRAY NOT NULL DEFAULT '{invitado}'::text[],
+  first_name text,
+  last_name text,
+  national_id text,
+  department text,
+  job_title text,
+  phone text,
+  updated_at timestamp with time zone DEFAULT now(),
+  plain_text_reports boolean DEFAULT false,
+  CONSTRAINT profiles_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.vehiculos (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  codigo text NOT NULL UNIQUE,
+  placa text NOT NULL,
+  modelo text NOT NULL,
+  año text,
+  capacidad_tanque text,
+  color text,
+  tipo_combustible text,
+  foto_url text,
+  tipo text,
+  current_fuel_level integer DEFAULT 100,
+  last_fuel_update timestamp with time zone DEFAULT now(),
+  last_oil_change_km numeric,
+  last_timing_belt_km numeric,
+  last_chain_kit_km numeric,
+  last_wash_date timestamp with time zone,
+  assigned_driver_id uuid,
+  department text,
+  odometro_averiado boolean DEFAULT false,
+  kilometraje numeric DEFAULT 0,
+  CONSTRAINT vehiculos_pkey PRIMARY KEY (id),
+  CONSTRAINT vehiculos_assigned_driver_id_fkey FOREIGN KEY (assigned_driver_id) REFERENCES public.profiles(id)
+);
 CREATE TABLE public.fallas (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   created_at timestamp with time zone NOT NULL DEFAULT now(),
@@ -66,21 +106,6 @@ CREATE TABLE public.maintenance_logs (
   CONSTRAINT maintenance_logs_pkey PRIMARY KEY (id),
   CONSTRAINT maintenance_logs_vehicle_id_fkey FOREIGN KEY (vehicle_id) REFERENCES public.vehiculos(id)
 );
-CREATE TABLE public.profiles (
-  id uuid NOT NULL,
-  email text,
-  created_at timestamp with time zone DEFAULT now(),
-  roles ARRAY NOT NULL DEFAULT '{invitado}'::text[],
-  first_name text,
-  last_name text,
-  national_id text,
-  department text,
-  job_title text,
-  phone text,
-  updated_at timestamp with time zone DEFAULT now(),
-  plain_text_reports boolean DEFAULT false,
-  CONSTRAINT profiles_pkey PRIMARY KEY (id)
-);
 CREATE TABLE public.reportes (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   created_at timestamp with time zone NOT NULL DEFAULT now(),
@@ -118,35 +143,36 @@ CREATE TABLE public.reportes (
   casco_salida boolean DEFAULT false,
   luces_salida boolean DEFAULT false,
   herramientas_salida boolean DEFAULT false,
+  cinturones_salida boolean DEFAULT false,
+  conos_salida boolean DEFAULT false,
+  extintor_salida boolean DEFAULT false,
   casco_entrada boolean DEFAULT false,
   luces_entrada boolean DEFAULT false,
   herramientas_entrada boolean DEFAULT false,
+  cinturones_entrada boolean DEFAULT false,
+  conos_entrada boolean DEFAULT false,
+  extintor_entrada boolean DEFAULT false,
   user_id uuid,
   CONSTRAINT reportes_pkey PRIMARY KEY (id),
   CONSTRAINT reportes_vehiculo_id_fkey FOREIGN KEY (vehiculo_id) REFERENCES public.vehiculos(id)
 );
-CREATE TABLE public.vehiculos (
+CREATE TABLE public.zonas_operativas (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
-  created_at timestamp with time zone NOT NULL DEFAULT now(),
-  codigo text NOT NULL UNIQUE,
-  placa text NOT NULL,
-  modelo text NOT NULL,
-  año text,
-  capacidad_tanque text,
-  color text,
-  tipo_combustible text,
-  foto_url text,
-  tipo text,
-  current_fuel_level integer DEFAULT 100,
-  last_fuel_update timestamp with time zone DEFAULT now(),
-  last_oil_change_km numeric,
-  last_timing_belt_km numeric,
-  last_chain_kit_km numeric,
-  last_wash_date timestamp with time zone,
-  assigned_driver_id uuid,
-  department text,
-  odometro_averiado boolean DEFAULT false,
-  kilometraje numeric DEFAULT 0,
-  CONSTRAINT vehiculos_pkey PRIMARY KEY (id),
-  CONSTRAINT vehiculos_assigned_driver_id_fkey FOREIGN KEY (assigned_driver_id) REFERENCES public.profiles(id)
+  estado text NOT NULL,
+  municipio text NOT NULL,
+  parroquia text NOT NULL,
+  sector text NOT NULL,
+  CONSTRAINT zonas_operativas_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.daily_activities_reports (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  supervisor_id uuid NOT NULL,
+  date date NOT NULL DEFAULT CURRENT_DATE,
+  status text NOT NULL DEFAULT 'DRAFT'::text,
+  selected_activities ARRAY DEFAULT '{}'::text[],
+  report_data jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  updated_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT daily_activities_reports_pkey PRIMARY KEY (id),
+  CONSTRAINT daily_activities_reports_supervisor_id_fkey FOREIGN KEY (supervisor_id) REFERENCES auth.users(id)
 );

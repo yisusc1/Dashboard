@@ -98,6 +98,10 @@ export default function ReporteManager({
         msg += `Chequeo de Agua/Refrigerante: ${check(data.agua_salida)}\n\n`;
 
         msg += `*Seguridad:*\n`;
+        msg += `Luces: ${check(data.luces_salida)}\n`;
+        msg += `Cinturones de seguridad: ${check(data.cinturones_salida)}\n`;
+        msg += `Conos de tráfico: ${check(data.conos_salida)}\n`;
+        msg += `Extintor de incendios: ${check(data.extintor_salida)}\n`;
         msg += `Gato: ${check(data.gato_salida)}\n`;
         msg += `Llave Cruz: ${check(data.cruz_salida)}\n`;
         msg += `Triángulo: ${check(data.triangulo_salida)}\n`;
@@ -153,6 +157,10 @@ export default function ReporteManager({
         msg += `Chequeo de Agua/Refrigerante: ${check(entradaData.agua_entrada)}\n\n`;
 
         msg += `*Seguridad:*\n`;
+        msg += `Luces: ${check(entradaData.luces_entrada)}\n`;
+        msg += `Cinturones de seguridad: ${check(entradaData.cinturones_entrada)}\n`;
+        msg += `Conos de tráfico: ${check(entradaData.conos_entrada)}\n`;
+        msg += `Extintor de incendios: ${check(entradaData.extintor_entrada)}\n`;
         msg += `Gato: ${check(entradaData.gato_entrada)}\n`;
         msg += `Llave Cruz: ${check(entradaData.cruz_entrada)}\n`;
         msg += `Triángulo: ${check(entradaData.triangulo_entrada)}\n`;
@@ -191,6 +199,10 @@ export default function ReporteManager({
                 aceite_salida: raw.aceite_salida === 'on',
                 agua_salida: raw.agua_salida === 'on',
                 // ...otros booleanos
+                luces_salida: raw.luces_salida === 'on',
+                cinturones_salida: raw.cinturones_salida === 'on',
+                conos_salida: raw.conos_salida === 'on',
+                extintor_salida: raw.extintor_salida === 'on',
                 gato_salida: raw.gato_salida === 'on',
                 cruz_salida: raw.cruz_salida === 'on',
                 triangulo_salida: raw.triangulo_salida === 'on',
@@ -229,6 +241,10 @@ export default function ReporteManager({
                 ...raw,
                 aceite_entrada: raw.aceite_entrada === 'on',
                 agua_entrada: raw.agua_entrada === 'on',
+                luces_entrada: raw.luces_entrada === 'on',
+                cinturones_entrada: raw.cinturones_entrada === 'on',
+                conos_entrada: raw.conos_entrada === 'on',
+                extintor_entrada: raw.extintor_entrada === 'on',
                 gato_entrada: raw.gato_entrada === 'on',
                 cruz_entrada: raw.cruz_entrada === 'on',
                 triangulo_entrada: raw.triangulo_entrada === 'on',
@@ -437,7 +453,7 @@ export default function ReporteManager({
                                         <h4 className="font-bold text-zinc-500 uppercase text-xs tracking-wider flex items-center gap-2"><Shield size={16} /> Seguridad</h4>
                                     </div>
                                     <div className="pl-6">
-                                        {[{ k: 'gato_salida', l: 'Gato' }, { k: 'cruz_salida', l: 'Llave Cruz' }, { k: 'triangulo_salida', l: 'Triángulo' }, { k: 'caucho_salida', l: 'Caucho Repuesto' }, { k: 'carpeta_salida', l: 'Carpeta de Permisos' }].map((item) => (
+                                        {[{ k: 'luces_salida', l: 'Luces' }, { k: 'cinturones_salida', l: 'Cinturones de seguridad' }, { k: 'conos_salida', l: 'Conos de tráfico' }, { k: 'extintor_salida', l: 'Extintor de incendios' }, { k: 'gato_salida', l: 'Gato' }, { k: 'cruz_salida', l: 'Llave Cruz' }, { k: 'triangulo_salida', l: 'Triángulo' }, { k: 'caucho_salida', l: 'Caucho Repuesto' }, { k: 'carpeta_salida', l: 'Carpeta de Permisos' }].map((item) => (
                                             <label key={item.k} className="check-row pr-6 py-5 border-b border-zinc-100 last:border-0">
                                                 <span className="text-lg font-medium text-zinc-900">{item.l}</span>
                                                 <input name={item.k} type="checkbox" className="checkbox" />
@@ -581,10 +597,10 @@ export default function ReporteManager({
                                                 <h4 className="font-bold text-zinc-500 uppercase text-xs tracking-wider flex items-center gap-2"><Shield size={16} /> Herramientas</h4>
                                             </div>
                                             <div className="pl-6">
-                                                {['gato', 'cruz', 'triangulo', 'caucho', 'carpeta'].map(item => (
-                                                    <label key={item} className="check-row pr-6 py-5 border-b border-zinc-100 last:border-0 capitalize">
-                                                        <span className="text-lg font-medium text-zinc-900">{item}</span>
-                                                        <input name={`${item}_entrada`} type="checkbox" className="checkbox" />
+                                                {[{ k: 'luces_entrada', l: 'Luces' }, { k: 'cinturones_entrada', l: 'Cinturones de seguridad' }, { k: 'conos_entrada', l: 'Conos de tráfico' }, { k: 'extintor_entrada', l: 'Extintor de incendios' }, { k: 'gato_entrada', l: 'Gato' }, { k: 'cruz_entrada', l: 'Llave Cruz' }, { k: 'triangulo_entrada', l: 'Triángulo' }, { k: 'caucho_entrada', l: 'Caucho Repuesto' }, { k: 'carpeta_entrada', l: 'Carpeta de Permisos' }].map((item) => (
+                                                    <label key={item.k} className="check-row pr-6 py-5 border-b border-zinc-100 last:border-0">
+                                                        <span className="text-lg font-medium text-zinc-900">{item.l}</span>
+                                                        <input name={item.k} type="checkbox" className="checkbox" />
                                                     </label>
                                                 ))}
                                             </div>

@@ -74,6 +74,9 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
         triangulo: false,
         caucho: false,
         carpeta: false,
+        cinturones: false,
+        conos: false,
+        extintor: false,
         onu: false,
         ups: false,
         escalera: false,
@@ -261,6 +264,9 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
                 cruz_salida: checks.cruz,
                 triangulo_salida: checks.triangulo,
                 caucho_salida: checks.caucho,
+                cinturones_salida: checks.cinturones,
+                conos_salida: checks.conos,
+                extintor_salida: checks.extintor,
 
                 onu_salida: checks.onu ? 1 : 0,
                 ups_salida: checks.ups ? 1 : 0,
@@ -296,6 +302,9 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
                 triangulo_salida: checks.triangulo,
                 caucho_salida: checks.caucho,
                 carpeta_salida: checks.carpeta,
+                cinturones_salida: checks.cinturones,
+                conos_salida: checks.conos,
+                extintor_salida: checks.extintor,
                 // Moto
                 casco_salida: checks.casco,
                 luces_salida: checks.luces,
@@ -324,6 +333,7 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
             setChecks({
                 aceite: false, agua: false, gato: false, cruz: false,
                 triangulo: false, caucho: false, carpeta: false,
+                cinturones: false, conos: false, extintor: false,
                 onu: false, ups: false, escalera: false,
                 casco: false, luces: false, herramientas: false
             })
@@ -370,6 +380,10 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
             msg += `Herramientas: ${check(data.herramientas_salida)}\n`
         } else {
             msg += `*Seguridad:*\n`
+            msg += `Luces: ${check(data.luces_salida)}\n`
+            msg += `Cinturones de seguridad: ${check(data.cinturones_salida)}\n`
+            msg += `Conos de tráfico: ${check(data.conos_salida)}\n`
+            msg += `Extintor de incendios: ${check(data.extintor_salida)}\n`
             msg += `Gato: ${check(data.gato_salida)}\n`
             msg += `Llave Cruz: ${check(data.cruz_salida)}\n`
             msg += `Triángulo: ${check(data.triangulo_salida)}\n`
@@ -573,6 +587,22 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
                                             Seguridad y Herramientas
                                         </h4>
                                         <div className="grid grid-cols-1 gap-3">
+                                            <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                                <Label htmlFor="luces" className="text-sm font-medium text-zinc-700 cursor-pointer">Luces</Label>
+                                                <Switch id="luces" checked={checks.luces} onCheckedChange={() => toggleCheck('luces')} />
+                                            </div>
+                                            <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                                <Label htmlFor="cinturones" className="text-sm font-medium text-zinc-700 cursor-pointer">Cinturones de seguridad</Label>
+                                                <Switch id="cinturones" checked={checks.cinturones} onCheckedChange={() => toggleCheck('cinturones')} />
+                                            </div>
+                                            <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                                <Label htmlFor="conos" className="text-sm font-medium text-zinc-700 cursor-pointer">Conos de tráfico</Label>
+                                                <Switch id="conos" checked={checks.conos} onCheckedChange={() => toggleCheck('conos')} />
+                                            </div>
+                                            <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                                <Label htmlFor="extintor" className="text-sm font-medium text-zinc-700 cursor-pointer">Extintor de incendios</Label>
+                                                <Switch id="extintor" checked={checks.extintor} onCheckedChange={() => toggleCheck('extintor')} />
+                                            </div>
                                             <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
                                                 <Label htmlFor="gato" className="text-sm font-medium text-zinc-700 cursor-pointer">Gato Hidráulico</Label>
                                                 <Switch id="gato" checked={checks.gato} onCheckedChange={() => toggleCheck('gato')} />

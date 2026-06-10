@@ -50,6 +50,9 @@ export async function crearSalida(formData: FormData) {
         cruz_salida: formData.get('cruz_salida') === 'on',
         triangulo_salida: formData.get('triangulo_salida') === 'on',
         caucho_salida: formData.get('caucho_salida') === 'on',
+        cinturones_salida: formData.get('cinturones_salida') === 'on',
+        conos_salida: formData.get('conos_salida') === 'on',
+        extintor_salida: formData.get('extintor_salida') === 'on',
 
         // Dispositivos (Instalación)
         onu_salida: formData.get('onu_salida') === 'on' ? 1 : 0,
@@ -142,6 +145,9 @@ export async function registrarEntrada(formData: FormData) {
         cruz_entrada: formData.get('cruz_entrada') === 'on',
         triangulo_entrada: formData.get('triangulo_entrada') === 'on',
         caucho_entrada: formData.get('caucho_entrada') === 'on',
+        cinturones_entrada: formData.get('cinturones_entrada') === 'on',
+        conos_entrada: formData.get('conos_entrada') === 'on',
+        extintor_entrada: formData.get('extintor_entrada') === 'on',
 
         // Dispositivos (Re-chequeo)
         onu_entrada: formData.get('onu_entrada') === 'on' ? 1 : 0,
@@ -280,6 +286,9 @@ export async function submitExitReport(reportData: any) {
         cruz_salida: reportData.cruz_salida,
         triangulo_salida: reportData.triangulo_salida,
         caucho_salida: reportData.caucho_salida,
+        cinturones_salida: reportData.cinturones_salida,
+        conos_salida: reportData.conos_salida,
+        extintor_salida: reportData.extintor_salida,
 
         // Dispositivos (Instalación)
         onu_salida: reportData.onu_salida,
@@ -428,6 +437,9 @@ export async function submitEntryReport(reportData: any) {
         cruz_entrada: reportData.cruz_entrada,
         triangulo_entrada: reportData.triangulo_entrada,
         caucho_entrada: reportData.caucho_entrada,
+        cinturones_entrada: reportData.cinturones_entrada,
+        conos_entrada: reportData.conos_entrada,
+        extintor_entrada: reportData.extintor_entrada,
 
         // Moto
         casco_entrada: reportData.casco_entrada,
