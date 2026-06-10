@@ -349,8 +349,10 @@ export function VehicleDetailsDialog({ isOpen, onClose, vehicle, onUpdate, reado
                                                 <CheckItem label="Aceite" checked={vehicle.activeReport.aceite_salida} />
                                                 <CheckItem label="Iluminación" checked={vehicle.activeReport.luces_salida} />
                                                 <CheckItem label="Frenos" checked={vehicle.activeReport.frenos_salida} />
-                                                <CheckItem label="Cauchos" checked={vehicle.activeReport.estado_cauchos_salida} />
                                                 <CheckItem label="Corneta" checked={vehicle.activeReport.corneta_salida} />
+                                                <div className="col-span-2 mt-1 mb-2">
+                                                    <TextItem label="Estado de Cauchos" value={vehicle.activeReport.estado_cauchos_salida} />
+                                                </div>
 
                                                 {/* CAR SPECIFIC (Agua, Safety) */}
                                                 {!vehicle.tipo?.toLowerCase().includes('moto') && !vehicle.modelo?.toLowerCase().includes('moto') && (
@@ -358,6 +360,7 @@ export function VehicleDetailsDialog({ isOpen, onClose, vehicle, onUpdate, reado
                                                         <CheckItem label="Cinturones" checked={vehicle.activeReport.cinturones_salida} />
                                                         <CheckItem label="Conos" checked={vehicle.activeReport.conos_salida} />
                                                         <CheckItem label="Extintor" checked={vehicle.activeReport.extintor_salida} />
+                                                        <CheckItem label="Botiquín" checked={vehicle.activeReport.botiquin_salida} />
                                                         <CheckItem label="Agua / Refr." checked={vehicle.activeReport.agua_salida} />
                                                         <CheckItem label="Caucho" checked={vehicle.activeReport.caucho_salida} />
                                                         <CheckItem label="Gato" checked={vehicle.activeReport.gato_salida} />
@@ -676,6 +679,7 @@ export function VehicleDetailsDialog({ isOpen, onClose, vehicle, onUpdate, reado
             </AlertDialog>
         </>
     )
+    )
 }
 
 function CheckItem({ label, checked }: { label: string, checked: boolean }) {
@@ -688,6 +692,15 @@ function CheckItem({ label, checked }: { label: string, checked: boolean }) {
                 {checked ? <CheckCircle2 size={12} strokeWidth={3} /> : <X size={12} strokeWidth={3} />}
             </div>
             <span className={`text-xs font-medium ${checked ? 'text-zinc-700' : 'text-zinc-400'}`}>{label}</span>
+        </div>
+    )
+}
+
+function TextItem({ label, value }: { label: string, value: string | undefined | null }) {
+    return (
+        <div className="flex flex-col gap-0.5">
+            <span className="text-xs font-bold text-zinc-400 uppercase">{label}</span>
+            <span className="text-sm font-medium text-zinc-700">{value || 'N/A'}</span>
         </div>
     )
 }

@@ -44,7 +44,7 @@ export async function crearSalida(formData: FormData) {
         aceite_salida: formData.get('aceite_salida') === 'on',
         agua_salida: formData.get('agua_salida') === 'on',
         frenos_salida: formData.get('frenos_salida') === 'on',
-        estado_cauchos_salida: formData.get('estado_cauchos_salida') === 'on',
+        estado_cauchos_salida: formData.get('estado_cauchos_salida') as string,
         corneta_salida: formData.get('corneta_salida') === 'on',
 
         // Seguridad (Carros)
@@ -56,6 +56,7 @@ export async function crearSalida(formData: FormData) {
         cinturones_salida: formData.get('cinturones_salida') === 'on',
         conos_salida: formData.get('conos_salida') === 'on',
         extintor_salida: formData.get('extintor_salida') === 'on',
+        botiquin_salida: formData.get('botiquin_salida') === 'on',
 
         // Dispositivos (Instalación)
         onu_salida: formData.get('onu_salida') === 'on' ? 1 : 0,
@@ -142,7 +143,7 @@ export async function registrarEntrada(formData: FormData) {
         aceite_entrada: formData.get('aceite_entrada') === 'on',
         agua_entrada: formData.get('agua_entrada') === 'on',
         frenos_entrada: formData.get('frenos_entrada') === 'on',
-        estado_cauchos_entrada: formData.get('estado_cauchos_entrada') === 'on',
+        estado_cauchos_entrada: formData.get('estado_cauchos_entrada') as string,
         corneta_entrada: formData.get('corneta_entrada') === 'on',
 
         // Seguridad (Re-chequeo)
@@ -154,6 +155,7 @@ export async function registrarEntrada(formData: FormData) {
         cinturones_entrada: formData.get('cinturones_entrada') === 'on',
         conos_entrada: formData.get('conos_entrada') === 'on',
         extintor_entrada: formData.get('extintor_entrada') === 'on',
+        botiquin_entrada: formData.get('botiquin_entrada') === 'on',
 
         // Dispositivos (Re-chequeo)
         onu_entrada: formData.get('onu_entrada') === 'on' ? 1 : 0,
@@ -298,6 +300,7 @@ export async function submitExitReport(reportData: any) {
         cinturones_salida: reportData.cinturones_salida,
         conos_salida: reportData.conos_salida,
         extintor_salida: reportData.extintor_salida,
+        botiquin_salida: reportData.botiquin_salida,
 
         // Dispositivos (Instalación)
         onu_salida: reportData.onu_salida,
@@ -452,6 +455,7 @@ export async function submitEntryReport(reportData: any) {
         cinturones_entrada: reportData.cinturones_entrada,
         conos_entrada: reportData.conos_entrada,
         extintor_entrada: reportData.extintor_entrada,
+        botiquin_entrada: reportData.botiquin_entrada,
 
         // Moto
         casco_entrada: reportData.casco_entrada,

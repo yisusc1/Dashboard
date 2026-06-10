@@ -51,7 +51,8 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
     const [selectedVehicle, setSelectedVehicle] = useState<Vehiculo | null>(null)
     const [kmSalida, setKmSalida] = useState("")
     const [conductor, setConductor] = useState("")
-    const [departamento, setDepartamento] = useState("")
+    const [departamento, setDepartamento] = useState('')
+    const [estadoCauchos, setEstadoCauchos] = useState<string>('')
     const [gasolina, setGasolina] = useState("Full")
     const [observaciones, setObservaciones] = useState("")
     const [lastKm, setLastKm] = useState<number | null>(null)
@@ -72,13 +73,12 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
         gato: false,
         cruz: false,
         triangulo: false,
-        caucho: false,
         carpeta: false,
         cinturones: false,
         conos: false,
         extintor: false,
+        botiquin: false,
         frenos: false,
-        estado_cauchos: false,
         corneta: false,
         onu: false,
         ups: false,
@@ -240,7 +240,7 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
             // We just skip the "less than" check to allow corrections or same value, 
             // but maybe still warn if it's drastically different? 
             // Letting it pass for now as requested "Same value allowed" which `km < lastKm` doesn't block (it blocks LESS).
-            // Wait, `km < lastKm` blocks strictly less. So equal is allowed?
+            // Wait, `km < lastKm` blocks strictly less. So Equal is allowed?
             // Re-reading user request: "Permite ingresar el mismo kilometraje".
             // My previous code: `km < lastKm`. So Equal WAS allowed already?
             // Usually yes. But let's be explicit avoiding the block.
@@ -262,17 +262,17 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
                 aceite_salida: checks.aceite,
                 agua_salida: checks.agua,
                 frenos_salida: checks.frenos,
-                estado_cauchos_salida: checks.estado_cauchos,
+                estado_cauchos_salida: estadoCauchos,
                 corneta_salida: checks.corneta,
 
                 carpeta_salida: checks.carpeta,
                 gato_salida: checks.gato,
                 cruz_salida: checks.cruz,
                 triangulo_salida: checks.triangulo,
-                caucho_salida: checks.caucho,
                 cinturones_salida: checks.cinturones,
                 conos_salida: checks.conos,
                 extintor_salida: checks.extintor,
+                botiquin_salida: checks.botiquin,
 
                 onu_salida: checks.onu ? 1 : 0,
                 ups_salida: checks.ups ? 1 : 0,
@@ -304,16 +304,16 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
                 aceite_salida: checks.aceite,
                 agua_salida: checks.agua,
                 frenos_salida: checks.frenos,
-                estado_cauchos_salida: checks.estado_cauchos,
+                estado_cauchos_salida: estadoCauchos,
                 corneta_salida: checks.corneta,
                 gato_salida: checks.gato,
                 cruz_salida: checks.cruz,
                 triangulo_salida: checks.triangulo,
-                caucho_salida: checks.caucho,
                 carpeta_salida: checks.carpeta,
                 cinturones_salida: checks.cinturones,
                 conos_salida: checks.conos,
                 extintor_salida: checks.extintor,
+                botiquin_salida: checks.botiquin,
                 // Moto
                 casco_salida: checks.casco,
                 luces_salida: checks.luces,
@@ -332,8 +332,9 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
             setVehiculoId("")
             setSelectedVehicle(null)
             setKmSalida("")
-            setConductor("")
-            setDepartamento("")
+            setConductor('')
+            setDepartamento('')
+            setEstadoCauchos('')
             setGasolina("Full")
             setObservaciones("")
             setFaultsToAdd([]) // Reset faults
@@ -342,8 +343,8 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
             setChecks({
                 aceite: false, agua: false, gato: false, cruz: false,
                 triangulo: false, caucho: false, carpeta: false,
-                cinturones: false, conos: false, extintor: false,
-                frenos: false, estado_cauchos: false, corneta: false,
+                cinturones: false, conos: false, extintor: false, botiquin: false,
+                frenos: false, corneta: false,
                 onu: false, ups: false, escalera: false,
                 casco: false, luces: false, herramientas: false
             })
@@ -381,7 +382,7 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
         msg += `Chequeo de Aceite: ${check(data.aceite_salida)}\n`
         msg += `Sistema de iluminación: ${check(data.luces_salida)}\n`
         msg += `Sistema de frenos: ${check(data.frenos_salida)}\n`
-        msg += `Cauchos: ${check(data.estado_cauchos_salida)}\n`
+        msg += `Cauchos: ${data.estado_cauchos_salida || 'No especificado'}\n`
         msg += `Corneta: ${check(data.corneta_salida)}\n`
         if (!isMoto) {
             msg += `Agua / Refrigerante: ${check(data.agua_salida)}\n\n`
@@ -400,6 +401,7 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
             msg += `Cinturones de seguridad: ${check(data.cinturones_salida)}\n`
             msg += `Conos de tráfico: ${check(data.conos_salida)}\n`
             msg += `Extintor de incendios: ${check(data.extintor_salida)}\n`
+            msg += `Botiquín de primeros auxilios: ${check(data.botiquin_salida)}\n`
             msg += `Gato: ${check(data.gato_salida)}\n`
             msg += `Llave Cruz: ${check(data.cruz_salida)}\n`
             msg += `Triángulo: ${check(data.triangulo_salida)}\n`
@@ -596,8 +598,18 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
                                             <Switch id="frenos" checked={checks.frenos} onCheckedChange={() => toggleCheck('frenos')} />
                                         </div>
                                         <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                            <Label htmlFor="estado_cauchos" className="text-sm font-medium text-zinc-700 cursor-pointer">Cauchos</Label>
-                                            <Switch id="estado_cauchos" checked={checks.estado_cauchos} onCheckedChange={() => toggleCheck('estado_cauchos')} />
+                                            <Label htmlFor="estado_cauchos" className="text-sm font-medium text-zinc-700">Estado de Cauchos</Label>
+                                            <Select value={estadoCauchos} onValueChange={setEstadoCauchos}>
+                                                <SelectTrigger className="w-[200px] h-9 bg-white">
+                                                    <SelectValue placeholder="Seleccionar" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="100% al 80% Estado Óptimo">100% al 80% Estado Óptimo</SelectItem>
+                                                    <SelectItem value="79% al 50% Desgaste Medio">79% al 50% Desgaste Medio</SelectItem>
+                                                    <SelectItem value="49% al 20% Planificar Cambio">49% al 20% Planificar Cambio</SelectItem>
+                                                    <SelectItem value="19% al 1% Riesgo Crítico">19% al 1% Riesgo Crítico</SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                         </div>
                                         <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
                                             <Label htmlFor="corneta" className="text-sm font-medium text-zinc-700 cursor-pointer">Corneta</Label>
@@ -630,6 +642,10 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
                                             <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
                                                 <Label htmlFor="extintor" className="text-sm font-medium text-zinc-700 cursor-pointer">Extintor de incendios</Label>
                                                 <Switch id="extintor" checked={checks.extintor} onCheckedChange={() => toggleCheck('extintor')} />
+                                            </div>
+                                            <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                                <Label htmlFor="botiquin" className="text-sm font-medium text-zinc-700 cursor-pointer">Botiquín de primeros auxilios</Label>
+                                                <Switch id="botiquin" checked={checks.botiquin} onCheckedChange={() => toggleCheck('botiquin')} />
                                             </div>
                                             <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
                                                 <Label htmlFor="gato" className="text-sm font-medium text-zinc-700 cursor-pointer">Gato Hidráulico</Label>
