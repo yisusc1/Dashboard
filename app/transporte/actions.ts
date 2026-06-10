@@ -43,6 +43,9 @@ export async function crearSalida(formData: FormData) {
         // Chequeo Técnico
         aceite_salida: formData.get('aceite_salida') === 'on',
         agua_salida: formData.get('agua_salida') === 'on',
+        frenos_salida: formData.get('frenos_salida') === 'on',
+        estado_cauchos_salida: formData.get('estado_cauchos_salida') === 'on',
+        corneta_salida: formData.get('corneta_salida') === 'on',
 
         // Seguridad (Carros)
         carpeta_salida: formData.get('carpeta_salida') === 'on',
@@ -135,9 +138,12 @@ export async function registrarEntrada(formData: FormData) {
         gasolina_entrada: formData.get('gasolina_entrada'),
         observaciones_entrada: formData.get('observaciones_entrada'),
 
-        // Chequeo Técnico (Re-chequeo)
+        // Chequeo Técnico
         aceite_entrada: formData.get('aceite_entrada') === 'on',
         agua_entrada: formData.get('agua_entrada') === 'on',
+        frenos_entrada: formData.get('frenos_entrada') === 'on',
+        estado_cauchos_entrada: formData.get('estado_cauchos_entrada') === 'on',
+        corneta_entrada: formData.get('corneta_entrada') === 'on',
 
         // Seguridad (Re-chequeo)
         carpeta_entrada: formData.get('carpeta_entrada') === 'on',
@@ -279,6 +285,9 @@ export async function submitExitReport(reportData: any) {
         // Chequeo Técnico
         aceite_salida: reportData.aceite_salida,
         agua_salida: reportData.agua_salida,
+        frenos_salida: reportData.frenos_salida,
+        estado_cauchos_salida: reportData.estado_cauchos_salida,
+        corneta_salida: reportData.corneta_salida,
 
         // Seguridad (Carros)
         carpeta_salida: reportData.carpeta_salida,
@@ -427,9 +436,12 @@ export async function submitEntryReport(reportData: any) {
         gasolina_entrada: reportData.gasolina_entrada,
         // observaciones_entrada: reportData.observaciones_entrada, // Removed/Optional
 
-        // Chequeo Técnico (Re-chequeo)
+        // Chequeo Técnico
         aceite_entrada: reportData.aceite_entrada,
         agua_entrada: reportData.agua_entrada,
+        frenos_entrada: reportData.frenos_entrada,
+        estado_cauchos_entrada: reportData.estado_cauchos_entrada,
+        corneta_entrada: reportData.corneta_entrada,
 
         // Seguridad (Carros)
         carpeta_entrada: reportData.carpeta_entrada,

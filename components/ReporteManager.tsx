@@ -95,10 +95,13 @@ export default function ReporteManager({
 
         msg += `*Chequeo Técnico:*\n`;
         msg += `Chequeo de Aceite: ${check(data.aceite_salida)}\n`;
+        msg += `Sistema de iluminación: ${check(data.luces_salida)}\n`;
+        msg += `Sistema de frenos: ${check(data.frenos_salida)}\n`;
+        msg += `Cauchos: ${check(data.estado_cauchos_salida)}\n`;
+        msg += `Corneta: ${check(data.corneta_salida)}\n`;
         msg += `Chequeo de Agua/Refrigerante: ${check(data.agua_salida)}\n\n`;
 
         msg += `*Seguridad:*\n`;
-        msg += `Luces: ${check(data.luces_salida)}\n`;
         msg += `Cinturones de seguridad: ${check(data.cinturones_salida)}\n`;
         msg += `Conos de tráfico: ${check(data.conos_salida)}\n`;
         msg += `Extintor de incendios: ${check(data.extintor_salida)}\n`;
@@ -154,10 +157,13 @@ export default function ReporteManager({
 
         msg += `*Chequeo Técnico:*\n`;
         msg += `Chequeo de Aceite: ${check(entradaData.aceite_entrada)}\n`;
+        msg += `Sistema de iluminación: ${check(entradaData.luces_entrada)}\n`;
+        msg += `Sistema de frenos: ${check(entradaData.frenos_entrada)}\n`;
+        msg += `Cauchos: ${check(entradaData.estado_cauchos_entrada)}\n`;
+        msg += `Corneta: ${check(entradaData.corneta_entrada)}\n`;
         msg += `Chequeo de Agua/Refrigerante: ${check(entradaData.agua_entrada)}\n\n`;
 
         msg += `*Seguridad:*\n`;
-        msg += `Luces: ${check(entradaData.luces_entrada)}\n`;
         msg += `Cinturones de seguridad: ${check(entradaData.cinturones_entrada)}\n`;
         msg += `Conos de tráfico: ${check(entradaData.conos_entrada)}\n`;
         msg += `Extintor de incendios: ${check(entradaData.extintor_entrada)}\n`;
@@ -440,6 +446,22 @@ export default function ReporteManager({
                                     <span className="text-lg font-medium text-zinc-900">Nivel de Aceite</span>
                                     <input name="aceite_salida" type="checkbox" className="checkbox" />
                                 </label>
+                                <label className="check-row pr-6 py-5 border-b border-zinc-100 last:border-0">
+                                    <span className="text-lg font-medium text-zinc-900">Sistema de iluminación</span>
+                                    <input name="luces_salida" type="checkbox" className="checkbox" />
+                                </label>
+                                <label className="check-row pr-6 py-5 border-b border-zinc-100 last:border-0">
+                                    <span className="text-lg font-medium text-zinc-900">Sistema de frenos</span>
+                                    <input name="frenos_salida" type="checkbox" className="checkbox" />
+                                </label>
+                                <label className="check-row pr-6 py-5 border-b border-zinc-100 last:border-0">
+                                    <span className="text-lg font-medium text-zinc-900">Cauchos</span>
+                                    <input name="estado_cauchos_salida" type="checkbox" className="checkbox" />
+                                </label>
+                                <label className="check-row pr-6 py-5 border-b border-zinc-100 last:border-0">
+                                    <span className="text-lg font-medium text-zinc-900">Corneta</span>
+                                    <input name="corneta_salida" type="checkbox" className="checkbox" />
+                                </label>
                                 <label className="check-row pr-6 py-5">
                                     <span className="text-lg font-medium text-zinc-900">Agua / Refrigerante</span>
                                     <input name="agua_salida" type="checkbox" className="checkbox" />
@@ -453,7 +475,7 @@ export default function ReporteManager({
                                         <h4 className="font-bold text-zinc-500 uppercase text-xs tracking-wider flex items-center gap-2"><Shield size={16} /> Seguridad</h4>
                                     </div>
                                     <div className="pl-6">
-                                        {[{ k: 'luces_salida', l: 'Luces' }, { k: 'cinturones_salida', l: 'Cinturones de seguridad' }, { k: 'conos_salida', l: 'Conos de tráfico' }, { k: 'extintor_salida', l: 'Extintor de incendios' }, { k: 'gato_salida', l: 'Gato' }, { k: 'cruz_salida', l: 'Llave Cruz' }, { k: 'triangulo_salida', l: 'Triángulo' }, { k: 'caucho_salida', l: 'Caucho Repuesto' }, { k: 'carpeta_salida', l: 'Carpeta de Permisos' }].map((item) => (
+                                        {[{ k: 'cinturones_salida', l: 'Cinturones de seguridad' }, { k: 'conos_salida', l: 'Conos de tráfico' }, { k: 'extintor_salida', l: 'Extintor de incendios' }, { k: 'gato_salida', l: 'Gato' }, { k: 'cruz_salida', l: 'Llave Cruz' }, { k: 'triangulo_salida', l: 'Triángulo' }, { k: 'caucho_salida', l: 'Caucho Repuesto' }, { k: 'carpeta_salida', l: 'Carpeta de Permisos' }].map((item) => (
                                             <label key={item.k} className="check-row pr-6 py-5 border-b border-zinc-100 last:border-0">
                                                 <span className="text-lg font-medium text-zinc-900">{item.l}</span>
                                                 <input name={item.k} type="checkbox" className="checkbox" />
@@ -584,6 +606,22 @@ export default function ReporteManager({
                                             <span className="text-lg font-medium text-zinc-900">Nivel de Aceite</span>
                                             <input name="aceite_entrada" type="checkbox" className="checkbox" />
                                         </label>
+                                        <label className="check-row pr-6 py-5 border-b border-zinc-100 last:border-0">
+                                            <span className="text-lg font-medium text-zinc-900">Sistema de iluminación</span>
+                                            <input name="luces_entrada" type="checkbox" className="checkbox" />
+                                        </label>
+                                        <label className="check-row pr-6 py-5 border-b border-zinc-100 last:border-0">
+                                            <span className="text-lg font-medium text-zinc-900">Sistema de frenos</span>
+                                            <input name="frenos_entrada" type="checkbox" className="checkbox" />
+                                        </label>
+                                        <label className="check-row pr-6 py-5 border-b border-zinc-100 last:border-0">
+                                            <span className="text-lg font-medium text-zinc-900">Cauchos</span>
+                                            <input name="estado_cauchos_entrada" type="checkbox" className="checkbox" />
+                                        </label>
+                                        <label className="check-row pr-6 py-5 border-b border-zinc-100 last:border-0">
+                                            <span className="text-lg font-medium text-zinc-900">Corneta</span>
+                                            <input name="corneta_entrada" type="checkbox" className="checkbox" />
+                                        </label>
                                         <label className="check-row pr-6 py-5">
                                             <span className="text-lg font-medium text-zinc-900">Agua / Refrigerante</span>
                                             <input name="agua_entrada" type="checkbox" className="checkbox" />
@@ -597,7 +635,7 @@ export default function ReporteManager({
                                                 <h4 className="font-bold text-zinc-500 uppercase text-xs tracking-wider flex items-center gap-2"><Shield size={16} /> Herramientas</h4>
                                             </div>
                                             <div className="pl-6">
-                                                {[{ k: 'luces_entrada', l: 'Luces' }, { k: 'cinturones_entrada', l: 'Cinturones de seguridad' }, { k: 'conos_entrada', l: 'Conos de tráfico' }, { k: 'extintor_entrada', l: 'Extintor de incendios' }, { k: 'gato_entrada', l: 'Gato' }, { k: 'cruz_entrada', l: 'Llave Cruz' }, { k: 'triangulo_entrada', l: 'Triángulo' }, { k: 'caucho_entrada', l: 'Caucho Repuesto' }, { k: 'carpeta_entrada', l: 'Carpeta de Permisos' }].map((item) => (
+                                                {[{ k: 'cinturones_entrada', l: 'Cinturones de seguridad' }, { k: 'conos_entrada', l: 'Conos de tráfico' }, { k: 'extintor_entrada', l: 'Extintor de incendios' }, { k: 'gato_entrada', l: 'Gato' }, { k: 'cruz_entrada', l: 'Llave Cruz' }, { k: 'triangulo_entrada', l: 'Triángulo' }, { k: 'caucho_entrada', l: 'Caucho Repuesto' }, { k: 'carpeta_entrada', l: 'Carpeta de Permisos' }].map((item) => (
                                                     <label key={item.k} className="check-row pr-6 py-5 border-b border-zinc-100 last:border-0">
                                                         <span className="text-lg font-medium text-zinc-900">{item.l}</span>
                                                         <input name={item.k} type="checkbox" className="checkbox" />

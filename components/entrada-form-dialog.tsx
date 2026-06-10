@@ -67,6 +67,9 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
         cinturones: false,
         conos: false,
         extintor: false,
+        frenos: false,
+        estado_cauchos: false,
+        corneta: false,
         onu: false,
         ups: false,
         escalera: false,
@@ -93,6 +96,7 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
                             aceite: false, agua: false, gato: false, cruz: false,
                             triangulo: false, caucho: false, carpeta: false,
                             cinturones: false, conos: false, extintor: false,
+                            frenos: false, estado_cauchos: false, corneta: false,
                             onu: false, ups: false, escalera: false,
                             casco: false, luces: false, herramientas: false
                         })
@@ -157,6 +161,7 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
             aceite: false, agua: false, gato: false, cruz: false,
             triangulo: false, caucho: false, carpeta: false,
             cinturones: false, conos: false, extintor: false,
+            frenos: false, estado_cauchos: false, corneta: false,
             onu: false, ups: false, escalera: false,
             casco: false, luces: false, herramientas: false
         })
@@ -224,8 +229,12 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
                 km_entrada: km,
                 gasolina_entrada: gasolina,
 
+                // Chequeo Técnico
                 aceite_entrada: checks.aceite,
                 agua_entrada: checks.agua,
+                frenos_entrada: checks.frenos,
+                estado_cauchos_entrada: checks.estado_cauchos,
+                corneta_entrada: checks.corneta,
 
                 // Car specific
                 gato_entrada: checks.gato,
@@ -261,8 +270,12 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
                 const text = formatEntradaText({
                     km_entrada: km,
                     gasolina_entrada: gasolina,
+                    observaciones_entrada: observaciones,
                     aceite_entrada: checks.aceite,
                     agua_entrada: checks.agua,
+                    frenos_entrada: checks.frenos,
+                    estado_cauchos_entrada: checks.estado_cauchos,
+                    corneta_entrada: checks.corneta,
                     gato_entrada: checks.gato,
                     cruz_entrada: checks.cruz,
                     triangulo_entrada: checks.triangulo,
@@ -301,6 +314,7 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
                 aceite: false, agua: false, gato: false, cruz: false,
                 triangulo: false, caucho: false, carpeta: false,
                 cinturones: false, conos: false, extintor: false,
+                frenos: false, estado_cauchos: false, corneta: false,
                 onu: false, ups: false, escalera: false,
                 casco: false, luces: false, herramientas: false
             })
@@ -355,14 +369,18 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
 
         msg += `*Chequeo Técnico:*\n`
         msg += `Chequeo de Aceite: ${check(entradaData.aceite_entrada)}\n`
-
-        if (!isMoto) msg += `Chequeo de Agua/Refrigerante: ${check(entradaData.agua_entrada)}\n`
-
-        msg += `\n`
+        msg += `Sistema de iluminación: ${check(entradaData.luces_entrada)}\n`
+        msg += `Sistema de frenos: ${check(entradaData.frenos_entrada)}\n`
+        msg += `Cauchos: ${check(entradaData.estado_cauchos_entrada)}\n`
+        msg += `Corneta: ${check(entradaData.corneta_entrada)}\n`
+        if (!isMoto) {
+            msg += `Agua / Refrigerante: ${check(entradaData.agua_entrada)}\n\n`
+        } else {
+            msg += `\n`
+        }
 
         if (!isMoto) {
             msg += `*Herramientas y Seguridad:*\n`
-            msg += `Luces: ${check(entradaData.luces_entrada)}\n`
             msg += `Cinturones de seguridad: ${check(entradaData.cinturones_entrada)}\n`
             msg += `Conos de tráfico: ${check(entradaData.conos_entrada)}\n`
             msg += `Extintor de incendios: ${check(entradaData.extintor_entrada)}\n`
@@ -372,9 +390,8 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
             msg += `Caucho: ${check(entradaData.caucho_entrada)}\n`
             msg += `Carpeta de Permisos: ${check(entradaData.carpeta_entrada)}\n`
         } else {
-            msg += `*Seguridad (Moto):*\n`
+            msg += `*Herramientas y Seguridad (Moto):*\n`
             msg += `Casco: ${check(entradaData.casco_entrada)}\n`
-            msg += `Luces: ${check(entradaData.luces_entrada)}\n`
             msg += `Herramientas: ${check(entradaData.herramientas_entrada)}\n`
         }
 
@@ -551,6 +568,22 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
                                             <Label htmlFor="aceite" className="text-sm font-medium text-zinc-700 cursor-pointer">Nivel de Aceite</Label>
                                             <Switch id="aceite" checked={checks.aceite} onCheckedChange={() => toggleCheck('aceite')} />
                                         </div>
+                                        <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                            <Label htmlFor="luces" className="text-sm font-medium text-zinc-700 cursor-pointer">Sistema de iluminación</Label>
+                                            <Switch id="luces" checked={checks.luces} onCheckedChange={() => toggleCheck('luces')} />
+                                        </div>
+                                        <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                            <Label htmlFor="frenos" className="text-sm font-medium text-zinc-700 cursor-pointer">Sistema de frenos</Label>
+                                            <Switch id="frenos" checked={checks.frenos} onCheckedChange={() => toggleCheck('frenos')} />
+                                        </div>
+                                        <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                            <Label htmlFor="estado_cauchos" className="text-sm font-medium text-zinc-700 cursor-pointer">Cauchos</Label>
+                                            <Switch id="estado_cauchos" checked={checks.estado_cauchos} onCheckedChange={() => toggleCheck('estado_cauchos')} />
+                                        </div>
+                                        <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                            <Label htmlFor="corneta" className="text-sm font-medium text-zinc-700 cursor-pointer">Corneta</Label>
+                                            <Switch id="corneta" checked={checks.corneta} onCheckedChange={() => toggleCheck('corneta')} />
+                                        </div>
                                         {!isMoto && (
                                             <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
                                                 <Label htmlFor="agua" className="text-sm font-medium text-zinc-700 cursor-pointer">Agua / Refrigerante</Label>
@@ -567,10 +600,6 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
                                             Herramientas (Verificar devolución)
                                         </h4>
                                         <div className="grid grid-cols-1 gap-3">
-                                            <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                                <Label htmlFor="luces" className="text-sm font-medium text-zinc-700 cursor-pointer">Luces</Label>
-                                                <Switch id="luces" checked={checks.luces} onCheckedChange={() => toggleCheck('luces')} />
-                                            </div>
                                             <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
                                                 <Label htmlFor="cinturones" className="text-sm font-medium text-zinc-700 cursor-pointer">Cinturones de seguridad</Label>
                                                 <Switch id="cinturones" checked={checks.cinturones} onCheckedChange={() => toggleCheck('cinturones')} />
@@ -617,10 +646,6 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
                                             <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
                                                 <Label htmlFor="casco" className="text-sm font-medium text-zinc-700 cursor-pointer">Casco</Label>
                                                 <Switch id="casco" checked={checks.casco} onCheckedChange={() => toggleCheck('casco')} />
-                                            </div>
-                                            <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                                <Label htmlFor="luces" className="text-sm font-medium text-zinc-700 cursor-pointer">Luces</Label>
-                                                <Switch id="luces" checked={checks.luces} onCheckedChange={() => toggleCheck('luces')} />
                                             </div>
                                             <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
                                                 <Label htmlFor="herramientas" className="text-sm font-medium text-zinc-700 cursor-pointer">Herramientas Básicas</Label>

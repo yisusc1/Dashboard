@@ -347,11 +347,14 @@ export function VehicleDetailsDialog({ isOpen, onClose, vehicle, onUpdate, reado
                                             <div className="p-4 grid grid-cols-2 gap-y-3 gap-x-4">
                                                 {/* COMMON */}
                                                 <CheckItem label="Aceite" checked={vehicle.activeReport.aceite_salida} />
+                                                <CheckItem label="Iluminación" checked={vehicle.activeReport.luces_salida} />
+                                                <CheckItem label="Frenos" checked={vehicle.activeReport.frenos_salida} />
+                                                <CheckItem label="Cauchos" checked={vehicle.activeReport.estado_cauchos_salida} />
+                                                <CheckItem label="Corneta" checked={vehicle.activeReport.corneta_salida} />
 
                                                 {/* CAR SPECIFIC (Agua, Safety) */}
                                                 {!vehicle.tipo?.toLowerCase().includes('moto') && !vehicle.modelo?.toLowerCase().includes('moto') && (
                                                     <>
-                                                        <CheckItem label="Luces" checked={vehicle.activeReport.luces_salida} />
                                                         <CheckItem label="Cinturones" checked={vehicle.activeReport.cinturones_salida} />
                                                         <CheckItem label="Conos" checked={vehicle.activeReport.conos_salida} />
                                                         <CheckItem label="Extintor" checked={vehicle.activeReport.extintor_salida} />
@@ -368,7 +371,6 @@ export function VehicleDetailsDialog({ isOpen, onClose, vehicle, onUpdate, reado
                                                 {(vehicle.tipo?.toLowerCase().includes('moto') || vehicle.modelo?.toLowerCase().includes('moto')) && (
                                                     <>
                                                         <CheckItem label="Casco" checked={vehicle.activeReport.casco_salida} />
-                                                        <CheckItem label="Luces" checked={vehicle.activeReport.luces_salida} />
                                                         <CheckItem label="Herramientas" checked={vehicle.activeReport.herramientas_salida} />
                                                     </>
                                                 )}
