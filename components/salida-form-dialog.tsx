@@ -409,9 +409,11 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
         }
         msg += `\n`
 
-        if ((data.departamento === 'Instalación' || data.departamento === 'Distribución') && !isMoto) {
+        if ((data.departamento === 'Instalación' || data.departamento === 'Distribución' || data.departamento === 'Afectaciones') && !isMoto) {
             msg += `*Equipos Asignados:*\n`
-            msg += `Mini-UPS: ${check(data.ups_salida)}\n`
+            if (data.departamento === 'Instalación') {
+                msg += `Mini-UPS: ${check(data.ups_salida)}\n`
+            }
             msg += `Escalera telescópica: ${check(data.escalera_salida)}\n\n`
         }
 
@@ -433,7 +435,7 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
 
     // Helpers conditions
     const isMoto = selectedVehicle?.codigo?.startsWith('M-') || selectedVehicle?.tipo === 'Moto' || selectedVehicle?.modelo?.toLowerCase().includes('moto')
-    const isInstalacion = departamento === 'Instalación' || departamento === 'Distribución'
+    const isEquiposDepartamento = departamento === 'Instalación' || departamento === 'Distribución' || departamento === 'Afectaciones'
     const isCarga = selectedVehicle?.tipo?.toLowerCase() === 'carga' || selectedVehicle?.modelo?.toLowerCase().includes('carga')
 
     return (
@@ -695,17 +697,19 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
                                     </div>
                                 )}
 
-                                {/* EQUIPOS - SOLO INSTALACION/DISTRIBUCION Y NO MOTO */}
-                                {isInstalacion && !isMoto && (
+                                {/* EQUIPOS - SOLO INSTALACION/DISTRIBUCION/AFECTACIONES Y NO MOTO */}
+                                {isEquiposDepartamento && !isMoto && (
                                     <div>
                                         <h4 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-2 border-t border-zinc-100 pt-4">
                                             Equipos Asignados
                                         </h4>
                                         <div className="grid grid-cols-1 gap-3">
-                                            <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                                <Label htmlFor="ups" className="text-sm font-medium text-zinc-700 cursor-pointer">Mini-UPS</Label>
-                                                <Switch id="ups" checked={checks.ups} onCheckedChange={() => toggleCheck('ups')} />
-                                            </div>
+                                            {departamento === 'Instalación' && (
+                                                <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                                    <Label htmlFor="ups" className="text-sm font-medium text-zinc-700 cursor-pointer">Mini-UPS</Label>
+                                                    <Switch id="ups" checked={checks.ups} onCheckedChange={() => toggleCheck('ups')} />
+                                                </div>
+                                            )}
                                             <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
                                                 <Label htmlFor="escalera" className="text-sm font-medium text-zinc-700 cursor-pointer">Escalera telescópica</Label>
                                                 <Switch id="escalera" checked={checks.escalera} onCheckedChange={() => toggleCheck('escalera')} />

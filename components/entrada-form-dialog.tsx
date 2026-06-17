@@ -399,9 +399,14 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
             msg += `Herramientas: ${check(entradaData.herramientas_entrada)}\n`
         }
 
-        if ((vehiculo?.department === 'Instalación' || vehiculo?.department === 'Distribución' || reporteOriginal.departamento === 'Instalación' || reporteOriginal.departamento === 'Distribución') && !isMoto) {
+        const isEquiposOriginal = reporteOriginal.departamento === 'Instalación' || reporteOriginal.departamento === 'Distribución' || reporteOriginal.departamento === 'Afectaciones'
+        const isEquiposEntrada = entradaData.departamento === 'Instalación' || entradaData.departamento === 'Distribución' || entradaData.departamento === 'Afectaciones'
+        
+        if ((vehiculo?.department === 'Instalación' || vehiculo?.department === 'Distribución' || vehiculo?.department === 'Afectaciones' || isEquiposOriginal || isEquiposEntrada) && !isMoto) {
             msg += `\n*Equipos Asignados:*\n`
-            msg += `Mini-UPS: ${check(entradaData.ups_entrada)}\n`
+            if (reporteOriginal.departamento === 'Instalación' || entradaData.departamento === 'Instalación') {
+                msg += `Mini-UPS: ${check(entradaData.ups_entrada)}\n`
+            }
             msg += `Escalera telescópica: ${check(entradaData.escalera_entrada)}\n`
         }
 
@@ -428,7 +433,7 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
     // Note: In Entrada, we use selectedReport.vehiculos which is an object
     const v = selectedReport?.vehiculos
     const isMoto = v?.codigo?.startsWith('M-') || v?.tipo === 'Moto' || v?.modelo?.toLowerCase().includes('moto')
-    const isInstalacion = selectedReport?.departamento === 'Instalación' || selectedReport?.departamento === 'Distribución'
+    const isEquiposDepartamento = selectedReport?.departamento === 'Instalación' || selectedReport?.departamento === 'Distribución' || selectedReport?.departamento === 'Afectaciones'
     const isCarga = v?.tipo?.toLowerCase() === 'carga' || v?.modelo?.toLowerCase().includes('carga')
 
 
@@ -679,17 +684,19 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
                                     </div>
                                 )}
 
-                                {/* EQUIPOS - SOLO INSTALACION/DISTRIBUCION Y NO MOTO */}
-                                {isInstalacion && !isMoto && (
+                                {/* EQUIPOS - SOLO INSTALACION/DISTRIBUCION/AFECTACIONES Y NO MOTO */}
+                                {isEquiposDepartamento && !isMoto && (
                                     <div>
                                         <h4 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-2 border-t border-zinc-100 pt-4">
                                             Equipos Asignados
                                         </h4>
                                         <div className="grid grid-cols-1 gap-3">
-                                            <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                                <Label htmlFor="ups" className="text-sm font-medium text-zinc-700 cursor-pointer">Mini-UPS</Label>
-                                                <Switch id="ups" checked={checks.ups} onCheckedChange={() => toggleCheck('ups')} />
-                                            </div>
+                                            {selectedReport?.departamento === 'Instalación' && (
+                                                <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
+                                                    <Label htmlFor="ups" className="text-sm font-medium text-zinc-700 cursor-pointer">Mini-UPS</Label>
+                                                    <Switch id="ups" checked={checks.ups} onCheckedChange={() => toggleCheck('ups')} />
+                                                </div>
+                                            )}
                                             <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
                                                 <Label htmlFor="escalera" className="text-sm font-medium text-zinc-700 cursor-pointer">Escalera telescópica</Label>
                                                 <Switch id="escalera" checked={checks.escalera} onCheckedChange={() => toggleCheck('escalera')} />

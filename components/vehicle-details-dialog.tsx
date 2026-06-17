@@ -378,10 +378,12 @@ export function VehicleDetailsDialog({ isOpen, onClose, vehicle, onUpdate, reado
                                                     </>
                                                 )}
 
-                                                {/* TECH STUFF - Only for Soporte/Instalación/Distribución AND NOT MOTO */}
-                                                {(vehicle.department === 'Soporte' || vehicle.department === 'Instalación' || vehicle.department === 'Distribución') && !vehicle.tipo?.toLowerCase().includes('moto') && !vehicle.modelo?.toLowerCase().includes('moto') && (
+                                                {/* TECH STUFF - Only for Soporte/Instalación/Distribución/Afectaciones AND NOT MOTO */}
+                                                {(vehicle.department === 'Soporte' || vehicle.department === 'Instalación' || vehicle.department === 'Distribución' || vehicle.department === 'Afectaciones') && !vehicle.tipo?.toLowerCase().includes('moto') && !vehicle.modelo?.toLowerCase().includes('moto') && (
                                                     <>
-                                                        <CheckItem label="UPS" checked={vehicle.activeReport.ups_salida === 1} />
+                                                        {vehicle.department === 'Instalación' && (
+                                                            <CheckItem label="UPS" checked={vehicle.activeReport.ups_salida === 1} />
+                                                        )}
                                                         <CheckItem label="Esc. Telescópica" checked={vehicle.activeReport.escalera_salida} />
                                                     </>
                                                 )}

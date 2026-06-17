@@ -67,7 +67,7 @@ export default function ReporteManager({
 
     // Helpers para detectar tipo
     const esMoto = (v: { codigo: string; modelo: string } | null | undefined) => v?.codigo.startsWith('M-') || v?.modelo.includes('MOTO');
-    const esInstalacionODistribucion = (d: string) => d === 'Instalación' || d === 'Distribución';
+    const esInstalacionODistribucion = (d: string) => d === 'Instalación' || d === 'Distribución' || d === 'Afectaciones';
 
     // Refs para WhatsApp
     const salidaFormRef = useRef<HTMLFormElement>(null);
@@ -114,7 +114,9 @@ export default function ReporteManager({
 
         msg += `*Equipos Asignados:*\n`;
         if (esInstalacionODistribucion(data.departamento)) {
-            msg += `Mini-UPS: ${check(data.ups_salida)}\n`;
+            if (data.departamento === 'Instalación') {
+                msg += `Mini-UPS: ${check(data.ups_salida)}\n`;
+            }
             msg += `Escalera telescópica: ${check(data.escalera_salida)}\n\n`;
         } else {
             msg += `N/A\n\n`;
@@ -181,7 +183,9 @@ export default function ReporteManager({
 
         msg += `*Equipos Asignados:*\n`;
         if (esInstalacionODistribucion(reporteOriginal.departamento)) {
-            msg += `Mini-UPS: ${check(entradaData.ups_entrada)}\n`;
+            if (reporteOriginal.departamento === 'Instalación') {
+                msg += `Mini-UPS: ${check(entradaData.ups_entrada)}\n`;
+            }
             msg += `Escalera telescópica: ${check(entradaData.escalera_entrada)}\n\n`;
         } else {
             msg += `N/A\n\n`;
@@ -510,10 +514,12 @@ export default function ReporteManager({
                                         <h4 className="font-bold text-zinc-500 uppercase text-xs tracking-wider flex items-center gap-2"><Zap size={16} /> Equipos</h4>
                                     </div>
                                     <div className="pl-6">
-                                        <label className="check-row pr-6 py-5 border-b border-zinc-100">
-                                            <span className="text-lg font-medium text-zinc-900">Mini-UPS</span>
-                                            <input name="ups_salida" type="checkbox" className="checkbox" />
-                                        </label>
+                                        {departamento === 'Instalación' && (
+                                            <label className="check-row pr-6 py-5 border-b border-zinc-100">
+                                                <span className="text-lg font-medium text-zinc-900">Mini-UPS</span>
+                                                <input name="ups_salida" type="checkbox" className="checkbox" />
+                                            </label>
+                                        )}
                                         <label className="check-row pr-6 py-5">
                                             <span className="text-lg font-medium text-zinc-900">Escalera telescópica</span>
                                             <input name="escalera_salida" type="checkbox" className="checkbox" />
@@ -685,10 +691,12 @@ export default function ReporteManager({
                                                 <h4 className="font-bold text-zinc-500 uppercase text-xs tracking-wider flex items-center gap-2"><Zap size={16} /> Equipos</h4>
                                             </div>
                                             <div className="pl-6">
-                                                <label className="check-row pr-6 py-5 border-b border-zinc-100">
-                                                    <span className="text-lg font-medium text-zinc-900">Mini-UPS</span>
-                                                    <input name="ups_entrada" type="checkbox" className="checkbox" />
-                                                </label>
+                                                {reporteEntrada.departamento === 'Instalación' && (
+                                                    <label className="check-row pr-6 py-5 border-b border-zinc-100">
+                                                        <span className="text-lg font-medium text-zinc-900">Mini-UPS</span>
+                                                        <input name="ups_entrada" type="checkbox" className="checkbox" />
+                                                    </label>
+                                                )}
                                                 <label className="check-row pr-6 py-5">
                                                     <span className="text-lg font-medium text-zinc-900">Escalera telescópica</span>
                                                     <input name="escalera_entrada" type="checkbox" className="checkbox" />
