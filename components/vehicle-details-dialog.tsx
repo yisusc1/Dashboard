@@ -383,7 +383,14 @@ export function VehicleDetailsDialog({ isOpen, onClose, vehicle, onUpdate, reado
                                                     <>
                                                         <CheckItem label="ONU" checked={vehicle.activeReport.onu_salida === 1} />
                                                         <CheckItem label="UPS" checked={vehicle.activeReport.ups_salida === 1} />
-                                                        <CheckItem label="Escalera" checked={vehicle.activeReport.escalera_salida} />
+                                                        <CheckItem label="Esc. Telescópica" checked={vehicle.activeReport.escalera_salida} />
+                                                    </>
+                                                )}
+
+                                                {/* EQUIPOS DE CARGA */}
+                                                {(vehicle.tipo?.toLowerCase() === 'carga' || vehicle.modelo?.toLowerCase().includes('carga')) && (
+                                                    <>
+                                                        <CheckItem label="Esc. Tijera" checked={vehicle.activeReport.escalera_tijera_salida} />
                                                     </>
                                                 )}
                                             </div>

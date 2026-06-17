@@ -19,7 +19,7 @@ interface EquipmentFormProps {
 
 const KIT_FTTH = ["Cleaver", "Stripper", "Pela Drop", "Power Meter", "Bolso Tolsen", "Alicate/Piqueta", "VFL"];
 const EPP = ["Casco", "Botas", "Chaleco", "Guantes", "Lentes"];
-const HERRAMIENTAS = ["Taladro", "Mecha", "Destornillador E", "Destornillador P", "Destornillador E/P", "Arnés", "Escalera", "Zinchas", "Martillo", "Eslinga", "Extensión Eléctrica"];
+const HERRAMIENTAS = ["Taladro", "Mecha", "Destornillador E", "Destornillador P", "Destornillador E/P", "Arnés", "Escalera telescópica", "Escalera de Tijera", "Zinchas", "Martillo", "Eslinga", "Extensión Eléctrica"];
 const ESTADOS = ["Operativo", "Dañado", "En Reparación", "Extraviado", "No Aplica"];
 
 const inputClass = "w-full h-12 px-4 rounded-[14px] bg-[#F2F2F7] focus:bg-white focus:ring-2 focus:ring-orange-500 transition-all outline-none text-[15px] text-gray-900 placeholder:text-gray-400 disabled:opacity-50 disabled:bg-gray-100 border border-transparent";

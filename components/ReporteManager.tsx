@@ -116,9 +116,14 @@ export default function ReporteManager({
         if (esInstalacion(data.departamento)) {
             msg += `ONU/Router: ${check(data.onu_salida)}\n`;
             msg += `Mini-UPS: ${check(data.ups_salida)}\n`;
-            msg += `Escalera: ${check(data.escalera_salida)}\n\n`;
+            msg += `Escalera telescópica: ${check(data.escalera_salida)}\n\n`;
         } else {
             msg += `N/A\n\n`;
+        }
+
+        if (vehiculoObj?.tipo?.toLowerCase() === 'carga' || vehiculoObj?.modelo?.toLowerCase().includes('carga')) {
+            msg += `*Equipos de Carga:*\n`;
+            msg += `Escalera de Tijera: ${check(data.escalera_tijera_salida)}\n\n`;
         }
 
         msg += `Observaciones: ${data.observaciones_salida || 'Ninguna'}`;
@@ -179,9 +184,14 @@ export default function ReporteManager({
         if (esInstalacion(reporteOriginal.departamento)) {
             msg += `ONU/Router: ${check(entradaData.onu_entrada)}\n`;
             msg += `Mini-UPS: ${check(entradaData.ups_entrada)}\n`;
-            msg += `Escalera: ${check(entradaData.escalera_entrada)}\n\n`;
+            msg += `Escalera telescópica: ${check(entradaData.escalera_entrada)}\n\n`;
         } else {
             msg += `N/A\n\n`;
+        }
+
+        if (vehiculo?.tipo?.toLowerCase() === 'carga' || vehiculo?.modelo?.toLowerCase().includes('carga')) {
+            msg += `*Equipos de Carga:*\n`;
+            msg += `Escalera de Tijera: ${check(entradaData.escalera_tijera_entrada)}\n\n`;
         }
 
         msg += `Observaciones: ${entradaData.observaciones_entrada || 'Ninguna'}`;
@@ -220,6 +230,7 @@ export default function ReporteManager({
                 onu_salida: raw.onu_salida === 'on',
                 ups_salida: raw.ups_salida === 'on',
                 escalera_salida: raw.escalera_salida === 'on',
+                escalera_tijera_salida: raw.escalera_tijera_salida === 'on',
             };
 
             const vehiculoObj = vehiculos.find(v => v.id === processed.vehiculo_id);
@@ -263,6 +274,7 @@ export default function ReporteManager({
                 onu_entrada: raw.onu_entrada === 'on',
                 ups_entrada: raw.ups_entrada === 'on',
                 escalera_entrada: raw.escalera_entrada === 'on',
+                escalera_tijera_entrada: raw.escalera_tijera_entrada === 'on',
             };
 
             const text = formatEntradaText(processed, reporteEntrada!);
@@ -511,8 +523,21 @@ export default function ReporteManager({
                                             <input name="ups_salida" type="checkbox" className="checkbox" />
                                         </label>
                                         <label className="check-row pr-6 py-5">
-                                            <span className="text-lg font-medium text-zinc-900">Escalera</span>
+                                            <span className="text-lg font-medium text-zinc-900">Escalera telescópica</span>
                                             <input name="escalera_salida" type="checkbox" className="checkbox" />
+                                        </label>
+                                    </div>
+                                </>
+                            )}
+                            {(selectedReport?.vehiculos?.tipo?.toLowerCase() === 'carga' || selectedReport?.vehiculos?.modelo?.toLowerCase().includes('carga')) && (
+                                <>
+                                    <div className="p-5 bg-zinc-50 border-b border-zinc-100 border-t">
+                                        <h4 className="font-bold text-zinc-500 uppercase text-xs tracking-wider flex items-center gap-2"><Zap size={16} /> Equipos de Carga</h4>
+                                    </div>
+                                    <div className="pl-6">
+                                        <label className="check-row pr-6 py-5">
+                                            <span className="text-lg font-medium text-zinc-900">Escalera de Tijera</span>
+                                            <input name="escalera_tijera_salida" type="checkbox" className="checkbox" />
                                         </label>
                                     </div>
                                 </>
@@ -677,8 +702,23 @@ export default function ReporteManager({
                                                     <input name="ups_entrada" type="checkbox" className="checkbox" />
                                                 </label>
                                                 <label className="check-row pr-6 py-5">
-                                                    <span className="text-lg font-medium text-zinc-900">Escalera</span>
+                                                    <span className="text-lg font-medium text-zinc-900">Escalera telescópica</span>
                                                     <input name="escalera_entrada" type="checkbox" className="checkbox" />
+                                                </label>
+                                            </div>
+                                        </>
+                                    )}
+
+                                    {/* EQUIPOS CARGA */}
+                                    {(reporteEntrada.vehiculos?.tipo?.toLowerCase() === 'carga' || reporteEntrada.vehiculos?.modelo?.toLowerCase().includes('carga')) && (
+                                        <>
+                                            <div className="p-5 bg-zinc-50 border-b border-zinc-100 border-t">
+                                                <h4 className="font-bold text-zinc-500 uppercase text-xs tracking-wider flex items-center gap-2"><Zap size={16} /> Equipos de Carga</h4>
+                                            </div>
+                                            <div className="pl-6">
+                                                <label className="check-row pr-6 py-5">
+                                                    <span className="text-lg font-medium text-zinc-900">Escalera de Tijera</span>
+                                                    <input name="escalera_tijera_entrada" type="checkbox" className="checkbox" />
                                                 </label>
                                             </div>
                                         </>

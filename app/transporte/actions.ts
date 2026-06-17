@@ -62,6 +62,7 @@ export async function crearSalida(formData: FormData) {
         onu_salida: formData.get('onu_salida') === 'on' ? 1 : 0,
         ups_salida: formData.get('ups_salida') === 'on' ? 1 : 0,
         escalera_salida: formData.get('escalera_salida') === 'on',
+        escalera_tijera_salida: formData.get('escalera_tijera_salida') === 'on',
     };
 
     // [NEW] Hard Limit Validation (300km)
@@ -162,6 +163,7 @@ export async function registrarEntrada(formData: FormData) {
         ups_entrada: formData.get('ups_entrada') === 'on' ? 1 : 0,
         // La escalera la chequeamos también al entrar por seguridad
         escalera_entrada: formData.get('escalera_entrada') === 'on',
+        escalera_tijera_entrada: formData.get('escalera_tijera_entrada') === 'on',
     };
 
     const { data, error } = await supabase.from('reportes').update(updateData).eq('id', reporte_id).select().single();
@@ -306,6 +308,7 @@ export async function submitExitReport(reportData: any) {
         onu_salida: reportData.onu_salida,
         ups_salida: reportData.ups_salida,
         escalera_salida: reportData.escalera_salida,
+        escalera_tijera_salida: reportData.escalera_tijera_salida,
 
         // Moto
         casco_salida: reportData.casco_salida,
@@ -466,6 +469,7 @@ export async function submitEntryReport(reportData: any) {
         onu_entrada: reportData.onu_entrada ? 1 : 0,
         ups_entrada: reportData.ups_entrada ? 1 : 0,
         escalera_entrada: reportData.escalera_entrada,
+        escalera_tijera_entrada: reportData.escalera_tijera_entrada,
     };
 
     // 1.5. Server-Side Validation [NEW]
