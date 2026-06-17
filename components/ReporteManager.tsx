@@ -67,7 +67,7 @@ export default function ReporteManager({
 
     // Helpers para detectar tipo
     const esMoto = (v: { codigo: string; modelo: string } | null | undefined) => v?.codigo.startsWith('M-') || v?.modelo.includes('MOTO');
-    const esInstalacion = (d: string) => d === 'Instalación';
+    const esInstalacionODistribucion = (d: string) => d === 'Instalación' || d === 'Distribución';
 
     // Refs para WhatsApp
     const salidaFormRef = useRef<HTMLFormElement>(null);
@@ -113,8 +113,7 @@ export default function ReporteManager({
         msg += `Carpeta de Permisos: ${check(data.carpeta_salida)}\n\n`;
 
         msg += `*Equipos Asignados:*\n`;
-        if (esInstalacion(data.departamento)) {
-            msg += `ONU/Router: ${check(data.onu_salida)}\n`;
+        if (esInstalacionODistribucion(data.departamento)) {
             msg += `Mini-UPS: ${check(data.ups_salida)}\n`;
             msg += `Escalera telescópica: ${check(data.escalera_salida)}\n\n`;
         } else {
@@ -181,8 +180,7 @@ export default function ReporteManager({
         msg += `Carpeta de Permisos: ${check(entradaData.carpeta_entrada)}\n\n`;
 
         msg += `*Equipos Asignados:*\n`;
-        if (esInstalacion(reporteOriginal.departamento)) {
-            msg += `ONU/Router: ${check(entradaData.onu_entrada)}\n`;
+        if (esInstalacionODistribucion(reporteOriginal.departamento)) {
             msg += `Mini-UPS: ${check(entradaData.ups_entrada)}\n`;
             msg += `Escalera telescópica: ${check(entradaData.escalera_entrada)}\n\n`;
         } else {
@@ -227,7 +225,6 @@ export default function ReporteManager({
                 triangulo_salida: raw.triangulo_salida === 'on',
                 caucho_salida: raw.caucho_salida === 'on',
                 carpeta_salida: raw.carpeta_salida === 'on',
-                onu_salida: raw.onu_salida === 'on',
                 ups_salida: raw.ups_salida === 'on',
                 escalera_salida: raw.escalera_salida === 'on',
                 escalera_tijera_salida: raw.escalera_tijera_salida === 'on',
@@ -271,7 +268,6 @@ export default function ReporteManager({
                 triangulo_entrada: raw.triangulo_entrada === 'on',
                 caucho_entrada: raw.caucho_entrada === 'on',
                 carpeta_entrada: raw.carpeta_entrada === 'on',
-                onu_entrada: raw.onu_entrada === 'on',
                 ups_entrada: raw.ups_entrada === 'on',
                 escalera_entrada: raw.escalera_entrada === 'on',
                 escalera_tijera_entrada: raw.escalera_tijera_entrada === 'on',
@@ -508,16 +504,12 @@ export default function ReporteManager({
                             )}
 
                             {/* EQUIPOS */}
-                            {esInstalacion(departamento) && (
+                            {esInstalacionODistribucion(departamento) && (
                                 <>
                                     <div className="p-5 bg-zinc-50 border-b border-zinc-100 border-t">
                                         <h4 className="font-bold text-zinc-500 uppercase text-xs tracking-wider flex items-center gap-2"><Zap size={16} /> Equipos</h4>
                                     </div>
                                     <div className="pl-6">
-                                        <label className="check-row pr-6 py-5 border-b border-zinc-100">
-                                            <span className="text-lg font-medium text-zinc-900">ONU / Router</span>
-                                            <input name="onu_salida" type="checkbox" className="checkbox" />
-                                        </label>
                                         <label className="check-row pr-6 py-5 border-b border-zinc-100">
                                             <span className="text-lg font-medium text-zinc-900">Mini-UPS</span>
                                             <input name="ups_salida" type="checkbox" className="checkbox" />
@@ -687,16 +679,12 @@ export default function ReporteManager({
                                     )}
 
                                     {/* EQUIPOS */}
-                                    {esInstalacion(reporteEntrada.departamento) && (
+                                    {esInstalacionODistribucion(reporteEntrada.departamento) && (
                                         <>
                                             <div className="p-5 bg-zinc-50 border-b border-zinc-100 border-t">
                                                 <h4 className="font-bold text-zinc-500 uppercase text-xs tracking-wider flex items-center gap-2"><Zap size={16} /> Equipos</h4>
                                             </div>
                                             <div className="pl-6">
-                                                <label className="check-row pr-6 py-5 border-b border-zinc-100">
-                                                    <span className="text-lg font-medium text-zinc-900">ONU / Router</span>
-                                                    <input name="onu_entrada" type="checkbox" className="checkbox" />
-                                                </label>
                                                 <label className="check-row pr-6 py-5 border-b border-zinc-100">
                                                     <span className="text-lg font-medium text-zinc-900">Mini-UPS</span>
                                                     <input name="ups_entrada" type="checkbox" className="checkbox" />

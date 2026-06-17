@@ -59,7 +59,6 @@ export async function crearSalida(formData: FormData) {
         botiquin_salida: formData.get('botiquin_salida') === 'on',
 
         // Dispositivos (Instalación)
-        onu_salida: formData.get('onu_salida') === 'on' ? 1 : 0,
         ups_salida: formData.get('ups_salida') === 'on' ? 1 : 0,
         escalera_salida: formData.get('escalera_salida') === 'on',
         escalera_tijera_salida: formData.get('escalera_tijera_salida') === 'on',
@@ -159,7 +158,6 @@ export async function registrarEntrada(formData: FormData) {
         botiquin_entrada: formData.get('botiquin_entrada') === 'on',
 
         // Dispositivos (Re-chequeo)
-        onu_entrada: formData.get('onu_entrada') === 'on' ? 1 : 0,
         ups_entrada: formData.get('ups_entrada') === 'on' ? 1 : 0,
         // La escalera la chequeamos también al entrar por seguridad
         escalera_entrada: formData.get('escalera_entrada') === 'on',
@@ -305,7 +303,6 @@ export async function submitExitReport(reportData: any) {
         botiquin_salida: reportData.botiquin_salida,
 
         // Dispositivos (Instalación)
-        onu_salida: reportData.onu_salida,
         ups_salida: reportData.ups_salida,
         escalera_salida: reportData.escalera_salida,
         escalera_tijera_salida: reportData.escalera_tijera_salida,
@@ -466,7 +463,6 @@ export async function submitEntryReport(reportData: any) {
         herramientas_entrada: reportData.herramientas_entrada,
 
         // Dispositivos (Instalación)
-        onu_entrada: reportData.onu_entrada ? 1 : 0,
         ups_entrada: reportData.ups_entrada ? 1 : 0,
         escalera_entrada: reportData.escalera_entrada,
         escalera_tijera_entrada: reportData.escalera_tijera_entrada,

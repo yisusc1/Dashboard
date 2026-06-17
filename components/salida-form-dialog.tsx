@@ -80,7 +80,6 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
         botiquin: false,
         frenos: false,
         corneta: false,
-        onu: false,
         ups: false,
         escalera: false,
         escalera_tijera: false,
@@ -275,7 +274,7 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
                 extintor_salida: checks.extintor,
                 botiquin_salida: checks.botiquin,
 
-                onu_salida: checks.onu ? 1 : 0,
+                // Dispositivos (Instalación y Distribución)
                 ups_salida: checks.ups ? 1 : 0,
                 escalera_salida: checks.escalera,
                 escalera_tijera_salida: checks.escalera_tijera,
@@ -347,7 +346,7 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
                 triangulo: false, caucho: false, carpeta: false,
                 cinturones: false, conos: false, extintor: false, botiquin: false,
                 frenos: false, corneta: false,
-                onu: false, ups: false, escalera: false, escalera_tijera: false,
+                ups: false, escalera: false, escalera_tijera: false,
                 casco: false, luces: false, herramientas: false
             })
 
@@ -410,9 +409,8 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
         }
         msg += `\n`
 
-        if (data.departamento === 'Instalación' && !isMoto) {
+        if ((data.departamento === 'Instalación' || data.departamento === 'Distribución') && !isMoto) {
             msg += `*Equipos Asignados:*\n`
-            msg += `ONU/Router: ${check(data.onu_salida)}\n`
             msg += `Mini-UPS: ${check(data.ups_salida)}\n`
             msg += `Escalera telescópica: ${check(data.escalera_salida)}\n\n`
         }
@@ -435,7 +433,7 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
 
     // Helpers conditions
     const isMoto = selectedVehicle?.codigo?.startsWith('M-') || selectedVehicle?.tipo === 'Moto' || selectedVehicle?.modelo?.toLowerCase().includes('moto')
-    const isInstalacion = departamento === 'Instalación'
+    const isInstalacion = departamento === 'Instalación' || departamento === 'Distribución'
     const isCarga = selectedVehicle?.tipo?.toLowerCase() === 'carga' || selectedVehicle?.modelo?.toLowerCase().includes('carga')
 
     return (
@@ -697,17 +695,13 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
                                     </div>
                                 )}
 
-                                {/* EQUIPOS - SOLO INSTALACION Y NO MOTO */}
+                                {/* EQUIPOS - SOLO INSTALACION/DISTRIBUCION Y NO MOTO */}
                                 {isInstalacion && !isMoto && (
                                     <div>
                                         <h4 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-2 border-t border-zinc-100 pt-4">
                                             Equipos Asignados
                                         </h4>
                                         <div className="grid grid-cols-1 gap-3">
-                                            <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                                <Label htmlFor="onu" className="text-sm font-medium text-zinc-700 cursor-pointer">ONU / Router</Label>
-                                                <Switch id="onu" checked={checks.onu} onCheckedChange={() => toggleCheck('onu')} />
-                                            </div>
                                             <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
                                                 <Label htmlFor="ups" className="text-sm font-medium text-zinc-700 cursor-pointer">Mini-UPS</Label>
                                                 <Switch id="ups" checked={checks.ups} onCheckedChange={() => toggleCheck('ups')} />

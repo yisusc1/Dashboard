@@ -71,7 +71,6 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
         botiquin: false,
         frenos: false,
         corneta: false,
-        onu: false,
         ups: false,
         escalera: false,
         escalera_tijera: false,
@@ -292,7 +291,6 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
                     luces_entrada: checks.luces,
                     herramientas_entrada: checks.herramientas,
 
-                    onu_entrada: checks.onu ? 1 : 0,
                     ups_entrada: checks.ups ? 1 : 0,
                     escalera_entrada: checks.escalera
                 }, selectedReport)
@@ -318,7 +316,7 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
                 triangulo: false, carpeta: false,
                 cinturones: false, conos: false, extintor: false, botiquin: false,
                 frenos: false, corneta: false,
-                onu: false, ups: false, escalera: false, escalera_tijera: false,
+                ups: false, escalera: false, escalera_tijera: false,
                 casco: false, luces: false, herramientas: false
             })
             setObservaciones("")
@@ -401,9 +399,8 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
             msg += `Herramientas: ${check(entradaData.herramientas_entrada)}\n`
         }
 
-        if (reporteOriginal.departamento === 'Instalación' && !isMoto) {
+        if ((vehiculo?.department === 'Instalación' || vehiculo?.department === 'Distribución' || reporteOriginal.departamento === 'Instalación' || reporteOriginal.departamento === 'Distribución') && !isMoto) {
             msg += `\n*Equipos Asignados:*\n`
-            msg += `ONU/Router: ${check(entradaData.onu_entrada)}\n`
             msg += `Mini-UPS: ${check(entradaData.ups_entrada)}\n`
             msg += `Escalera telescópica: ${check(entradaData.escalera_entrada)}\n`
         }
@@ -431,7 +428,7 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
     // Note: In Entrada, we use selectedReport.vehiculos which is an object
     const v = selectedReport?.vehiculos
     const isMoto = v?.codigo?.startsWith('M-') || v?.tipo === 'Moto' || v?.modelo?.toLowerCase().includes('moto')
-    const isInstalacion = selectedReport?.departamento === 'Instalación'
+    const isInstalacion = selectedReport?.departamento === 'Instalación' || selectedReport?.departamento === 'Distribución'
     const isCarga = v?.tipo?.toLowerCase() === 'carga' || v?.modelo?.toLowerCase().includes('carga')
 
 
@@ -682,17 +679,13 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
                                     </div>
                                 )}
 
-                                {/* EQUIPOS - SOLO INSTALACION Y NO MOTO */}
+                                {/* EQUIPOS - SOLO INSTALACION/DISTRIBUCION Y NO MOTO */}
                                 {isInstalacion && !isMoto && (
                                     <div>
                                         <h4 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-2 border-t border-zinc-100 pt-4">
                                             Equipos Asignados
                                         </h4>
                                         <div className="grid grid-cols-1 gap-3">
-                                            <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                                <Label htmlFor="onu" className="text-sm font-medium text-zinc-700 cursor-pointer">ONU / Router</Label>
-                                                <Switch id="onu" checked={checks.onu} onCheckedChange={() => toggleCheck('onu')} />
-                                            </div>
                                             <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
                                                 <Label htmlFor="ups" className="text-sm font-medium text-zinc-700 cursor-pointer">Mini-UPS</Label>
                                                 <Switch id="ups" checked={checks.ups} onCheckedChange={() => toggleCheck('ups')} />
