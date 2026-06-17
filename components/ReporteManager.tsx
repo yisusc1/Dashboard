@@ -109,7 +109,7 @@ export default function ReporteManager({
         msg += `Gato: ${check(data.gato_salida)}\n`;
         msg += `Llave Cruz: ${check(data.cruz_salida)}\n`;
         msg += `Triángulo: ${check(data.triangulo_salida)}\n`;
-        msg += `Caucho: ${check(data.caucho_salida)}\n`;
+        msg += `Caucho de repuesto: ${check(data.caucho_salida)}\n`;
         msg += `Carpeta de Permisos: ${check(data.carpeta_salida)}\n\n`;
 
         msg += `*Equipos Asignados:*\n`;
@@ -172,7 +172,7 @@ export default function ReporteManager({
         msg += `Gato: ${check(entradaData.gato_entrada)}\n`;
         msg += `Llave Cruz: ${check(entradaData.cruz_entrada)}\n`;
         msg += `Triángulo: ${check(entradaData.triangulo_entrada)}\n`;
-        msg += `Caucho: ${check(entradaData.caucho_entrada)}\n`;
+        msg += `Caucho de repuesto: ${check(entradaData.caucho_entrada)}\n`;
         msg += `Carpeta de Permisos: ${check(entradaData.carpeta_entrada)}\n\n`;
 
         msg += `*Equipos Asignados:*\n`;
@@ -460,7 +460,7 @@ export default function ReporteManager({
                                 </label>
                                 <label className="check-row pr-6 py-5 border-b border-zinc-100 last:border-0">
                                     <span className="text-lg font-medium text-zinc-900">Cauchos</span>
-                                    <select name="estado_cauchos_salida" defaultValue={selectedReport?.estado_cauchos_salida || ''} className="h-10 rounded-lg border border-zinc-200 px-3 bg-white ml-auto max-w-[200px]">
+                                    <select name="estado_cauchos_salida" required defaultValue={selectedReport?.estado_cauchos_salida || ''} className="h-10 rounded-lg border border-zinc-200 px-3 bg-white ml-auto max-w-[200px]">
                                         <option value="">Seleccionar</option>
                                         <option value="100% al 80% Estado Óptimo">100% al 80% Estado Óptimo</option>
                                         <option value="79% al 50% Desgaste Medio">79% al 50% Desgaste Medio</option>
@@ -485,7 +485,7 @@ export default function ReporteManager({
                                         <h4 className="font-bold text-zinc-500 uppercase text-xs tracking-wider flex items-center gap-2"><Shield size={16} /> Seguridad</h4>
                                     </div>
                                     <div className="pl-6">
-                                        {[{ k: 'cinturones_salida', l: 'Cinturones de seguridad' }, { k: 'conos_salida', l: 'Conos de tráfico' }, { k: 'extintor_salida', l: 'Extintor de incendios' }, { k: 'botiquin_salida', l: 'Botiquín de primeros auxilios' }, { k: 'gato_salida', l: 'Gato' }, { k: 'cruz_salida', l: 'Llave Cruz' }, { k: 'triangulo_salida', l: 'Triángulo' }, { k: 'caucho_salida', l: 'Caucho Repuesto' }, { k: 'carpeta_salida', l: 'Carpeta de Permisos' }].map((item) => (
+                                        {[{ k: 'cinturones_salida', l: 'Cinturones de seguridad' }, { k: 'conos_salida', l: 'Conos de tráfico' }, { k: 'extintor_salida', l: 'Extintor de incendios' }, { k: 'botiquin_salida', l: 'Botiquín de primeros auxilios' }, { k: 'gato_salida', l: 'Gato' }, { k: 'cruz_salida', l: 'Llave Cruz' }, { k: 'triangulo_salida', l: 'Triángulo' }, { k: 'caucho_salida', l: 'Caucho de repuesto' }, { k: 'carpeta_salida', l: 'Carpeta de Permisos' }].map((item) => (
                                             <label key={item.k} className="check-row pr-6 py-5 border-b border-zinc-100 last:border-0">
                                                 <span className="text-lg font-medium text-zinc-900">{item.l}</span>
                                                 <input name={item.k} type="checkbox" className="checkbox" />
@@ -626,7 +626,7 @@ export default function ReporteManager({
                                         </label>
                                         <label className="check-row pr-6 py-5 border-b border-zinc-100 last:border-0">
                                             <span className="text-lg font-medium text-zinc-900">Cauchos</span>
-                                            <select name="estado_cauchos_entrada" defaultValue={selectedReport?.estado_cauchos_entrada || ''} className="h-10 rounded-lg border border-zinc-200 px-3 bg-white ml-auto max-w-[200px]">
+                                            <select name="estado_cauchos_entrada" required defaultValue={selectedReport?.estado_cauchos_entrada || ''} className="h-10 rounded-lg border border-zinc-200 px-3 bg-white ml-auto max-w-[200px]">
                                                 <option value="">Seleccionar</option>
                                                 <option value="100% al 80% Estado Óptimo">100% al 80% Estado Óptimo</option>
                                                 <option value="79% al 50% Desgaste Medio">79% al 50% Desgaste Medio</option>
@@ -651,7 +651,7 @@ export default function ReporteManager({
                                                 <h4 className="font-bold text-zinc-500 uppercase text-xs tracking-wider flex items-center gap-2"><Shield size={16} /> Herramientas</h4>
                                             </div>
                                             <div className="pl-6">
-                                                {[{ k: 'cinturones_entrada', l: 'Cinturones de seguridad' }, { k: 'conos_entrada', l: 'Conos de tráfico' }, { k: 'extintor_entrada', l: 'Extintor de incendios' }, { k: 'botiquin_entrada', l: 'Botiquín de primeros auxilios' }, { k: 'gato_entrada', l: 'Gato' }, { k: 'cruz_entrada', l: 'Llave Cruz' }, { k: 'triangulo_entrada', l: 'Triángulo' }, { k: 'caucho_entrada', l: 'Caucho Repuesto' }, { k: 'carpeta_entrada', l: 'Carpeta de Permisos' }].map((item) => (
+                                                {[{ k: 'cinturones_entrada', l: 'Cinturones de seguridad' }, { k: 'conos_entrada', l: 'Conos de tráfico' }, { k: 'extintor_entrada', l: 'Extintor de incendios' }, { k: 'botiquin_entrada', l: 'Botiquín de primeros auxilios' }, { k: 'gato_entrada', l: 'Gato' }, { k: 'cruz_entrada', l: 'Llave Cruz' }, { k: 'triangulo_entrada', l: 'Triángulo' }, { k: 'caucho_entrada', l: 'Caucho de repuesto' }, { k: 'carpeta_entrada', l: 'Carpeta de Permisos' }].map((item) => (
                                                     <label key={item.k} className="check-row pr-6 py-5 border-b border-zinc-100 last:border-0">
                                                         <span className="text-lg font-medium text-zinc-900">{item.l}</span>
                                                         <input name={item.k} type="checkbox" className="checkbox" />

@@ -220,7 +220,7 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
     }
 
     async function handleSubmit() {
-        if (!vehiculoId || !kmSalida || !conductor || !departamento) {
+        if (!vehiculoId || !kmSalida || !conductor || !departamento || !estadoCauchos) {
             toast.error("Complete todos los campos obligatorios")
             return
         }
@@ -403,7 +403,7 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
             msg += `Gato: ${check(data.gato_salida)}\n`
             msg += `Llave Cruz: ${check(data.cruz_salida)}\n`
             msg += `Triángulo: ${check(data.triangulo_salida)}\n`
-            msg += `Caucho: ${check(data.caucho_salida)}\n`
+            msg += `Caucho de repuesto: ${check(data.caucho_salida)}\n`
             msg += `Carpeta de Permisos: ${check(data.carpeta_salida)}\n`
         }
         msg += `\n`
@@ -658,7 +658,7 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
                                                 <Switch id="triangulo" checked={checks.triangulo} onCheckedChange={() => toggleCheck('triangulo')} />
                                             </div>
                                             <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                                <Label htmlFor="caucho" className="text-sm font-medium text-zinc-700 cursor-pointer">Caucho Repuesto</Label>
+                                                <Label htmlFor="caucho" className="text-sm font-medium text-zinc-700 cursor-pointer">Caucho de repuesto</Label>
                                                 <Switch id="caucho" checked={checks.caucho} onCheckedChange={() => toggleCheck('caucho')} />
                                             </div>
                                             <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">

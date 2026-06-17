@@ -184,7 +184,7 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
     }
 
     async function handleSubmit() {
-        if (!reporteId || !kmEntrada) {
+        if (!reporteId || !kmEntrada || !estadoCauchos) {
             toast.error("Complete todos los campos obligatorios")
             return
         }
@@ -391,7 +391,7 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
             msg += `Gato: ${check(entradaData.gato_entrada)}\n`
             msg += `Llave Cruz: ${check(entradaData.cruz_entrada)}\n`
             msg += `Triángulo: ${check(entradaData.triangulo_entrada)}\n`
-            msg += `Caucho: ${check(entradaData.caucho_entrada)}\n`
+            msg += `Caucho de repuesto: ${check(entradaData.caucho_entrada)}\n`
             msg += `Carpeta de Permisos: ${check(entradaData.carpeta_entrada)}\n`
         } else {
             msg += `*Herramientas y Seguridad (Moto):*\n`
@@ -643,7 +643,7 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
                                                 <Switch id="triangulo" checked={checks.triangulo} onCheckedChange={() => toggleCheck('triangulo')} />
                                             </div>
                                             <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">
-                                                <Label htmlFor="caucho" className="text-sm font-medium text-zinc-700 cursor-pointer">Caucho Repuesto</Label>
+                                                <Label htmlFor="caucho" className="text-sm font-medium text-zinc-700 cursor-pointer">Caucho de repuesto</Label>
                                                 <Switch id="caucho" checked={checks.caucho} onCheckedChange={() => toggleCheck('caucho')} />
                                             </div>
                                             <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-transparent hover:border-zinc-200 transition-all">

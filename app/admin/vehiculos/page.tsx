@@ -149,7 +149,7 @@ function VehiculosContent() {
                     "Gato": isMoto ? 'N/A' : formatCheck(isSalida ? lr?.gato_salida : lr?.gato_entrada),
                     "Llave Cruz": isMoto ? 'N/A' : formatCheck(isSalida ? lr?.cruz_salida : lr?.cruz_entrada),
                     "Triángulo": isMoto ? 'N/A' : formatCheck(isSalida ? lr?.triangulo_salida : lr?.triangulo_entrada),
-                    "Caucho Repuesto": isMoto ? 'N/A' : formatCheck(isSalida ? lr?.caucho_salida : lr?.caucho_entrada),
+                    "Caucho de repuesto": isMoto ? 'N/A' : formatCheck(isSalida ? lr?.caucho_salida : lr?.caucho_entrada),
                     "Carpeta de Permisos": isMoto ? 'N/A' : formatCheck(isSalida ? lr?.carpeta_salida : lr?.carpeta_entrada),
                     
                     // Moto Specific
