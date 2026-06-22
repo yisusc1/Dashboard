@@ -86,7 +86,9 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
         // Moto specific
         casco: false,
         luces: false,
-        herramientas: false
+        herramientas: false,
+        caucho: false,
+        onu: false
     })
 
     const router = useRouter()
@@ -315,11 +317,12 @@ export function SalidaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess 
                 conos_salida: checks.conos,
                 extintor_salida: checks.extintor,
                 botiquin_salida: checks.botiquin,
-                // Moto
                 casco_salida: checks.casco,
                 luces_salida: checks.luces,
                 herramientas_salida: checks.herramientas,
 
+                caucho_salida: checks.caucho,
+                escalera_tijera_salida: checks.escalera_tijera,
                 onu_salida: checks.onu ? 1 : 0,
                 ups_salida: checks.ups ? 1 : 0,
                 escalera_salida: checks.escalera

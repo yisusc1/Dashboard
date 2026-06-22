@@ -77,7 +77,9 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
         // Moto specific
         casco: false,
         luces: false,
-        herramientas: false
+        herramientas: false,
+        caucho: false,
+        onu: false
     })
 
     // [FIX] Effect 1: Load Reports on Open (Initial Load Only)
@@ -286,11 +288,12 @@ export function EntradaFormDialog({ isOpen, onClose, initialVehicleId, onSuccess
                     conos_entrada: checks.conos,
                     extintor_entrada: checks.extintor,
                     botiquin_entrada: checks.botiquin,
-                    // Moto
                     casco_entrada: checks.casco,
                     luces_entrada: checks.luces,
                     herramientas_entrada: checks.herramientas,
 
+                    caucho_entrada: checks.caucho,
+                    escalera_tijera_entrada: checks.escalera_tijera,
                     ups_entrada: checks.ups ? 1 : 0,
                     escalera_entrada: checks.escalera
                 }, selectedReport)
