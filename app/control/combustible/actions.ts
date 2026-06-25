@@ -66,8 +66,8 @@ export async function createFuelLog(data: FuelLogData) {
         const { data: allLogs } = await supabase
             .from("fuel_logs")
             .select("ticket_number")
-            .eq("vehicle_id", data.vehicle_id)
-            .eq("status", "active");
+            .eq("vehicle_id", data.vehicle_id);
+            // .eq("status", "active"); Removed so annulled tickets count in sequence
 
         if (allLogs && allLogs.length > 0) {
             let maxNum = -1;
@@ -174,6 +174,39 @@ export async function createFuelLog(data: FuelLogData) {
         console.error("Create Fuel Log Error:", error)
         return { success: false, error: error.message }
     }
+}
+
+export async function registerVoidedTicket(data: { ticket_number: string, vehicle_id: string, notes: string }) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { success: false, error: "No autenticado" }
+
+    const cleanTicket = cleanTicketNumber(data.ticket_number);
+    if (!cleanTicket) return { success: false, error: "Número de ticket inválido" };
+
+    const { error } = await supabase.from("fuel_logs").insert({
+        ticket_number: cleanTicket,
+        fuel_date: new Date().toISOString(),
+        vehicle_id: data.vehicle_id,
+        driver_name: 'ANULADO',
+        liters: 0,
+        mileage: 0,
+        supervisor_id: user.id,
+        notes: data.notes,
+        void_reason: data.notes,
+        status: 'annulled',
+        voided_at: new Date().toISOString(),
+        voided_by: user.id
+    })
+
+    if (error) {
+        console.error("Register Voided Ticket Error:", error)
+        return { success: false, error: error.message }
+    }
+
+    revalidatePath("/control/combustible")
+    return { success: true }
 }
 
 export async function getFuelLogs(filters?: { startDate?: string, endDate?: string, vehicleId?: string }) {
@@ -360,6 +393,13 @@ export async function annulFuelLog(logId: string, reason: string) {
 
     if (!user) return { success: false, error: "No autorizado" }
 
+    // 1. Get the ticket details first
+    const { data: logToAnnul } = await supabase
+        .from("fuel_logs")
+        .select("vehicle_id")
+        .eq("id", logId)
+        .single();
+
     const { error } = await supabase
         .from("fuel_logs")
         .update({ 
@@ -371,6 +411,47 @@ export async function annulFuelLog(logId: string, reason: string) {
         .eq("id", logId)
 
     if (error) return { success: false, error: error.message }
+
+    // 2. Re-calculate the maximum valid mileage for this vehicle
+    if (logToAnnul) {
+        const vehicleId = logToAnnul.vehicle_id;
+        
+        // Find highest mileage across active fuel logs and reportes
+        const { data: activeLogs } = await supabase
+            .from("fuel_logs")
+            .select("mileage")
+            .eq("vehicle_id", vehicleId)
+            .eq("status", "active")
+            .order("mileage", { ascending: false })
+            .limit(1);
+
+        const { data: activeEntryReports } = await supabase
+            .from("reportes")
+            .select("km_entrada")
+            .eq("vehiculo_id", vehicleId)
+            .order("km_entrada", { ascending: false })
+            .limit(1);
+
+        const { data: activeExitReports } = await supabase
+            .from("reportes")
+            .select("km_salida")
+            .eq("vehiculo_id", vehicleId)
+            .order("km_salida", { ascending: false })
+            .limit(1);
+
+        let maxKm = 0;
+        if (activeLogs && activeLogs.length > 0) maxKm = Math.max(maxKm, activeLogs[0].mileage);
+        if (activeEntryReports && activeEntryReports.length > 0) maxKm = Math.max(maxKm, activeEntryReports[0].km_entrada);
+        if (activeExitReports && activeExitReports.length > 0) maxKm = Math.max(maxKm, activeExitReports[0].km_salida);
+
+        if (maxKm > 0) {
+            // Update the vehicle's master mileage
+            await supabase
+                .from("vehiculos")
+                .update({ kilometraje: maxKm })
+                .eq("id", vehicleId);
+        }
+    }
 
     revalidatePath("/control/combustible")
     return { success: true }

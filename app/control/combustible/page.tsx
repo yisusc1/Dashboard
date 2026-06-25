@@ -605,18 +605,7 @@ export default function FuelControlPage() {
                                     <h2 className="text-2xl font-black text-zinc-900 leading-none">Detalle de Ticket</h2>
                                     <p className="text-zinc-500 font-bold mt-2">N# {selectedLog?.ticket_number}</p>
                                 </div>
-                                {selectedLog?.status !== 'annulled' && (
-                                    <Button 
-                                        variant="ghost" 
-                                        className="text-red-500 hover:text-red-600 hover:bg-red-50 rounded-xl font-bold"
-                                        onClick={() => {
-                                            setLogToAnnul(selectedLog.id)
-                                            setAnnulDialogOpen(true)
-                                        }}
-                                    >
-                                        <Trash2 size={18} className="mr-[6px]" /> Anular
-                                    </Button>
-                                )}
+                                {/* El botón de anular fue removido por regla de negocio: los supervisores no pueden eliminar tickets ya cargados */}
                             </div>
 
                             {selectedLog?.status === 'annulled' && (

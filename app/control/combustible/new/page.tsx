@@ -41,7 +41,7 @@ import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
 import Link from "next/link"
 
-import { createFuelLog, getVehicles, getVehicleDetailsAction, getActiveDriverAction } from "../actions"
+import { createFuelLog, getVehicles, getVehicleDetailsAction, getActiveDriverAction, registerVoidedTicket } from "../actions"
 
 const formSchema = z.object({
     ticket_number: z.string().min(1, "Número de ticket requerido"),
@@ -78,6 +78,9 @@ function NewFuelLogContent() {
         currentSystemKm: number,
         vehicleId: string
     } | null>(null)
+
+    // Void Ticket Alert State
+    const [voidTicketDialogOpen, setVoidTicketDialogOpen] = useState(false)
 
     const supabase = createClient()
 
@@ -356,6 +359,13 @@ function NewFuelLogContent() {
                                                                 }
                                                             }
 
+                                                            // Auto-fill mileage from vehicle state
+                                                            if (v.kilometraje !== undefined && v.kilometraje !== null) {
+                                                                form.setValue("mileage", v.kilometraje);
+                                                            } else if (details?.kilometraje !== undefined && details?.kilometraje !== null) {
+                                                                form.setValue("mileage", details.kilometraje);
+                                                            }
+
                                                             // Auto-detect driver
                                                             const activeDriver = await getActiveDriverAction(v.id)
                                                             if (activeDriver) {
@@ -487,9 +497,21 @@ function NewFuelLogContent() {
                                     </div>
                                 </div>
 
-                                <Button type="submit" size="lg" className="w-full h-16 rounded-2xl text-lg font-black shadow-xl shadow-indigo-200 bg-indigo-600 hover:bg-indigo-700 transition-all active:scale-[0.98]" disabled={loading || uploading}>
-                                    {loading ? <><Loader2 className="mr-2 h-6 w-6 animate-spin" /> Guardando...</> : <><Save className="mr-2 h-6 w-6" /> Guardar Registro</>}
-                                </Button>
+                                <div className="flex gap-4">
+                                    <Button type="button" size="lg" variant="outline" className="h-16 rounded-2xl text-lg font-black border-red-200 text-red-600 hover:bg-red-50" onClick={() => {
+                                        if (!form.getValues("ticket_number") || !form.getValues("vehicle_id")) {
+                                            toast.error("Selecciona un vehículo e indica el número de ticket a anular")
+                                            return
+                                        }
+                                        setVoidTicketDialogOpen(true)
+                                    }}>
+                                        Anular N# {form.watch("ticket_number") || ""}
+                                    </Button>
+
+                                    <Button type="submit" size="lg" className="w-full h-16 rounded-2xl text-lg font-black shadow-xl shadow-indigo-200 bg-indigo-600 hover:bg-indigo-700 transition-all active:scale-[0.98]" disabled={loading || uploading}>
+                                        {loading ? <><Loader2 className="mr-2 h-6 w-6 animate-spin" /> Guardando...</> : <><Save className="mr-2 h-6 w-6" /> Guardar Registro</>}
+                                    </Button>
+                                </div>
 
                             </form>
                         </Form>
@@ -574,6 +596,78 @@ function NewFuelLogContent() {
                             className="rounded-2xl h-14 bg-red-600 text-white font-black hover:bg-red-700 shadow-lg shadow-red-200"
                         >
                             Sí, Corregir y Guardar
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* VOID TICKET ALERT */}
+            <AlertDialog open={voidTicketDialogOpen} onOpenChange={setVoidTicketDialogOpen}>
+                <AlertDialogContent className="rounded-[32px] border-none shadow-2xl bg-white p-8">
+                    <AlertDialogHeader>
+                        <div className="mx-auto bg-red-50 w-20 h-20 rounded-full flex items-center justify-center mb-6 text-red-600">
+                            <AlertTriangle size={40} />
+                        </div>
+                        <AlertDialogTitle className="text-center text-2xl font-black text-zinc-900">Anular Ticket Físico</AlertDialogTitle>
+                        <AlertDialogDescription className="text-center text-zinc-500 text-lg">
+                            Se registrará el ticket <strong>#{form.getValues("ticket_number")}</strong> como anulado en el sistema.
+                            <br /><br />
+                            Por favor indica el motivo de la anulación:
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    
+                    <div className="mt-4">
+                        <Input 
+                            placeholder="Motivo (ej. Error de escritura, dañado)" 
+                            className="h-14 rounded-2xl border-zinc-200 bg-zinc-50"
+                            onChange={(e) => form.setValue("notes", e.target.value)}
+                        />
+                    </div>
+
+                    <AlertDialogFooter className="flex-col sm:flex-row gap-3 mt-8">
+                        <AlertDialogCancel
+                            onClick={() => {
+                                setVoidTicketDialogOpen(false);
+                                form.setValue("notes", "");
+                            }}
+                            className="rounded-2xl h-14 border-zinc-200 text-zinc-600 font-bold hover:bg-zinc-50"
+                        >
+                            Cancelar
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={async () => {
+                                const notes = form.getValues("notes");
+                                if (!notes) {
+                                    toast.error("Debes indicar el motivo");
+                                    return;
+                                }
+                                setLoading(true);
+                                try {
+                                    const res = await registerVoidedTicket({
+                                        ticket_number: form.getValues("ticket_number"),
+                                        vehicle_id: form.getValues("vehicle_id"),
+                                        notes: notes
+                                    });
+                                    if (res.success) {
+                                        toast.success("Ticket anulado exitosamente");
+                                        setVoidTicketDialogOpen(false);
+                                        // Avanzar al siguiente número de ticket
+                                        const current = parseInt(form.getValues("ticket_number").replace(/\D/g, ''), 10);
+                                        if (!isNaN(current)) {
+                                            const nextTicketStr = (current + 1).toString().padStart(form.getValues("ticket_number").length, '0');
+                                            form.setValue("ticket_number", nextTicketStr);
+                                            form.setValue("notes", "");
+                                        }
+                                    } else {
+                                        toast.error(res.error || "Error al anular");
+                                    }
+                                } finally {
+                                    setLoading(false);
+                                }
+                            }}
+                            className="rounded-2xl h-14 bg-red-600 text-white font-black hover:bg-red-700 shadow-lg shadow-red-200"
+                        >
+                            Confirmar Anulación
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
