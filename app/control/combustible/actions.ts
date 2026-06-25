@@ -61,6 +61,11 @@ export async function createFuelLog(data: FuelLogData) {
     const cleanTicket = cleanTicketNumber(data.ticket_number);
     if (!cleanTicket) return { success: false, error: "Número de ticket inválido" };
 
+    // [NEW] Validate Liters limit to prevent typing errors
+    const MAX_LITERS = 1000; // Reasonable upper limit for heavy trucks
+    if (data.liters <= 0) return { success: false, error: "La cantidad de litros debe ser mayor a 0." };
+    if (data.liters > MAX_LITERS) return { success: false, error: `La cantidad de litros (${data.liters}) excede el límite máximo permitido por carga (${MAX_LITERS}L).` };
+
     try {
         // [NEW] Validate Sequence (Per vehicle, by numerically highest ticket)
         const { data: allLogs } = await supabase
@@ -105,6 +110,18 @@ export async function createFuelLog(data: FuelLogData) {
 
         // If no mileage record exists, we assume 0 or allow the entry (it might be the first one)
         const currentKm = vehicleMileage?.ultimo_kilometraje || 0
+
+        // [NEW] Validate absurd mileage jumps to prevent typing errors (e.g., adding an extra 0)
+        // Set a reasonable max jump per refuel, e.g., 3000 km. Adjust if necessary.
+        const MAX_REASONABLE_KM_JUMP = 3000;
+        if (data.mileage > currentKm + MAX_REASONABLE_KM_JUMP && currentKm > 0 && !data.forceCorrection) {
+             return {
+                success: false,
+                error: `El kilometraje (${data.mileage}) representa un salto inusualmente alto (+${data.mileage - currentKm} km) desde la última carga (${currentKm}). Revisa si tipeaste mal.`,
+                requiresCorrection: true,
+                currentSystemKm: currentKm
+            }
+        }
 
 
         if (data.mileage <= currentKm) {
