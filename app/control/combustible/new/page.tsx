@@ -570,8 +570,8 @@ function NewFuelLogContent() {
                                     </div>
                                 </div>
 
-                                <div className="flex gap-4">
-                                    <Button type="button" size="lg" variant="outline" className="h-16 rounded-2xl text-lg font-black border-red-200 text-red-600 hover:bg-red-50" onClick={() => {
+                                <div className="flex flex-col-reverse sm:flex-row gap-4">
+                                    <Button type="button" size="lg" variant="outline" className="w-full sm:w-auto h-16 rounded-2xl text-lg font-black border-red-200 text-red-600 hover:bg-red-50" onClick={() => {
                                         if (!form.getValues("ticket_number") || !form.getValues("vehicle_id")) {
                                             toast.error("Selecciona un vehículo e indica el número de ticket a anular")
                                             return

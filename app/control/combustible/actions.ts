@@ -260,7 +260,7 @@ export async function getFuelLogs(filters?: { startDate?: string, endDate?: stri
         .from("fuel_logs")
         .select(`
             *,
-            vehicle:vehiculos(placa, modelo, codigo),
+            vehicle:vehiculos!vehicle_id(placa, modelo, codigo),
             supervisor:profiles(first_name, last_name)
         `) // Assuming explicit FK relation or simple join. We might need to check profile relation name.
         // If 'supervisor_id' references auth.users, we join on profiles via id usually.
@@ -541,7 +541,7 @@ export async function generateDailyReport(dateString: string) {
         .select(`
             liters,
             mileage,
-            vehicle:vehiculos(modelo, placa)
+            vehicle:vehiculos!vehicle_id(modelo, placa)
         `)
         .eq("status", "active")
         .gte("fuel_date", startDate)
