@@ -426,7 +426,7 @@ function VehiculosContent() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredVehicles.map((vehicle) => {
-                            const openTrip = openTrips.find(t => t.vehicleId === vehicle.id);
+                            const openTrip = openTrips.find(t => t.vehiculo_id === vehicle.id);
                             return (
                                 <div key={vehicle.id} className={`bg-white rounded-[24px] border ${openTrip ? 'border-amber-400 shadow-amber-100' : 'border-zinc-200'} p-4 shadow-sm hover:shadow-md transition-all group overflow-hidden relative`}>
 
