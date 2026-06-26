@@ -199,6 +199,12 @@ export async function resetVehicleTalonario(vehicleId: string, nextTicketStr: st
         }
     )
 
+    const userClient = await createClient()
+    const { data: { user } } = await userClient.auth.getUser()
+    if (!user) {
+        return { success: false, error: "Usuario no autenticado" }
+    }
+
     try {
         const currentTicket = parseInt(nextTicketStr.replace(/\D/g, ''), 10)
         if (isNaN(currentTicket)) {
@@ -216,13 +222,15 @@ export async function resetVehicleTalonario(vehicleId: string, nextTicketStr: st
         // We insert a dummy log to establish the new base
         const { error } = await supabase.from('fuel_logs').insert({
             vehicle_id: vehicleId,
+            talonario_vehiculo_id: vehicleId,
             ticket_number: baseTicketStr,
             fuel_date: new Date().toISOString(),
             driver_name: 'SISTEMA',
             liters: 0,
             mileage: 0,
             notes: 'Reinicio de Talonario',
-            status: 'pad_reset'
+            status: 'pad_reset',
+            supervisor_id: user.id
         })
 
         if (error) throw error
