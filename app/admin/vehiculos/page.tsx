@@ -413,53 +413,6 @@ function VehiculosContent() {
                     </button>
                 </div>
 
-                {/* OPEN TRIPS ALERT */}
-                {openTrips.length > 0 && (
-                    <div className="mb-8 bg-amber-50 border border-amber-200 rounded-[24px] p-5 shadow-sm">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="h-10 w-10 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600">
-                                <Clock size={20} />
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-amber-900 text-lg">Viajes Abiertos</h3>
-                                <p className="text-xs text-amber-700">{openTrips.length} vehículo{openTrips.length > 1 ? 's' : ''} sin registrar entrada</p>
-                            </div>
-                        </div>
-                        <div className="space-y-3">
-                            {openTrips.map(trip => (
-                                <div key={trip.id} className="bg-white rounded-2xl border border-amber-100 p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-bold text-zinc-900">{trip.vehicleModel}</span>
-                                            <span className="text-xs font-mono bg-zinc-100 text-zinc-500 px-2 py-[2px] rounded-md">{trip.vehiclePlaca}</span>
-                                        </div>
-                                        <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-zinc-500">
-                                            <span className="flex items-center gap-1"><UserIcon size={12} /> {trip.conductor || 'Sin conductor'}</span>
-                                            <span className="flex items-center gap-1"><MapPin size={12} /> Salida: {trip.km_salida?.toLocaleString()} km</span>
-                                            <span className={`flex items-center gap-1 font-bold ${trip.hoursActive > 12 ? 'text-red-500' : trip.hoursActive > 6 ? 'text-amber-600' : 'text-zinc-500'}`}>
-                                                <Clock size={12} /> {trip.hoursActive}h activo
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => {
-                                            setTripToClose(trip)
-                                            setForceCloseKm(trip.km_salida?.toString() || "")
-                                            setForceCloseNote("")
-                                            setForceCloseDialog(true)
-                                        }}
-                                        className="h-10 rounded-xl border-amber-200 text-amber-700 hover:bg-amber-100 hover:text-amber-800 font-bold text-sm shrink-0"
-                                    >
-                                        <XCircle size={16} className="mr-[6px]" />
-                                        Forzar Entrada
-                                    </Button>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
                 {/* GRID */}
                 {loading ? (
                     <div className="text-center py-20">
@@ -472,8 +425,10 @@ function VehiculosContent() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filteredVehicles.map((vehicle) => (
-                            <div key={vehicle.id} className="bg-white rounded-[24px] border border-zinc-200 p-4 shadow-sm hover:shadow-md transition-all group overflow-hidden relative">
+                        {filteredVehicles.map((vehicle) => {
+                            const openTrip = openTrips.find(t => t.vehicleId === vehicle.id);
+                            return (
+                                <div key={vehicle.id} className={`bg-white rounded-[24px] border ${openTrip ? 'border-amber-400 shadow-amber-100' : 'border-zinc-200'} p-4 shadow-sm hover:shadow-md transition-all group overflow-hidden relative`}>
 
                                 {/* Image Aspect Ratio Container - CLICKABLE */}
                                 <div
@@ -501,6 +456,14 @@ function VehiculosContent() {
                                         {getIcon(vehicle.tipo)}
                                         {vehicle.tipo || 'Vehículo'}
                                     </div>
+
+                                    {/* Badge Viaje Abierto */}
+                                    {openTrip && (
+                                        <div className="absolute top-2 right-2 bg-amber-500/90 backdrop-blur-md text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm border border-amber-400">
+                                            <Clock size={12} />
+                                            En Ruta ({openTrip.hoursActive}h)
+                                        </div>
+                                    )}
 
                                     {/* Badge Kilometraje */}
                                     <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-md text-zinc-900 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm border border-white/50">
@@ -571,12 +534,26 @@ function VehiculosContent() {
                                                     <span>Corregir Talonario</span>
                                                 </div>
                                             </DropdownMenuItem>
+                                            {openTrip && (
+                                                <DropdownMenuItem onClick={() => {
+                                                    setTripToClose(openTrip)
+                                                    setForceCloseKm(openTrip.km_salida?.toString() || "")
+                                                    setForceCloseNote("")
+                                                    setForceCloseDialog(true)
+                                                }}>
+                                                    <div className="flex items-center w-full text-amber-600 font-bold">
+                                                        <XCircle className="mr-2 h-4 w-4" />
+                                                        <span>Forzar Entrada</span>
+                                                    </div>
+                                                </DropdownMenuItem>
+                                            )}
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </div>
 
                             </div>
-                        ))}
+                            )
+                        })}
                     </div>
                 )
                 }
