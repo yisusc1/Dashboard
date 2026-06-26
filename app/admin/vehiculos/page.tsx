@@ -160,6 +160,10 @@ function VehiculosContent() {
                     "Casco (Moto)": isMoto ? formatCheck(isSalida ? lr?.casco_salida : lr?.casco_entrada) : 'N/A',
                     "Herramientas Moto": isMoto ? formatCheck(isSalida ? lr?.herramientas_salida : lr?.herramientas_entrada) : 'N/A',
                     
+                    // Dispositivos y Notas
+                    "UPS": isMoto ? 'N/A' : formatCheck(isSalida ? lr?.ups_salida : lr?.ups_entrada),
+                    "Observaciones (Viaje)": isSalida ? (lr?.observaciones_salida || 'Ninguna') : (lr?.observaciones_entrada || 'Ninguna'),
+                    
                     "Departamento (Últ. Viaje)": lr?.departamento || 'N/A',
                     "Último Reporte ID": lr?.id || 'N/A',
                     "Fecha Último Reporte": lr ? new Date(lr.created_at).toLocaleString() : 'N/A'
