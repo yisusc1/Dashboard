@@ -24,6 +24,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
+import { Switch } from "@/components/ui/switch"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -54,8 +55,18 @@ const formSchema = z.object({
     mileage: z.coerce.number().min(0, "Kilometraje requerido"),
     ticket_url: z.string().optional(),
     notes: z.string().optional(),
-    is_skipped: z.boolean().default(false)
-})
+    is_skipped: z.boolean().default(false),
+    is_borrowed: z.boolean().default(false),
+    talonario_vehiculo_id: z.string().optional()
+}).superRefine((data, ctx) => {
+    if (data.is_borrowed && !data.talonario_vehiculo_id) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Debe seleccionar el vehículo prestamista",
+            path: ["talonario_vehiculo_id"],
+        });
+    }
+});
 
 function NewFuelLogContent() {
     const router = useRouter()
@@ -103,7 +114,9 @@ function NewFuelLogContent() {
             ticket_url: "",
             notes: "",
             fuel_date: new Date(),
-            is_skipped: false
+            is_skipped: false,
+            is_borrowed: false,
+            talonario_vehiculo_id: ""
         },
     })
 
@@ -349,13 +362,15 @@ function NewFuelLogContent() {
                                                             }
                                                             field.onChange(v.id)
                                                             
-                                                            const details = await getVehicleDetailsAction(v.id)
-                                                            if (details && details.last_fuel?.ticket_number) {
-                                                                const nextTicket = parseInt(details.last_fuel.ticket_number, 10) + 1;
-                                                                if (!isNaN(nextTicket)) {
-                                                                    const nextTicketStr = nextTicket.toString().padStart(details.last_fuel.ticket_number.length, '0');
-                                                                    form.setValue("ticket_number", nextTicketStr);
-                                                                    toast.info(`Siguiente ticket sugerido: #${nextTicketStr}`);
+                                                            if (!form.getValues("is_borrowed")) {
+                                                                const details = await getVehicleDetailsAction(v.id)
+                                                                if (details && details.last_fuel?.ticket_number) {
+                                                                    const nextTicket = parseInt(details.last_fuel.ticket_number, 10) + 1;
+                                                                    if (!isNaN(nextTicket)) {
+                                                                        const nextTicketStr = nextTicket.toString().padStart(details.last_fuel.ticket_number.length, '0');
+                                                                        form.setValue("ticket_number", nextTicketStr);
+                                                                        toast.info(`Siguiente ticket sugerido: #${nextTicketStr}`);
+                                                                    }
                                                                 }
                                                             }
 
@@ -395,6 +410,64 @@ function NewFuelLogContent() {
                                                 </FormItem>
                                             )}
                                         />
+
+                                        <div className="col-span-full bg-indigo-50/50 p-4 rounded-3xl border border-indigo-100/50 space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <div className="space-y-0.5">
+                                                    <FormLabel className="text-zinc-900 font-bold text-base">¿Usaste un talonario prestado?</FormLabel>
+                                                    <p className="text-xs text-zinc-500">Activa esto si el ticket pertenece a la chequera de otro vehículo.</p>
+                                                </div>
+                                                <FormField
+                                                    control={form.control}
+                                                    name="is_borrowed"
+                                                    render={({ field }) => (
+                                                        <FormControl>
+                                                            <Switch checked={field.value} onCheckedChange={(val) => {
+                                                                field.onChange(val)
+                                                                if (!val) form.setValue("talonario_vehiculo_id", "")
+                                                            }} />
+                                                        </FormControl>
+                                                    )}
+                                                />
+                                            </div>
+                                            
+                                            {form.watch("is_borrowed") && (
+                                                <div className="pt-2 animate-in fade-in slide-in-from-top-2">
+                                                    <FormField
+                                                        control={form.control}
+                                                        name="talonario_vehiculo_id"
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel className="text-zinc-500 font-bold uppercase text-[10px] tracking-wider ml-1">Selecciona el vehículo dueño del talonario</FormLabel>
+                                                                <VehicleSelector
+                                                                    vehicles={vehicles}
+                                                                    selectedVehicleId={field.value || ""}
+                                                                    onSelect={async (v) => {
+                                                                        if (!v) {
+                                                                            field.onChange("")
+                                                                            return
+                                                                        }
+                                                                        field.onChange(v.id)
+                                                                        
+                                                                        const details = await getVehicleDetailsAction(v.id)
+                                                                        if (details && details.last_fuel?.ticket_number) {
+                                                                            const nextTicket = parseInt(details.last_fuel.ticket_number, 10) + 1;
+                                                                            if (!isNaN(nextTicket)) {
+                                                                                const nextTicketStr = nextTicket.toString().padStart(details.last_fuel.ticket_number.length, '0');
+                                                                                form.setValue("ticket_number", nextTicketStr);
+                                                                                toast.info(`Ticket sugerido del talonario prestado: #${nextTicketStr}`);
+                                                                            }
+                                                                        }
+                                                                    }}
+                                                                    className="h-14 rounded-2xl bg-white border-indigo-200"
+                                                                />
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
 

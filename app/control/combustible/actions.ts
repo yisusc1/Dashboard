@@ -16,6 +16,7 @@ export interface FuelLogData {
     notes?: string
     forceCorrection?: boolean 
     is_skipped?: boolean // [NEW] Flag if user is skipping a number
+    talonario_vehiculo_id?: string // [NEW] ID of the vehicle whose pad is being used
 }
 
 function cleanTicketNumber(ticket: string): string {
@@ -67,24 +68,50 @@ export async function createFuelLog(data: FuelLogData) {
     if (data.liters > MAX_LITERS) return { success: false, error: `La cantidad de litros (${data.liters}) excede el límite máximo permitido por carga (${MAX_LITERS}L).` };
 
     try {
-        // [NEW] Validate Sequence (Per vehicle, by numerically highest ticket)
-        const { data: allLogs } = await supabase
+        const padVehicleId = data.talonario_vehiculo_id || data.vehicle_id;
+
+        // [NEW] Validate Sequence (Per vehicle, by numerically highest ticket, respecting pad_reset)
+        const { data: resetLog } = await supabase
+            .from("fuel_logs")
+            .select("ticket_number, created_at")
+            // Use fallback logic: Check both vehicle_id and talonario_vehiculo_id for backwards compatibility
+            // but ideally talonario_vehiculo_id is strictly used after migration
+            .or(`talonario_vehiculo_id.eq.${padVehicleId},and(talonario_vehiculo_id.is.null,vehicle_id.eq.${padVehicleId})`)
+            .eq("status", "pad_reset")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .single();
+
+        let query = supabase
             .from("fuel_logs")
             .select("ticket_number")
-            .eq("vehicle_id", data.vehicle_id);
-            // .eq("status", "active"); Removed so annulled tickets count in sequence
+            .or(`talonario_vehiculo_id.eq.${padVehicleId},and(talonario_vehiculo_id.is.null,vehicle_id.eq.${padVehicleId})`)
+            .neq("status", "pad_reset");
 
-        if (allLogs && allLogs.length > 0) {
-            let maxNum = -1;
-            for (const log of allLogs) {
+        if (resetLog) {
+            query = query.gte("created_at", resetLog.created_at);
+        }
+
+        const { data: activeLogs } = await query;
+
+        let maxNum = -1;
+
+        if (resetLog) {
+            maxNum = parseInt(resetLog.ticket_number.replace(/\D/g, ''), 10);
+            if (isNaN(maxNum)) maxNum = -1;
+        }
+
+        if (activeLogs && activeLogs.length > 0) {
+            for (const log of activeLogs) {
                 const num = parseInt(log.ticket_number.replace(/\D/g, ''), 10);
                 if (!isNaN(num) && num > maxNum) {
                     maxNum = num;
                 }
             }
+        }
 
-            if (maxNum !== -1) {
-                const lastNum = maxNum;
+        if (maxNum !== -1) {
+            const lastNum = maxNum;
             const currentNum = parseInt(cleanTicket);
 
             if (currentNum <= lastNum) {
@@ -99,7 +126,6 @@ export async function createFuelLog(data: FuelLogData) {
                     lastTicket: lastNum
                 };
             }
-        }
         }
         // [NEW] Validate Mileage
         const { data: vehicleMileage, error: mileageError } = await supabase
@@ -162,6 +188,7 @@ export async function createFuelLog(data: FuelLogData) {
             ticket_number: cleanTicket,
             fuel_date: data.fuel_date || new Date().toISOString(), // Use provided date (UI ensures current time)
             vehicle_id: data.vehicle_id,
+            talonario_vehiculo_id: data.talonario_vehiculo_id || data.vehicle_id,
             driver_name: data.driver_name,
             liters: data.liters,
             mileage: data.mileage,
@@ -362,16 +389,41 @@ export async function getVehicleDetailsAction(vehicleId: string) {
         return null
     }
 
-    // 2. Get Last Fuel Log (based on highest ticket number)
-    const { data: logs } = await supabase
+    // 2. Get Last Fuel Log (based on highest ticket number after latest pad_reset)
+    const { data: resetLog } = await supabase
+        .from("fuel_logs")
+        .select("ticket_number, created_at")
+        .or(`talonario_vehiculo_id.eq.${vehicleId},and(talonario_vehiculo_id.is.null,vehicle_id.eq.${vehicleId})`)
+        .eq("status", "pad_reset")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+    let logsQuery = supabase
         .from("fuel_logs")
         .select("ticket_number, fuel_date, liters, mileage")
-        .eq("vehicle_id", vehicleId)
+        .or(`talonario_vehiculo_id.eq.${vehicleId},and(talonario_vehiculo_id.is.null,vehicle_id.eq.${vehicleId})`)
         .eq("status", "active");
+        
+    if (resetLog) {
+        logsQuery = logsQuery.gte("created_at", resetLog.created_at);
+    }
+    
+    const { data: logs } = await logsQuery;
 
     let lastFuel = null;
+    let maxNum = -1;
+    
+    if (resetLog) {
+        maxNum = parseInt(resetLog.ticket_number.replace(/\D/g, ''), 10);
+        if (!isNaN(maxNum)) {
+            lastFuel = { ticket_number: resetLog.ticket_number };
+        } else {
+            maxNum = -1;
+        }
+    }
+
     if (logs && logs.length > 0) {
-        let maxNum = -1;
         for (const log of logs) {
             const num = parseInt(log.ticket_number.replace(/\D/g, ''), 10);
             if (!isNaN(num) && num > maxNum) {

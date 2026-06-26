@@ -181,3 +181,60 @@ export async function correctMileage(source: MileageSource, newValue: number) {
         return { success: false, error: error.message }
     }
 }
+
+export async function resetVehicleTalonario(vehicleId: string, nextTicketStr: string) {
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (!serviceRoleKey) {
+        return { success: false, error: "Configuration Error: Missing Service Key" }
+    }
+
+    const supabase = createAdminClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        serviceRoleKey,
+        {
+            auth: {
+                autoRefreshToken: false,
+                persistSession: false
+            }
+        }
+    )
+
+    try {
+        const currentTicket = parseInt(nextTicketStr.replace(/\D/g, ''), 10)
+        if (isNaN(currentTicket)) {
+            return { success: false, error: "El ticket debe contener números." }
+        }
+
+        const baseTicketNum = currentTicket - 1
+        // Maintain leading zeros if any, based on nextTicketStr
+        const paddingLength = nextTicketStr.length
+        let baseTicketStr = baseTicketNum.toString()
+        if (baseTicketStr.length < paddingLength) {
+            baseTicketStr = baseTicketStr.padStart(paddingLength, '0')
+        }
+
+        // We insert a dummy log to establish the new base
+        const { error } = await supabase.from('fuel_logs').insert({
+            vehicle_id: vehicleId,
+            ticket_number: baseTicketStr,
+            fuel_date: new Date().toISOString(),
+            driver_name: 'SISTEMA',
+            liters: 0,
+            mileage: 0,
+            notes: 'Reinicio de Talonario',
+            status: 'pad_reset'
+        })
+
+        if (error) throw error
+
+        revalidatePath('/admin/vehiculos')
+        revalidatePath('/control/combustible')
+        revalidatePath('/control/combustible/new')
+
+        return { success: true }
+    } catch (error: any) {
+        console.error("Error resetting talonario:", error)
+        return { success: false, error: error.message }
+    }
+}
+

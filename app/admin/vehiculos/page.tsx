@@ -6,7 +6,8 @@ import { createClient } from "@/lib/supabase/client"
 import { VehicleFormDialog } from "@/components/vehicle-form-dialog"
 import { VehicleDetailsDialog } from "@/components/vehicle-details-dialog"
 import { MileageCorrectionDialog } from "@/components/mileage-correction-dialog"
-import { Plus, Search, Car, Bike, Truck, MoreVertical, Pencil, Trash2, Home as HomeIcon, MapPin, Zap, Wrench, AlertTriangle, CheckCircle, Fuel, Clock, User as UserIcon, XCircle, Download } from "lucide-react"
+import { TalonarioCorrectionDialog } from "@/components/talonario-correction-dialog"
+import { Plus, Search, Car, Bike, Truck, MoreVertical, Pencil, Trash2, Home as HomeIcon, MapPin, Zap, Wrench, FileDigit, AlertTriangle, CheckCircle, Fuel, Clock, User as UserIcon, XCircle, Download } from "lucide-react"
 
 
 import { LogoutButton } from "@/components/ui/logout-button"
@@ -70,6 +71,7 @@ function VehiculosContent() {
     const [deletingVehicle, setDeletingVehicle] = useState<Vehicle | null>(null)
     const [detailsVehicle, setDetailsVehicle] = useState<Vehicle | null>(null)
     const [correctionVehicle, setCorrectionVehicle] = useState<Vehicle | null>(null)
+    const [talonarioVehicle, setTalonarioVehicle] = useState<Vehicle | null>(null)
 
     // Open Trips State
     const [openTrips, setOpenTrips] = useState<any[]>([])
@@ -563,6 +565,12 @@ function VehiculosContent() {
                                                     <span>Corregir Kilometraje</span>
                                                 </div>
                                             </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setTalonarioVehicle(vehicle)}>
+                                                <div className="flex items-center w-full">
+                                                    <FileDigit className="mr-2 h-4 w-4" />
+                                                    <span>Corregir Talonario</span>
+                                                </div>
+                                            </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </div>
@@ -594,6 +602,14 @@ function VehiculosContent() {
                 vehicleId={correctionVehicle?.id || ""}
                 vehicleName={`${correctionVehicle?.modelo} - ${correctionVehicle?.placa}`}
                 currentMileage={correctionVehicle?.kilometraje || 0}
+                onUpdate={loadVehicles}
+            />
+
+            <TalonarioCorrectionDialog
+                isOpen={!!talonarioVehicle}
+                onClose={() => setTalonarioVehicle(null)}
+                vehicleId={talonarioVehicle?.id || ""}
+                vehicleName={`${talonarioVehicle?.modelo} - ${talonarioVehicle?.placa}`}
                 onUpdate={loadVehicles}
             />
 
