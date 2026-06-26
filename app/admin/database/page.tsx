@@ -8,11 +8,16 @@ import { useState } from "react"
 import { toast } from "sonner"
 import { resetFuelLogsAction } from "./actions"
 import { runIntegrityCheck, type IntegrityIssue } from "./integrity/actions"
+import { cleanMonthData } from "@/app/control/combustible/cleanAction"
 import { useRouter } from "next/navigation"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { AlertTriangle } from "lucide-react"
 
 export default function DatabaseManagementPage() {
     const [fuelLoading, setFuelLoading] = useState(false)
     const [integrityLoading, setIntegrityLoading] = useState(false)
+    const [cleanupDialogOpen, setCleanupDialogOpen] = useState(false)
+    const [cleaning, setCleaning] = useState(false)
     const [integrityIssues, setIntegrityIssues] = useState<IntegrityIssue[]>([])
 
     const router = useRouter()
@@ -33,6 +38,24 @@ export default function DatabaseManagementPage() {
             toast.error("Error de conexión")
         } finally {
             setFuelLoading(false)
+        }
+    }
+
+    const handleCleanup = async () => {
+        setCleaning(true)
+        try {
+            const res = await cleanMonthData()
+            if (res.success) {
+                toast.success(res.message || "Limpieza completada")
+                setCleanupDialogOpen(false)
+                router.refresh()
+            } else {
+                toast.error("Error: " + res.error)
+            }
+        } catch (error: any) {
+            toast.error("Error inesperado al limpiar")
+        } finally {
+            setCleaning(false)
         }
     }
 
@@ -67,8 +90,31 @@ export default function DatabaseManagementPage() {
             </div>
 
             <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* MONTH END CLEANUP */}
+                <Card className="border-red-200 bg-red-50/30">
+                    <CardHeader>
+                        <div className="w-12 h-12 rounded-lg bg-red-100 flex items-center justify-center text-red-600 mb-4">
+                            <Trash2 size={24} />
+                        </div>
+                        <CardTitle className="text-xl text-red-700">Limpieza de Fin de Mes</CardTitle>
+                        <CardDescription>Vacía el historial antiguo y las imágenes de combustible.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="text-sm text-red-800 bg-red-100/50 p-3 rounded-lg border border-red-100">
+                            <strong>Conserva:</strong> El último ticket de cada vehículo para no descontrolar secuencias.
+                        </div>
+                        <Button
+                            className="w-full font-bold bg-red-600 hover:bg-red-700 text-white"
+                            onClick={() => setCleanupDialogOpen(true)}
+                            disabled={cleaning}
+                        >
+                            {cleaning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                            Vaciar Datos del Mes
+                        </Button>
+                    </CardContent>
+                </Card>
 
-                {/* FUEL */}
+                {/* FUEL RESET */}
                 <Card className="border-blue-200 bg-blue-50/30">
                     <CardHeader>
                         <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 mb-4">
@@ -130,6 +176,34 @@ export default function DatabaseManagementPage() {
                 </Card>
 
             </div>
+
+            {/* CLEANUP DIALOG */}
+            <AlertDialog open={cleanupDialogOpen} onOpenChange={setCleanupDialogOpen}>
+                <AlertDialogContent className="rounded-[32px] max-w-md p-6">
+                    <AlertDialogHeader>
+                        <div className="h-16 w-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4 mx-auto">
+                            <AlertTriangle size={32} />
+                        </div>
+                        <AlertDialogTitle className="text-center text-2xl font-black text-slate-900">¿Vaciar Base de Datos?</AlertDialogTitle>
+                        <AlertDialogDescription className="text-center text-sm font-medium text-slate-500">
+                            Esta acción <strong className="text-red-600">eliminará todas las fotos</strong> de los tickets del servidor de producción, y borrará el historial antiguo.
+                            <br/><br/>
+                            El sistema mantendrá automáticamente el <strong>último registro</strong> de cada vehículo.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="flex-col sm:flex-row gap-3 mt-6">
+                        <AlertDialogCancel className="rounded-2xl h-12 border-slate-200 text-slate-600 font-bold w-full m-0">Cancelar</AlertDialogCancel>
+                        <Button 
+                            variant="destructive"
+                            onClick={handleCleanup}
+                            disabled={cleaning}
+                            className="rounded-2xl h-12 font-black w-full shadow-lg shadow-red-200 m-0"
+                        >
+                            {cleaning ? "Vaciando..." : "Sí, vaciar datos"}
+                        </Button>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     )
 }

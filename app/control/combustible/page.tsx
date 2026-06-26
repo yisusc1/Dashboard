@@ -7,7 +7,6 @@ import { es } from "date-fns/locale"
 import { ArrowLeft, Fuel, Plus, FileSpreadsheet, Filter, QrCode, Truck, User as UserIcon, X, Trash2, AlertTriangle, CheckCircle, Image as ImageIcon, CalendarDays, ChevronRight, RotateCcw, Send } from "lucide-react"
 import { DateRange } from "react-day-picker"
 import { DailyReportDialog } from "./daily-report-dialog"
-import { cleanMonthData } from "./cleanAction"
 import * as XLSX from "xlsx"
 
 import { Button } from "@/components/ui/button"
@@ -46,10 +45,6 @@ export default function FuelControlPage() {
     const [annulReason, setAnnulReason] = useState("")
     const [logToAnnul, setLogToAnnul] = useState<string | null>(null)
     const [annulling, setAnnulling] = useState(false)
-    
-    // Cleanup State
-    const [cleanupDialogOpen, setCleanupDialogOpen] = useState(false)
-    const [cleaning, setCleaning] = useState(false)
 
     // Tab State
     const [activeTab, setActiveTab] = useState("logs")
@@ -143,24 +138,6 @@ export default function FuelControlPage() {
             toast.error("Error inesperado")
         } finally {
             setAnnulling(false)
-        }
-    }
-    
-    const handleCleanup = async () => {
-        setCleaning(true)
-        try {
-            const res = await cleanMonthData()
-            if (res.success) {
-                toast.success(res.message || "Limpieza completada")
-                setCleanupDialogOpen(false)
-                loadInitialData()
-            } else {
-                toast.error("Error: " + res.error)
-            }
-        } catch (error: any) {
-            toast.error("Error inesperado al limpiar")
-        } finally {
-            setCleaning(false)
         }
     }
 
@@ -540,31 +517,14 @@ export default function FuelControlPage() {
                     </TabsContent>
 
                     <TabsContent value="reports" className="mt-0 outline-none space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <Card className="rounded-[32px] border-zinc-200 shadow-sm bg-white overflow-hidden p-6 text-center">
-                                <div className="max-w-md mx-auto py-6">
-                                    <FileSpreadsheet size={48} className="mx-auto text-indigo-100 mb-4" />
-                                    <h2 className="text-xl font-black text-zinc-900 mb-2">Nuevo Cierre Diario</h2>
-                                    <p className="text-zinc-500 text-xs font-medium mb-6">Genera o actualiza el resumen oficial de consumos para la fecha seleccionada.</p>
-                                    <DailyReportDialog onSuccess={() => loadInitialData()} />
-                                </div>
-                            </Card>
-
-                            <Card className="rounded-[32px] border-red-100 shadow-sm bg-red-50/30 overflow-hidden p-6 text-center">
-                                <div className="max-w-md mx-auto py-6">
-                                    <Trash2 size={48} className="mx-auto text-red-200 mb-4" />
-                                    <h2 className="text-xl font-black text-red-900 mb-2">Limpieza de Fin de Mes</h2>
-                                    <p className="text-red-700/80 text-xs font-medium mb-6">Borra el historial antiguo y las imágenes de los tickets para no saturar el almacenamiento.</p>
-                                    <Button 
-                                        variant="destructive"
-                                        className="h-12 px-8 rounded-2xl font-black"
-                                        onClick={() => setCleanupDialogOpen(true)}
-                                    >
-                                        Vaciar Datos del Mes
-                                    </Button>
-                                </div>
-                            </Card>
-                        </div>
+                        <Card className="rounded-[32px] border-zinc-200 shadow-sm bg-white overflow-hidden p-6 text-center">
+                            <div className="max-w-md mx-auto py-6">
+                                <FileSpreadsheet size={48} className="mx-auto text-indigo-100 mb-4" />
+                                <h2 className="text-xl font-black text-zinc-900 mb-2">Nuevo Cierre Diario</h2>
+                                <p className="text-zinc-500 text-xs font-medium mb-6">Genera o actualiza el resumen oficial de consumos para la fecha seleccionada.</p>
+                                <DailyReportDialog onSuccess={() => loadInitialData()} />
+                            </div>
+                        </Card>
 
                         <div className="space-y-4">
                             <div className="flex justify-between items-center px-1">
@@ -724,36 +684,6 @@ export default function FuelControlPage() {
                             )}
                         </div>
                     </div>
-                </AlertDialogContent>
-            </AlertDialog>
-
-            {/* CLEANUP DIALOG */}
-            <AlertDialog open={cleanupDialogOpen} onOpenChange={setCleanupDialogOpen}>
-                <AlertDialogContent className="rounded-[32px] max-w-md p-6">
-                    <AlertDialogHeader>
-                        <div className="h-16 w-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4 mx-auto">
-                            <AlertTriangle size={32} />
-                        </div>
-                        <AlertDialogTitle className="text-center text-2xl font-black text-zinc-900">¿Vaciar Base de Datos?</AlertDialogTitle>
-                        <AlertDialogDescription className="text-center text-sm font-medium text-zinc-500">
-                            Esta acción <strong className="text-red-600">eliminará todas las fotos</strong> de los tickets del servidor para ahorrar espacio, y borrará el historial de cargas.
-                            <br/><br/>
-                            El sistema mantendrá automáticamente el <strong>último registro</strong> de cada vehículo para asegurar que las secuencias de los talonarios no se descontrolen.
-                            <br/><br/>
-                            <strong className="text-zinc-900">¿Ya exportaste a Excel y verificaste los tickets?</strong> Las fotos ya no estarán disponibles después de esto.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter className="flex-col sm:flex-row gap-3 mt-6">
-                        <AlertDialogCancel className="rounded-2xl h-12 border-zinc-200 text-zinc-600 font-bold w-full m-0">Cancelar</AlertDialogCancel>
-                        <Button 
-                            variant="destructive"
-                            onClick={handleCleanup}
-                            disabled={cleaning}
-                            className="rounded-2xl h-12 font-black w-full shadow-lg shadow-red-200 m-0"
-                        >
-                            {cleaning ? "Vaciando..." : "Sí, vaciar datos"}
-                        </Button>
-                    </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
 
