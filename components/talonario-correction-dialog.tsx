@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/dialog"
 import { resetVehicleTalonario } from "@/app/admin/vehiculos/actions"
 
+import { createClient } from "@/lib/supabase/client"
+
 interface TalonarioCorrectionDialogProps {
     isOpen: boolean
     onClose: () => void
@@ -26,12 +28,36 @@ interface TalonarioCorrectionDialogProps {
 export function TalonarioCorrectionDialog({ isOpen, onClose, vehicleId, vehicleName, onUpdate }: TalonarioCorrectionDialogProps) {
     const [loading, setLoading] = useState(false)
     const [nextTicket, setNextTicket] = useState<string>("")
+    const [currentTicket, setCurrentTicket] = useState<string | null>(null)
+    const [loadingCurrent, setLoadingCurrent] = useState(false)
 
     useEffect(() => {
-        if (!isOpen) {
+        if (isOpen && vehicleId) {
             setNextTicket("")
+            loadCurrentTicket()
+        } else {
+            setNextTicket("")
+            setCurrentTicket(null)
         }
-    }, [isOpen])
+    }, [isOpen, vehicleId])
+
+    async function loadCurrentTicket() {
+        setLoadingCurrent(true)
+        const supabase = createClient()
+        const { data } = await supabase
+            .from('fuel_logs')
+            .select('ticket_number')
+            .eq('talonario_vehiculo_id', vehicleId)
+            .order('created_at', { ascending: false })
+            .limit(1)
+
+        if (data && data.length > 0) {
+            setCurrentTicket(data[0].ticket_number)
+        } else {
+            setCurrentTicket("Ninguno")
+        }
+        setLoadingCurrent(false)
+    }
 
     async function handleSave() {
         if (!nextTicket) {
@@ -70,9 +96,18 @@ export function TalonarioCorrectionDialog({ isOpen, onClose, vehicleId, vehicleN
                 <div className="py-4">
                     <div className="space-y-6">
                         <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl space-y-2">
-                            <div className="flex items-center gap-2 text-indigo-700 font-bold">
-                                <FileDigit size={20} />
-                                Nuevo Talonario
+                            <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-2 text-indigo-700 font-bold">
+                                    <FileDigit size={20} />
+                                    Nuevo Talonario
+                                </div>
+                                <div className="text-xs bg-white text-indigo-700 px-2 py-1 rounded-md shadow-sm border border-indigo-100 font-mono flex items-center gap-1">
+                                    {loadingCurrent ? (
+                                        <Loader2 className="animate-spin" size={12} />
+                                    ) : (
+                                        <>Último: <strong>{currentTicket}</strong></>
+                                    )}
+                                </div>
                             </div>
                             <p className="text-xs text-indigo-600/80">
                                 Establece el número del <strong>siguiente ticket vacío</strong> que tienes en tu talonario físico.
