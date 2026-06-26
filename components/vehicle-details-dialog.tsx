@@ -208,7 +208,7 @@ export function VehicleDetailsDialog({ isOpen, onClose, vehicle, onUpdate, reado
     return (
         <>
             <Dialog open={isOpen} onOpenChange={onClose}>
-                <DialogContent className="max-w-2xl p-0 gap-0 overflow-hidden bg-white border-none rounded-[32px] shadow-2xl max-h-[90vh] flex flex-col focus:outline-none">
+                <DialogContent showCloseButton={false} className="max-w-2xl p-0 gap-0 overflow-hidden bg-white border-none rounded-[32px] shadow-2xl max-h-[90vh] flex flex-col focus:outline-none">
 
                     {/* Scrollable Content Container */}
                     <div className="overflow-y-auto custom-scrollbar flex flex-col">
