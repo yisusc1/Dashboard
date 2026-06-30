@@ -142,6 +142,18 @@ export async function correctMileage(source: MileageSource, newValue: number) {
             await supabase.from('reportes').update({ km_entrada: newValue }).eq('id', source.id);
         } else if (source.type === 'report_exit') {
             await supabase.from('reportes').update({ km_salida: newValue }).eq('id', source.id);
+        } else {
+            // For legacy or unknown, force update the most recent records to propagate the new mileage
+            if (source.vehicleId) {
+                const { data: lastFuel } = await supabase.from('fuel_logs').select('id').eq('vehicle_id', source.vehicleId).order('created_at', { ascending: false }).limit(1).single();
+                if (lastFuel) await supabase.from('fuel_logs').update({ mileage: newValue }).eq('id', lastFuel.id);
+                
+                const { data: lastReport } = await supabase.from('reportes').select('id, km_entrada, km_salida').eq('vehiculo_id', source.vehicleId).order('created_at', { ascending: false }).limit(1).single();
+                if (lastReport) {
+                    if (lastReport.km_entrada !== null) await supabase.from('reportes').update({ km_entrada: newValue }).eq('id', lastReport.id);
+                    else if (lastReport.km_salida !== null) await supabase.from('reportes').update({ km_salida: newValue }).eq('id', lastReport.id);
+                }
+            }
         }
 
         // 1. Update Master Record (The Truth)
