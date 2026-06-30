@@ -135,6 +135,15 @@ export async function correctMileage(source: MileageSource, newValue: number) {
     // Instead of just fixing one record, we fix the ecosystem to ensure the View (MAX) returns 'newValue'.
 
     try {
+        // 0. Update the actual source record that provided the max mileage
+        if (source.type === 'fuel_log') {
+            await supabase.from('fuel_logs').update({ mileage: newValue }).eq('id', source.id);
+        } else if (source.type === 'report_entry') {
+            await supabase.from('reportes').update({ km_entrada: newValue }).eq('id', source.id);
+        } else if (source.type === 'report_exit') {
+            await supabase.from('reportes').update({ km_salida: newValue }).eq('id', source.id);
+        }
+
         // 1. Update Master Record (The Truth)
         if (source.vehicleId) {
             await supabase.from('vehiculos').update({ kilometraje: newValue }).eq('id', source.vehicleId)
