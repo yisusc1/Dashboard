@@ -271,29 +271,29 @@ export default function FuelControlPage() {
                                 variant="outline"
                                 onClick={() => setFilterDrawerOpen(true)}
                                 className={cn(
-                                    "h-11 rounded-2xl border-zinc-200 bg-white hover:bg-zinc-50 font-bold text-sm gap-2 shadow-sm transition-all",
+                                    "h-10 px-3 shrink-0 rounded-[14px] border-zinc-200 bg-white hover:bg-zinc-50 font-bold text-xs gap-1.5 shadow-sm transition-all",
                                     hasActiveFilters && "border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
                                 )}
                             >
-                                <Filter size={16} />
-                                Filtros
+                                <Filter size={14} />
+                                <span className="hidden sm:inline">Filtros</span>
                                 {activeFilterCount > 0 && (
-                                    <span className="h-5 w-5 rounded-full bg-indigo-600 text-white text-[10px] font-black flex items-center justify-center">
+                                    <span className="h-4 w-4 rounded-full bg-indigo-600 text-white text-[9px] font-black flex items-center justify-center">
                                         {activeFilterCount}
                                     </span>
                                 )}
                             </Button>
 
-                            <div className="flex gap-[6px] overflow-x-auto no-scrollbar">
-                                {[{ id: "today", label: "Hoy" }, { id: "week", label: "Semana" }, { id: "month", label: "Mes" }].map(p => (
+                            <div className="flex flex-1 gap-1 bg-zinc-100/80 p-1 rounded-[16px] border border-zinc-200/50">
+                                {[{ id: "today", label: "Hoy" }, { id: "week", label: "Sem." }, { id: "month", label: "Mes" }].map(p => (
                                     <button
                                         key={p.id}
                                         onClick={() => activePreset === p.id ? clearFilters() : applyPreset(p.id)}
                                         className={cn(
-                                            "h-11 px-4 rounded-2xl text-sm font-bold whitespace-nowrap transition-all border",
+                                            "h-8 flex-1 rounded-[12px] text-xs font-bold transition-all",
                                             activePreset === p.id
-                                                ? "bg-zinc-900 text-white border-zinc-900 shadow-sm"
-                                                : "bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-50"
+                                                ? "bg-white text-zinc-900 shadow-sm"
+                                                : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50"
                                         )}
                                     >
                                         {p.label}
@@ -302,8 +302,8 @@ export default function FuelControlPage() {
                             </div>
 
                             {hasActiveFilters && (
-                                <button onClick={clearFilters} className="h-11 w-11 shrink-0 rounded-2xl border border-zinc-200 bg-white hover:bg-red-50 text-zinc-400 hover:text-red-500 flex items-center justify-center transition-colors">
-                                    <RotateCcw size={16} />
+                                <button onClick={clearFilters} className="h-10 w-10 shrink-0 rounded-[14px] border border-zinc-200 bg-white hover:bg-red-50 text-zinc-400 hover:text-red-500 flex items-center justify-center transition-colors shadow-sm">
+                                    <RotateCcw size={14} />
                                 </button>
                             )}
                         </div>
@@ -796,12 +796,7 @@ export default function FuelControlPage() {
                 </AlertDialogContent>
             </AlertDialog>
 
-            {/* Float Action Button (Mobile) */}
-            <Link href="/control/combustible/new">
-                <Button className="fixed bottom-24 right-6 w-16 h-16 rounded-full bg-indigo-600 text-white shadow-2xl shadow-indigo-300 md:hidden z-40">
-                    <Plus size={32} />
-                </Button>
-            </Link>
+
         </main>
     )
 }
